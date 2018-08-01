@@ -1,3 +1,8 @@
+import utils.Settings
+
 object MVP extends App {
-  println("Hello, world!")
+
+  val settings: Settings = Settings.load
+  println(settings)
+
 }
