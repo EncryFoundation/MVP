@@ -18,5 +18,6 @@ libraryDependencies ++= Seq(
   "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8",
   "org.iq80.leveldb" % "leveldb" % "0.7",
   "javax.xml.bind" % "jaxb-api" % "2.+",
-  "org.scorexfoundation" %% "scrypto" % "2.1.1"
+  "org.scorexfoundation" %% "scrypto" % "2.1.1",
+  "com.iheart" %% "ficus" % "1.4.3"
 )
