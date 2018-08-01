@@ -1,4 +1,4 @@
-package utils
+package mvp.utils
 
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.Ficus._

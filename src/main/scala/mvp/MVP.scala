@@ -1,7 +1,11 @@
-import actors.Starter
+package mvp
+
 import akka.actor.{ActorSystem, Props}
 import akka.stream.ActorMaterializer
-import utils.Settings
+import mvp.actors.Messages.Start
+import mvp.actors.Starter
+import mvp.utils.Settings
+
 import scala.concurrent.ExecutionContextExecutor
 
 object MVP extends App {
@@ -13,5 +17,5 @@ object MVP extends App {
   val settings: Settings = Settings.load
 
   system.actorOf(Props[Starter], "starter")
-
+  system.actorSelection("/user/starter") ! Start
 }
