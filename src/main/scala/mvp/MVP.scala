@@ -10,7 +10,7 @@ import scala.concurrent.ExecutionContextExecutor
 object MVP extends App {
 
   implicit val system: ActorSystem = ActorSystem()
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val context: ExecutionContextExecutor = system.dispatcher
 
   val settings: Settings = Settings.load

@@ -3,6 +3,9 @@ package mvp.actors
 import akka.actor.{Actor, Props}
 import mvp.MVP.{settings, system}
 import mvp.actors.Messages.Start
+import scala.concurrent.duration._
+import scala.language.postfixOps
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class Starter extends Actor {
   override def receive: Receive = {
@@ -14,4 +17,7 @@ class Starter extends Actor {
       println("real life baby on starter")
     case _ =>
   }
+
+  context.system.scheduler
+    .schedule(initialDelay = 5 seconds, interval = 20 seconds)(system.actorSelection("/user/starter/networker/sender") ! "hello")
 }
