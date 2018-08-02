@@ -5,7 +5,7 @@ import mvp.MVP.{settings, system}
 import mvp.actors.Messages.Start
 
 class Starter extends Actor {
-  def receive: PartialFunction[Any, Unit] = {
+  override def receive: Receive = {
     case Start if settings.testMode =>
       println("test mode on starter")
       context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
