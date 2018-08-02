@@ -1,4 +1,4 @@
-package mvp.transaction
+package mvp.modifiers.mempool
 
 case class Transaction(bundle: Array[Byte],
                        check: Array[Byte],
