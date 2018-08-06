@@ -2,16 +2,27 @@ package mvp.actors
 
 import akka.actor.{Actor, Props}
 import mvp.MVP.{settings, system}
-import mvp.actors.Messages.Start
+import mvp.actors.Messages.{Heartbeat, Start}
+import scala.concurrent.duration._
+import scala.language.postfixOps
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class Starter extends Actor {
-  def receive: PartialFunction[Any, Unit] = {
+
+  override def preStart(): Unit = {
+    context.system.scheduler.schedule(initialDelay = 10 seconds, interval = settings.heartbeat seconds)(self ! Heartbeat)
+  }
+
+  override def receive: Receive = {
     case Start if settings.testMode =>
       println("test mode on starter")
-      context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
-      system.actorSelection("/user/starter/networker") ! Start
+      val networker = context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
+      //system.actorSelection("/user/starter/networker") ! Start
+      networker ! Start
     case Start if settings.testMode =>
       println("real life baby on starter")
+    case Heartbeat => println("heartbeat pong")
     case _ =>
   }
+
 }
