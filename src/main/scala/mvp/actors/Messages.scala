@@ -6,4 +6,6 @@ object Messages {
 
   final case object Start extends Message
 
+  final case object Heartbeat extends Message
+
 }
