@@ -1,7 +1,7 @@
 package mvp.actors
 
-import akka.actor.{Actor, Props}
-import mvp.MVP.{settings, system}
+import akka.actor.{Actor, ActorRef, Props}
+import mvp.MVP.settings
 import mvp.actors.Messages.{Heartbeat, Start}
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -16,13 +16,17 @@ class Starter extends Actor {
   override def receive: Receive = {
     case Start if settings.testMode =>
       println("test mode on starter")
-      val networker = context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
+      val networker: ActorRef =
+        context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
       //system.actorSelection("/user/starter/networker") ! Start
       networker ! Start
     case Start if settings.testMode =>
       println("real life baby on starter")
-    case Heartbeat => println("heartbeat pong")
+    case Heartbeat =>
+      println("heartbeat pong")
     case _ =>
   }
+
+  override def postStop(): Unit = super.postStop()
 
 }

@@ -13,6 +13,7 @@ val akkaHttpVersion = "10.0.9"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+  "com.typesafe.akka" %% "akka-stream" % akkaVersion,
   "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-persistence" % akkaVersion,
   "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8",

@@ -3,7 +3,7 @@ package mvp.actors
 import java.net.InetSocketAddress
 import akka.actor.{Actor, Props}
 import akka.util.ByteString
-import mvp.MVP.{settings, system}
+import mvp.MVP.settings
 import mvp.actors.Messages.Start
 
 class Networker extends Actor {
