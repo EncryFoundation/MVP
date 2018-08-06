@@ -28,18 +28,10 @@ object HttpServer extends StrictLogging {
       s"""{"system": "test", "message":"moloko"}"""))
   }
 
-  def request(): Unit = {
-    val uri: String = s"http://${settings.otherNodes.head.port}:${settings.otherNodes.head.port}/"
-    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = uri))
-    responseFuture.onComplete {
-      case Success(res) =>
-        val result: String = res.entity.toStrict(1 second)(materializer).toString
-        val parsedResult = parse(result)
+  def request(): Future[HttpResponse] = Http().singleRequest(HttpRequest(
+    uri = s"http://${settings.otherNodes.head.port}:${settings.otherNodes.head.port}/"))
 
-        def parse(data: String): Data = Data(List.empty, List.empty, List.empty) //TODO
-      case Failure(_) =>
-    }
-  }
+
 }
 
 case class Data(blocks: List[Block], txs: List[Tx], nodes: List[Node])
