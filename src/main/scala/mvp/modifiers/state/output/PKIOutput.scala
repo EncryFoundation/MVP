@@ -12,4 +12,6 @@ case class PKIOutput(bundle: Array[Byte],
   override val id: Array[Byte] = Sha256RipeMD160(
     bundle ++ check ++ publicKeyHash ++ userData ++ publicKey ++ signature
   )
+
+  override def unlock(proof: Array[Byte]): Boolean = ???
 }
