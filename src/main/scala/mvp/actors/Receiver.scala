@@ -4,10 +4,11 @@ import java.net.InetSocketAddress
 import akka.actor.{Actor, ActorRef}
 import akka.io.{IO, Udp}
 import akka.util.ByteString
+import com.typesafe.scalalogging.StrictLogging
 import mvp.MVP.settings
 import mvp.actors.Messages.Start
 
-class Receiver extends Actor {
+class Receiver extends Actor with StrictLogging {
 
   import context.system
 
@@ -15,20 +16,21 @@ class Receiver extends Actor {
 
   override def receive: Receive = {
     case Udp.Bound(local) =>
-      println("Context on receiver is switched")
+      logger.info("Context on receiver is switched")
       context.become(ready(sender()))
-    case Start if settings.testMode => println("test mode on receiver")
+    case Start if settings.testMode => logger.info("test mode on receiver")
     case _ =>
   }
 
   def ready(socket: ActorRef): Receive = {
     case Udp.Received(data: ByteString, remote: InetSocketAddress) =>
-      println("received smth on receiver")
+      logger.info("received smth on receiver")
+
       context.parent ! data
       context.parent ! remote
     case Udp.Unbind => socket ! Udp.Unbind
     case Udp.Unbound => context.stop(self)
-    case any: Any => println(any)
+    case any: Any => logger.info(any.toString)
   }
 }
 
