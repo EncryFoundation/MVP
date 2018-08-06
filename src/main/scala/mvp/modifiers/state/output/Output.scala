@@ -1,4 +1,4 @@
-package mvp.modifiers.state
+package mvp.modifiers.state.output
 
 import mvp.modifiers.Modifier
 
