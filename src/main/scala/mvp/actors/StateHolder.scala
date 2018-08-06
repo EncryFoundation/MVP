@@ -5,12 +5,11 @@ import mvp.actors.Networker.{Headers, Payloads, Transactions}
 import mvp.modifiers.blockchain.{Header, Payload}
 import mvp.modifiers.mempool.Transaction
 import mvp.view.blockchain.Blockchain
-import mvp.view.blockchain.processor.block.{BlockProcessor, HeaderProcessor, PayloadProcessor}
-import mvp.view.blockchain.processor.transaction.TransactionProcessor
+import mvp.view.blockchain.processor.ModifiersProcessor
 import mvp.view.mempool.Mempool
 import mvp.view.state.State
 
-class StateHolder extends Actor with BlockProcessor with HeaderProcessor with PayloadProcessor with TransactionProcessor {
+class StateHolder extends Actor with ModifiersProcessor {
 
   var blockChain: Blockchain = Blockchain.recoverBlockchain
   var state: State = State.recoverState
@@ -19,6 +18,6 @@ class StateHolder extends Actor with BlockProcessor with HeaderProcessor with Pa
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(apply)
     case Payloads(payloads: Seq[Payload]) => payloads.filter(validate).foreach(apply)
-    case Transactions(transactions: Seq[Transaction]) => apply(transactions.filter(validate))
+    case Transactions(transactions: Seq[Transaction]) => transactions.filter(validate).foreach(apply)
   }
 }
