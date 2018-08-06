@@ -11,8 +11,9 @@ class Starter extends Actor {
   override def receive: Receive = {
     case Start if settings.testMode =>
       println("test mode on starter")
-      context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
-      system.actorSelection("/user/starter/networker") ! Start
+      val networker = context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
+      //system.actorSelection("/user/starter/networker") ! Start
+      networker ! Start
     case Start if settings.testMode =>
       println("real life baby on starter")
     case _ =>

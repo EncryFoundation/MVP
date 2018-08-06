@@ -15,7 +15,9 @@ class Receiver extends Actor {
   IO(Udp) ! Udp.Bind(self, new InetSocketAddress(settings.thisNode.host, settings.thisNode.port))
 
   override def receive: Receive = {
-    case Udp.Bound(local) => context.become(ready(sender()))
+    case Udp.Bound(local) =>
+      println("Context on receiver is switched")
+      context.become(ready(sender()))
     case Start if settings.testMode => println("test mode on receiver")
     case _ =>
   }

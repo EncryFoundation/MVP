@@ -17,7 +17,9 @@ class Sender extends Actor {
   println(remote)
 
   override def receive: Receive = {
-    case Udp.SimpleSenderReady => context.become(ready(sender()))
+    case Udp.SimpleSenderReady =>
+      println("Context on sender is switched")
+      context.become(ready(sender()))
     case Start if settings.testMode => println("test mode on sender")
     case _ =>
   }
