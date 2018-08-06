@@ -3,24 +3,25 @@ package mvp.actors
 import java.net.InetSocketAddress
 import akka.actor.{Actor, Props}
 import akka.util.ByteString
+import com.typesafe.scalalogging.StrictLogging
 import mvp.MVP.{settings, system}
 import mvp.actors.Messages.Start
 
-class Networker extends Actor {
+class Networker extends Actor with StrictLogging{
 
   override def preStart(): Unit = super.preStart()
 
   override def receive: Receive = {
     case Start if settings.testMode =>
-      println("test mode on networker")
+      logger.info("test mode on networker")
       val receiver = context.actorOf(Props[Receiver].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "receiver")
       //system.actorSelection("/user/starter/networker/receiver") ! Start
       receiver ! Start
       val sender = context.actorOf(Props[Sender].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "sender")
       //system.actorSelection("/user/starter/networker/sender") ! Start
       sender ! Start
-    case data: ByteString => println(data)
-    case remote: InetSocketAddress => println(remote)
+    case data: ByteString => logger.info(data.toString())
+    case remote: InetSocketAddress => logger.info(remote.toString)
     case _ =>
   }
 
