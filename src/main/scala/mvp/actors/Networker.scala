@@ -3,6 +3,7 @@ package mvp.actors
 import akka.actor.Actor
 import mvp.MVP.settings
 import mvp.actors.Messages.Start
+import mvp.modifiers.blockchain.{Header, Payload}
 
 class Networker extends Actor {
   def receive: PartialFunction[Any, Unit] = {
@@ -10,4 +11,11 @@ class Networker extends Actor {
       println("test mode on networker")
     case _ =>
   }
+}
+
+object Networker {
+
+  case class Headers(headers: Seq[Header])
+
+  case class Payloads(payloads: Seq[Payload])
 }
