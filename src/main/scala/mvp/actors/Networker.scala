@@ -29,12 +29,3 @@ class Networker extends Actor with StrictLogging{
 
   override def postStop(): Unit = super.postStop()
 }
-
-object Networker {
-
-  case class Headers(headers: Seq[Header])
-
-  case class Payloads(payloads: Seq[Payload])
-
-  case class Transactions(transaction: Seq[Transaction])
-}
