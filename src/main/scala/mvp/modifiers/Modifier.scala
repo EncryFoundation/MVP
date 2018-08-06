@@ -1,8 +1,6 @@
 package mvp.modifiers
 
-import scorex.crypto.hash.Digest32
-
 trait Modifier {
 
-  val id: Digest32
+  val id: Array[Byte]
 }
