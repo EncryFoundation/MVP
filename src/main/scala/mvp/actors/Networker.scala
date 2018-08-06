@@ -13,14 +13,12 @@ class Networker extends Actor {
   override def receive: Receive = {
     case Start if settings.testMode =>
       println("test mode on networker")
-      //val receiver = context.actorOf(Props[Receiver].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "receiver")
+      val receiver = context.actorOf(Props[Receiver].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "receiver")
       //system.actorSelection("/user/starter/networker/receiver") ! Start
-      //receiver ! "Hello"
-      //val sender = context.actorOf(Props[Sender].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "sender")
+      receiver ! Start
+      val sender = context.actorOf(Props[Sender].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "sender")
       //system.actorSelection("/user/starter/networker/sender") ! Start
-      //sender ! Start
-      val newClass = context.actorOf(Props[NewClass].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "newClass")
-      newClass ! Start
+      sender ! Start
     case data: ByteString => println(data)
     case remote: InetSocketAddress => println(remote)
     case _ =>
