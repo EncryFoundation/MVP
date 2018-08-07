@@ -19,11 +19,8 @@ class Starter extends Actor with StrictLogging {
   override def receive: Receive = {
     case Start if settings.testMode =>
       logger.info("test mode on starter")
-      val networker: ActorRef =
-        context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
-      //system.actorSelection("/user/starter/networker") ! Start
-      networker ! Start
-    case Start if settings.testMode => logger.info("real life baby on starter")
+      bornKids()
+    case Start if !settings.testMode => logger.info("real life baby on starter")
     case Heartbeat =>
       logger.info("heartbeat pong")
       HttpServer.request().onComplete {
@@ -37,5 +34,12 @@ class Starter extends Actor with StrictLogging {
   }
 
   override def postStop(): Unit = super.postStop()
+
+  def bornKids(): Unit = {
+    val networker: ActorRef =
+      context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
+    networker ! Start
+    context.actorOf(Props[Zombie].withDispatcher("common-dispatcher"), "zombie")
+  }
 
 }

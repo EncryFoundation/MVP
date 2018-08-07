@@ -22,7 +22,7 @@ class Networker extends Actor with StrictLogging {
 
   override def postStop(): Unit = super.postStop()
 
-  def startKids(): Unit = {
+  def bornKids(): Unit = {
     val receiver: ActorRef =
       context.actorOf(Props[Receiver].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "receiver")
     //system.actorSelection("/user/starter/networker/receiver") ! Start
