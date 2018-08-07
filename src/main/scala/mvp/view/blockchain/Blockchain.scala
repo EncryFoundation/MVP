@@ -6,9 +6,11 @@ import mvp.modifiers.blockchain.{Block, Header, Payload}
 
 case class Blockchain(headers: Seq[Header] = Seq.empty, blocks: Seq[Block] = Seq.empty) {
 
-  val headersHeight: Int = if (headers.nonEmpty) headers.last.height else Blockchain.genesisHeight
+  val headersHeight: Int = headers.lastOption.map(_.height).getOrElse(Blockchain.genesisHeight)
 
-  val blockchainHeight: Int = if (blocks.nonEmpty) blocks.last.header.height else Blockchain.genesisHeight
+  val blockchainHeight: Int = blocks.lastOption.map(_.header.height).getOrElse(Blockchain.genesisHeight)
+
+  val lastBlock: Option[Block] = blocks.lastOption
 
   def addPayload(payload: Payload): Blockchain = Blockchain(headers, headers.find(_.merkleTreeRoot sameElements payload.id).map(header => blocks :+ Block(header, payload)).getOrElse(blocks))
 

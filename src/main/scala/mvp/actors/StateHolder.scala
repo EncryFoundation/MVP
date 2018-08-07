@@ -2,19 +2,20 @@ package mvp.actors
 
 import akka.actor.Actor
 import mvp.actors.StateHolder.{Headers, Payloads, Transactions}
+import mvp.local.Keys
 import mvp.modifiers.Modifier
 import mvp.modifiers.blockchain.{Header, Payload}
 import mvp.modifiers.mempool.Transaction
-import mvp.modifiers.state.output.{AmountOutput, Output}
 import mvp.view.blockchain.Blockchain
-import mvp.view.mempool.Mempool
 import mvp.view.state.State
+import scorex.crypto.signatures.Curve25519
 
 class StateHolder extends Actor {
 
   var blockChain: Blockchain = Blockchain.recoverBlockchain
   var state: State = State.recoverState
-  var mempool: Mempool = Mempool()
+  val keys: Keys = Keys.recoverKeys
+  //var mempool: Mempool = Mempool()
 
   def apply(modifier: Modifier): Unit = modifier match {
     case header: Header =>
@@ -23,7 +24,18 @@ class StateHolder extends Actor {
       blockChain = blockChain.addPayload(payload)
       state = state.updateState(payload)
     case transaction: Transaction =>
-      mempool = mempool.put(Seq(transaction))
+      val payload: Payload = Payload(Seq(transaction))
+      val headerUnsigned: Header = Header(
+        System.currentTimeMillis(),
+        blockChain.blockchainHeight + 1,
+        blockChain.lastBlock.map(_.id).getOrElse(Array.emptyByteArray),
+        Array.emptyByteArray,
+        payload.id
+      )
+      val signedHeader: Header = headerUnsigned.copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
+      self ! signedHeader
+      self ! Payload
+      //mempool = mempool.put(Seq(transaction))
   }
 
   def validate(modifier: Modifier): Boolean = modifier match {
