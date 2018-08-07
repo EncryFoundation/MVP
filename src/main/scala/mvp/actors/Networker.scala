@@ -7,6 +7,8 @@ import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
 import mvp.MVP.settings
 import mvp.actors.Messages.Start
+import mvp.modifiers.blockchain.{Header, Payload}
+import mvp.modifiers.mempool.Transaction
 
 class Networker extends Actor with StrictLogging{
 
