@@ -9,6 +9,8 @@ case class Blockchain(headers: Seq[Header] = Seq.empty, blocks: Seq[Block] = Seq
   def addPayload(payload: Payload): Blockchain = Blockchain(headers, headers.find(_.merkleTreeRoot sameElements payload.id).map(header => blocks :+ Block(header, payload)).getOrElse(blocks))
 
   def addHeader(headerToAdd: Header): Blockchain = Blockchain(headers :+ headerToAdd, blocks)
+
+  def getHeaderAtHeight(height: Int): Option[Header] = headers.find(_.height == height)
 }
 
 object Blockchain {

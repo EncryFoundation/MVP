@@ -13,5 +13,6 @@ case class MessageOutput(bundle: Array[Byte],
     bundle ++ check ++ messageHash ++ metadata ++ publicKey ++ signature
   )
 
-  override def unlock(proof: Array[Byte]): Boolean = ???
+  override def unlock(proof: Array[Byte]): Boolean =
+    check sameElements Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)
 }

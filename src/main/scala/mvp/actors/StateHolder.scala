@@ -22,9 +22,13 @@ class StateHolder extends Actor {
   }
 
   def validate(modifier: Modifier): Boolean = modifier match {
-    case header: Header => ???
-    case payload: Payload => ???
-    case transaction: Transaction => ???
+    //TODO: Add semantic validation check
+    case header: Header =>
+      blockChain.getHeaderAtHeight(header.height - 1).exists(prevHeader => header.previousBlockHash sameElements prevHeader.id)
+    case payload: Payload =>
+      payload.transactions.forall(validate)
+    case transaction: Transaction =>
+      transaction.inputs.forall(input => state.state.get(input.useOutputId).exists(outputToUnlock => outputToUnlock.unlock(input.proof)))
   }
 
   override def receive: Receive = {
