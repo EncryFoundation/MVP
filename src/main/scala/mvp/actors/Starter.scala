@@ -23,14 +23,12 @@ class Starter extends Actor with StrictLogging {
         context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
       //system.actorSelection("/user/starter/networker") ! Start
       networker ! Start
-    case Start if settings.testMode =>
-      logger.info("real life baby on starter")
+    case Start if settings.testMode => logger.info("real life baby on starter")
     case Heartbeat =>
       logger.info("heartbeat pong")
       HttpServer.request().onComplete {
         case Success(res) =>
           val result: String = res.entity.toStrict(1 second)(materializer).toString
-
           def parse(data: String): Data = Data(List.empty, List.empty, List.empty) //TODO
         val parsedResult: Data = parse(result)
         case Failure(_) =>

@@ -7,8 +7,6 @@ import akka.http.scaladsl.model.HttpMethods._
 import com.typesafe.scalalogging.StrictLogging
 import scala.concurrent.Future
 import mvp.MVP._
-import scala.util.{Failure, Success}
-import scala.concurrent.duration._
 import scala.language.postfixOps
 
 object HttpServer extends StrictLogging {

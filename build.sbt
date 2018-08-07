@@ -1,7 +1,7 @@
 name := "mvp"
 version := "0.1"
 scalaVersion := "2.12.6"
-organization := "org.encryfoundation"
+organization := "org.encry"
 
 resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",
   "SonaType" at "https://oss.sonatype.org/content/groups/public",
