@@ -1,31 +1,35 @@
 package mvp.actors
 
 import java.net.InetSocketAddress
-import akka.actor.{Actor, Props}
+import akka.actor.{Actor, ActorRef, Props}
 import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
-import mvp.MVP.{settings, system}
+import mvp.MVP.settings
 import mvp.actors.Messages.Start
-import mvp.modifiers.blockchain.{Header, Payload}
-import mvp.modifiers.mempool.Transaction
 
-class Networker extends Actor with StrictLogging{
+class Networker extends Actor with StrictLogging {
 
   override def preStart(): Unit = super.preStart()
 
   override def receive: Receive = {
     case Start if settings.testMode =>
       logger.info("test mode on networker")
-      val receiver = context.actorOf(Props[Receiver].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "receiver")
-      //system.actorSelection("/user/starter/networker/receiver") ! Start
-      receiver ! Start
-      val sender = context.actorOf(Props[Sender].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "sender")
-      //system.actorSelection("/user/starter/networker/sender") ! Start
-      sender ! Start
+    //startKids()
     case data: ByteString => logger.info(data.toString())
     case remote: InetSocketAddress => logger.info(remote.toString)
     case _ =>
   }
 
   override def postStop(): Unit = super.postStop()
+
+  def startKids(): Unit = {
+    val receiver: ActorRef =
+      context.actorOf(Props[Receiver].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "receiver")
+    //system.actorSelection("/user/starter/networker/receiver") ! Start
+    receiver ! Start
+    val sender: ActorRef =
+      context.actorOf(Props[Sender].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "sender")
+    //system.actorSelection("/user/starter/networker/sender") ! Start
+    sender ! Start
+  }
 }

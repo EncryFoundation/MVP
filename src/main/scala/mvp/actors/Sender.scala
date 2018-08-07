@@ -8,7 +8,7 @@ import com.typesafe.scalalogging.StrictLogging
 import mvp.MVP.settings
 import mvp.actors.Messages.Start
 
-class Sender extends Actor with StrictLogging{
+class Sender extends Actor with StrictLogging {
 
   import context.system
 
