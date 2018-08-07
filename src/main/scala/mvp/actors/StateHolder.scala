@@ -21,12 +21,7 @@ class StateHolder extends Actor {
       blockChain = blockChain.addHeader(header)
     case payload: Payload =>
       blockChain = blockChain.addPayload(payload)
-      val (toAddToState, toRemoveFromState) = payload.transactions.foldLeft(Seq.empty[Output] -> Seq.empty[Array[Byte]]){
-        case ((toAdd, toRemove), tx) =>
-          if (tx.outputs.forall(_.isInstanceOf[AmountOutput])) (toAdd ++ tx.outputs, toRemove ++ tx.inputs.map(_.useOutputId))
-          else (toAdd ++ tx.outputs, toRemove)
-      }
-      state = state.updateState(toAddToState, toRemoveFromState)
+      state = state.updateState(payload)
     case transaction: Transaction =>
       mempool = mempool.put(Seq(transaction))
   }

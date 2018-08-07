@@ -8,22 +8,28 @@ import scorex.utils.Random
 
 object TestGenerator {
 
-  def generateHeaderChain(qty: Int): Seq[Header] = (0 to qty).foldLeft(Seq.empty[Header]) {
+  def generateHeaderChain(qty: Int): Seq[Header] = (0 until qty).foldLeft(Seq.empty[Header]) {
     case (headers, height) =>
       val lastHeaderId: Array[Byte] = if (headers.nonEmpty) headers.last.id else Array.emptyByteArray
       headers :+ Header(0L, height, lastHeaderId, Random.randomBytes(), Random.randomBytes())
   }
 
-  def generateBlockChainWithAmountPayloads(qty: Int, initialInputs: Seq[Input]): Seq[Block] =
-    generateHeaderChain(qty).foldLeft(Seq.empty[Block]){
+  def generateBlockChainWithAmountPayloads(blocksQty: Int, initialInputs: Seq[Input]): Seq[Block] =
+    generateHeaderChain(blocksQty).foldLeft(Seq.empty[Block]){
       case (blocks, header) =>
-        if (blocks.isEmpty) blocks :+ Block(header, Payload(generatePaymentTxs(initialInputs)))
-        else blocks :+ Block(header, Payload(
-          generatePaymentTxs(blocks.last.payload.transactions.flatMap(_.outputs.map(output => Input(output.id, Random.randomBytes())))))
-        )
+        if (blocks.isEmpty) {
+          val payload: Payload = Payload(generatePaymentTxs(initialInputs))
+          blocks :+ Block(header.copy(merkleTreeRoot = payload.id), payload)
+        }
+        else {
+          val payload: Payload = Payload(
+            generatePaymentTxs(blocks.last.payload.transactions.flatMap(_.outputs.map(output => Input(output.id, Random.randomBytes()))))
+          )
+          blocks :+ Block(header.copy(merkleTreeRoot = payload.id), payload)
+        }
     }
 
-  def generateDummyAmountOutputs(qty: Int): Seq[Output] = (0 to qty).map(i => AmountOutput(Random.randomBytes(), 100L))
+  def generateDummyAmountOutputs(qty: Int): Seq[Output] = (0 until qty).map(i => AmountOutput(Random.randomBytes(), 100L))
 
   def generatePaymentTxs(inputs: Seq[Input]): Seq[Transaction] = inputs.foldLeft(Seq.empty[Transaction]) {
     case (transatcions, input) =>
