@@ -5,6 +5,7 @@ import mvp.actors.StateHolder.{Headers, Payloads, Transactions}
 import mvp.modifiers.Modifier
 import mvp.modifiers.blockchain.{Header, Payload}
 import mvp.modifiers.mempool.Transaction
+import mvp.modifiers.state.output.{AmountOutput, Output}
 import mvp.view.blockchain.Blockchain
 import mvp.view.mempool.Mempool
 import mvp.view.state.State
@@ -16,9 +17,18 @@ class StateHolder extends Actor {
   var mempool: Mempool = Mempool()
 
   def apply(modifier: Modifier): Unit = modifier match {
-    case header: Header => blockChain = blockChain.addHeader(header)
-    case payload: Payload => blockChain = blockChain.addPayload(payload)
-    case transaction: Transaction => mempool = mempool.put(Seq(transaction))
+    case header: Header =>
+      blockChain = blockChain.addHeader(header)
+    case payload: Payload =>
+      blockChain = blockChain.addPayload(payload)
+      val (toAddToState, toRemoveFromState) = payload.transactions.foldLeft(Seq.empty[Output] -> Seq.empty[Array[Byte]]){
+        case ((toAdd, toRemove), tx) =>
+          if (tx.outputs.forall(_.isInstanceOf[AmountOutput])) (toAdd ++ tx.outputs, toRemove ++ tx.inputs.map(_.useOutputId))
+          else (toAdd ++ tx.outputs, toRemove)
+      }
+      state = state.updateState(toAddToState, toRemoveFromState)
+    case transaction: Transaction =>
+      mempool = mempool.put(Seq(transaction))
   }
 
   def validate(modifier: Modifier): Boolean = modifier match {

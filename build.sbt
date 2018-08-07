@@ -11,6 +11,13 @@ resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repos
 val akkaVersion = "2.5.13"
 val akkaHttpVersion = "10.0.9"
 
+val testingDependencies = Seq(
+  "com.typesafe.akka" %% "akka-testkit" % "2.4.+" % "test",
+  "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test",
+  "org.scalatest" %% "scalatest" % "3.0.3" % "test",
+  "org.scalacheck" %% "scalacheck" % "1.13.+" % "test",
+)
+
 val loggingDependencies = Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.+",
   "ch.qos.logback" % "logback-classic" % "1.+",
