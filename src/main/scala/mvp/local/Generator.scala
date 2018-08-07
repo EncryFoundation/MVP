@@ -3,6 +3,7 @@ package mvp.local
 import com.google.common.primitives.Longs
 import mvp.local.messageTransaction.MessageInfo
 import mvp.modifiers.mempool.Transaction
+import mvp.modifiers.state.input.Input
 import mvp.modifiers.state.output.MessageOutput
 import mvp.utils.Crypto.Sha256RipeMD160
 import org.encryfoundation.common.crypto.{PrivateKey25519, Signature25519}
@@ -12,7 +13,7 @@ object Generator {
 
   val iterCount: Int = 10
 
-  def generateMessageTx(privateKey: PrivateKey25519, previousMessage: Option[MessageInfo]): Transaction = {
+  def generateMessageTx(privateKey: PrivateKey25519, previousMessage: Option[MessageInfo], outputId: Option[Array[Byte]]): Transaction = {
 
     val messageInfo: MessageInfo = MessageInfo(
       "Hello, world!".getBytes,
@@ -27,7 +28,7 @@ object Generator {
     val bundle: Array[Byte] = proverGenerator(messageInfo, iterCount, privateKey.privKeyBytes)
     Transaction(
       System.currentTimeMillis(),
-      Seq.empty,
+      outputId.map(output => Seq(Input(output, proof))).getOrElse(Seq.empty),
       Seq(
         MessageOutput(
           proof,
