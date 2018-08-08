@@ -1,6 +1,6 @@
 package mvp.modifiers.state.output
 
-import io.circe.Encoder
+import io.circe.{Decoder, Encoder}
 import mvp.modifiers.Modifier
 
 trait Output extends Modifier {
@@ -9,6 +9,12 @@ trait Output extends Modifier {
 }
 
 object Output {
+
+  implicit val jsonDencoder: Decoder[Output] = {
+    case ab: AmountOutput => AmountOutput.jsonDecoder(ab)
+    case db: PKIOutput => PKIOutput.jsonDecoder(db)
+    case aib: MessageOutput => MessageOutput.jsonDecoder(aib)
+  }
 
   implicit val jsonEncoder: Encoder[Output] = {
     case ab: AmountOutput => AmountOutput.jsonEncoder(ab)

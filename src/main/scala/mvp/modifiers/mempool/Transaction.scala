@@ -1,7 +1,7 @@
 package mvp.modifiers.mempool
 
 import com.google.common.primitives.Longs
-import io.circe.Encoder
+import io.circe.{Decoder, Encoder, HCursor}
 import mvp.modifiers.Modifier
 import mvp.modifiers.state.input.Input
 import mvp.modifiers.state.output.Output
@@ -20,6 +20,16 @@ case class Transaction(timestamp: Long,
 }
 
 object Transaction {
+
+  implicit val jsonDecoder: Decoder[Transaction] = (c: HCursor) => for {
+    timestamp <- c.downField("timestamp").as[Long]
+    inputs <- c.downField("inputs").as[Seq[Input]]
+    outputs <- c.downField("outputs").as[Seq[Output]]
+  } yield Transaction(
+    timestamp,
+    inputs,
+    outputs
+  )
 
   implicit val jsonEncoder: Encoder[Transaction] = (b: Transaction) => Map(
     "timestamp" -> b.timestamp.asJson,

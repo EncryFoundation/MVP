@@ -1,6 +1,6 @@
 package mvp.modifiers.state.input
 
-import io.circe.Encoder
+import io.circe.{Decoder, Encoder, HCursor}
 import mvp.modifiers.Modifier
 import mvp.utils.Crypto.Sha256RipeMD160
 import scorex.crypto.encode.Base58
@@ -13,6 +13,14 @@ case class Input(useOutputId: Array[Byte],
 }
 
 object Input {
+
+  implicit val jsonDecoder: Decoder[Input] = (c: HCursor) => for {
+    useOutputId <- c.downField("useOutputId").as[Array[Byte]]
+    proof <- c.downField("proof").as[Array[Byte]]
+  } yield Input(
+    useOutputId,
+    proof
+  )
 
   implicit val jsonEncoder: Encoder[Input] = (b: Input) => Map(
     "useOutputId" -> Base58.encode(b.useOutputId).asJson,

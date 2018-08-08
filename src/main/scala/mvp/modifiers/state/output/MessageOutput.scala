@@ -1,6 +1,6 @@
 package mvp.modifiers.state.output
 
-import io.circe.Encoder
+import io.circe.{Decoder, Encoder, HCursor}
 import mvp.utils.Crypto.Sha256RipeMD160
 import scorex.crypto.encode.Base58
 import io.circe.syntax._
@@ -21,6 +21,22 @@ case class MessageOutput(bundle: Array[Byte],
 }
 
 object MessageOutput {
+
+  implicit val jsonDecoder: Decoder[MessageOutput] = (c: HCursor) => for {
+    bundle <- c.downField("bundle").as[Array[Byte]]
+    check <- c.downField("check").as[Array[Byte]]
+    messageHash <- c.downField("messageHash").as[Array[Byte]]
+    metadata <- c.downField("metadata").as[Array[Byte]]
+    publicKey <- c.downField("publicKey").as[Array[Byte]]
+    signature <- c.downField("signature").as[Array[Byte]]
+  } yield MessageOutput(
+    bundle,
+    check,
+    messageHash,
+    metadata,
+    publicKey,
+    signature
+  )
 
   implicit val jsonEncoder: Encoder[MessageOutput] = (b: MessageOutput) => Map(
     "bundle" -> Base58.encode(b.bundle).asJson,
