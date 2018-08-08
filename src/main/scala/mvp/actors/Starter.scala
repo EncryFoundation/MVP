@@ -43,7 +43,7 @@ class Starter extends Actor with StrictLogging {
       context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
     networker ! Start
     context.actorOf(Props[Zombie].withDispatcher("common-dispatcher"), "zombie")
-    if (settings.mvpStat.sendStat) context.actorOf(Props[InfluxActor], "influxActor")
+    if (settings.mvpStat.sendStat) context.actorOf(Props[InfluxActor].withDispatcher("common-dispatcher"), "influxActor")
   }
 
 }
