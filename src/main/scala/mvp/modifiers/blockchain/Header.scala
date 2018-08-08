@@ -4,7 +4,8 @@ import com.google.common.primitives.Longs
 import mvp.modifiers.Modifier
 import mvp.utils.Crypto.Sha256RipeMD160
 
-case class Header(timestamp: Long,
+case class Header(height: Long,
+                  timestamp: Long,
                   previousBlockHash: Array[Byte],
                   minerSignature: Array[Byte],
                   merkleTreeRoot: Array[Byte]) extends Modifier {
