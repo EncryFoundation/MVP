@@ -4,7 +4,7 @@ import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.Ficus._
 import net.ceedubs.ficus.readers.ArbitraryTypeReader._
 
-case class Settings(thisNode: Node, otherNodes: List[Node], testMode: Boolean, heartbeat: Int)
+case class Settings(thisNode: Node, otherNodes: List[Node], testMode: Boolean, heartbeat: Int, influxDB: InfluxDBSettings, mvpStat: mvpStats)
 case class Node(host: String, port: Int)
 
 object Settings {
