@@ -1,7 +1,6 @@
 package mvp.actors
 
 import java.net.InetSocketAddress
-
 import akka.actor.{Actor, ActorRef}
 import akka.io.{IO, Udp}
 import akka.util.ByteString
@@ -26,7 +25,6 @@ class Receiver extends Actor with StrictLogging {
   def ready(socket: ActorRef): Receive = {
     case Udp.Received(data: ByteString, remote: InetSocketAddress) =>
       logger.info("received smth on receiver")
-
       context.parent ! data
       context.parent ! remote
     case Udp.Unbind => socket ! Udp.Unbind
