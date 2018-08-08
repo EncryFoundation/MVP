@@ -23,8 +23,11 @@ object Blockchain {
 
   val genesisHeight: Int = -1
 
-  val emptyBlockchain: Blockchain = Blockchain()
+  val genesisBlockchain: Blockchain = {
+    val genesisBlock: Block = Block(Header(1L, 0, Array.emptyByteArray, Array.emptyByteArray, Array.emptyByteArray), Payload(Seq.empty))
+    Blockchain(Seq(genesisBlock.header), Seq(genesisBlock))
+  }
 
   //TODO: Recover from levelDb
-  def recoverBlockchain: Blockchain = emptyBlockchain
+  def recoverBlockchain: Blockchain = genesisBlockchain
 }
