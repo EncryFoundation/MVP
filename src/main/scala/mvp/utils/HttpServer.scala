@@ -27,7 +27,7 @@ object HttpServer extends StrictLogging {
   }
 
   def request(): Future[HttpResponse] = Http().singleRequest(HttpRequest(
-    uri = s"http://${settings.otherNodes.head.port}:${settings.otherNodes.head.port}/"))
+    uri = s"http://${settings.otherNodes.head.host}:${settings.otherNodes.head.port}/"))
 
 
 }
