@@ -22,7 +22,7 @@ case class BlockchainRoute(stateHolder: ActorRef)(implicit val context: ActorRef
   protected def toJsonResponse(fn: Future[Json]): Route = onSuccess(fn)
   { json => complete(HttpEntity(ContentTypes.`application/json`, json.spaces2)) }
 
-  val route: Route = pathPrefix("history") {
+  val route: Route = pathPrefix("blockchain") {
     lastBlock
   }
 

@@ -2,11 +2,11 @@ package mvp.actors
 
 import com.typesafe.scalalogging.StrictLogging
 import akka.actor.{Actor, ActorRef, Props}
-import mvp.MVP.{materializer, settings}
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.HttpRequest
+import mvp.MVP.{materializer, settings, system}
 import mvp.actors.Messages.{Heartbeat, Start}
-//import mvp.http.{Data, HttpServer}
-//import mvp.utils.Data
-
+import scala.util.{Failure, Success}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -25,13 +25,13 @@ class Starter extends Actor with StrictLogging {
     case Start if !settings.testMode => logger.info("real life baby on starter")
     case Heartbeat =>
       logger.info("heartbeat pong")
-//      HttpServer.request().onComplete {
-//        case Success(res) =>
-//          val result: String = res.entity.toStrict(1 second)(materializer).toString
-//          def parse(data: String): Data = Data(List.empty, List.empty, List.empty) //TODO
-//        val parsedResult: Data = parse(result)
-//        case Failure(_) =>
-//      }
+      Http().singleRequest(HttpRequest(
+        uri = s"http://${settings.otherNodes.head.host}:${settings.otherNodes.head.port}/blockchain/lastBlock")).onComplete{
+        case Success(res) =>
+          println(res)
+          val result: String = res.entity.toStrict(1 second)(materializer).toString
+        case Failure(_) =>
+      }
     case _ =>
   }
 
