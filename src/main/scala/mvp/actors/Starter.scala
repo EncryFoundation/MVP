@@ -10,7 +10,7 @@ import mvp.actors.Messages.{Heartbeat, Start}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Failure, Success}
+//import scala.util.{Failure, Success}
 
 class Starter extends Actor with StrictLogging {
 
