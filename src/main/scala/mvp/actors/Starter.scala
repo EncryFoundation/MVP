@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
-import mvp.MVP._
+import mvp.stats.InfluxActor
 import mvp.stats.InfluxActor._
 
 class Starter extends Actor with StrictLogging {
@@ -25,7 +25,7 @@ class Starter extends Actor with StrictLogging {
     case Start if !settings.testMode => logger.info("real life baby on starter")
     case Heartbeat =>
       logger.info("heartbeat pong")
-      context.actorSelection("/user/influxActor") ! CurrentBlockHeight()
+      context.actorSelection("/user/starter/influxActor") ! CurrentBlockHeight()
       HttpServer.request().onComplete {
         case Success(res) =>
           val result: String = res.entity.toStrict(1 second)(materializer).toString
@@ -43,6 +43,7 @@ class Starter extends Actor with StrictLogging {
       context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
     networker ! Start
     context.actorOf(Props[Zombie].withDispatcher("common-dispatcher"), "zombie")
+    if (settings.mvpStat.sendStat) context.actorOf(Props[InfluxActor], "influxActor")
   }
 
 }

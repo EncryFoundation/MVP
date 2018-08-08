@@ -18,7 +18,6 @@ object MVP extends App {
 
   system.actorOf(Props[Starter], "starter")
   system.actorSelection("/user/starter") ! Start
-  if (settings.mvpStat.sendStat) system.actorOf(Props[InfluxActor], "influxActor")
 
   HttpServer.start()
 }
