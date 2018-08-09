@@ -9,8 +9,9 @@ import akka.util.ByteString
 import mvp.MVP.{materializer, settings, system}
 import mvp.actors.Messages.{Heartbeat, Start}
 import io.circe.parser.decode
-import mvp.actors.StateHolder.{Headers, LastInfo, Payloads}
+import mvp.actors.StateHolder.{Headers, LastInfo, Message, Payloads}
 import mvp.http.HttpServer
+
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -42,6 +43,9 @@ class Starter extends Actor with StrictLogging {
         .onComplete(_.map { lastInfo =>
           context.system.actorSelection("user/stateHolder") ! Headers(lastInfo.blocks.map(_.header))
           context.system.actorSelection("user/stateHolder") ! Payloads(lastInfo.blocks.map(_.payload))
+          lastInfo.messages.foreach(message =>
+            context.system.actorSelection("user/stateHolder") ! Message(message)
+          )
         })
     case _ =>
   }

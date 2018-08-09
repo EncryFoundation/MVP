@@ -44,10 +44,11 @@ class StateHolder extends Actor {
       self ! Payload
   }
 
-  def addMessage(message: UserMessage, previousMessage: Option[MessageInfo], outputId: Option[Array[Byte]]): Unit = {
-    messagesHolder = messagesHolder :+ message
-    apply(Generator.generateMessageTx(keys.keys.head, previousMessage, outputId, message.message))
-  }
+  def addMessage(message: UserMessage, previousMessage: Option[MessageInfo], outputId: Option[Array[Byte]]): Unit =
+    if (!messagesHolder.contains(message)) {
+      messagesHolder = messagesHolder :+ message
+      apply( Generator.generateMessageTx( keys.keys.head, previousMessage, outputId, message.message ) )
+    }
 
   def validate(modifier: Modifier): Boolean = modifier match {
     //TODO: Add semantic validation check
@@ -65,13 +66,13 @@ class StateHolder extends Actor {
 
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(apply)
-    case Message(msg: UserMessage, previousOutputId: Option[Array[Byte]]) =>
+    case Message(msg: UserMessage) =>
       val previousMessageInfo: Option[MessageInfo] =
-        previousOutputId.flatMap( outputId => state
+        msg.prevOutputId.flatMap( outputId => state
           .state
           .get(outputId)
           .map(_.asInstanceOf[MessageOutput].toMessageInfo(msg.message)))
-      addMessage(msg, previousMessageInfo, previousOutputId)
+      addMessage(msg, previousMessageInfo, msg.prevOutputId)
     case Payloads(payloads: Seq[Payload]) => payloads.filter(validate).foreach(apply)
     case Transactions(transactions: Seq[Transaction]) => transactions.filter(validate).foreach(apply)
     case GetLastBlock => sender() ! blockChain.blocks.last
@@ -83,7 +84,7 @@ object StateHolder {
 
   case object GetLastInfo
 
-  case class Message(msg: UserMessage, previousOutputId: Option[Array[Byte]])
+  case class Message(msg: UserMessage)
 
   case object GetLastBlock
 
