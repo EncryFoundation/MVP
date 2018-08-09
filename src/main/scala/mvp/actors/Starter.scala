@@ -35,7 +35,7 @@ class Starter extends Actor with StrictLogging {
       Http().singleRequest(HttpRequest(
         method = HttpMethods.GET,
         uri = "/blockchain/lastBlock"
-      ).withEffectiveUri(securedConnection = false, Host(s"http://${settings.otherNodes.head.host}:${settings.otherNodes.head.port}")))
+      ).withEffectiveUri(securedConnection = false, Host(settings.otherNodes.head.host,settings.otherNodes.head.port)))
         .flatMap(_.entity.dataBytes.runFold(ByteString.empty)(_ ++ _))
         .map(_.utf8String)
         .map(decode[Block])
