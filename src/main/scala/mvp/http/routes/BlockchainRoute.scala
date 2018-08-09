@@ -1,19 +1,19 @@
 package mvp.http.routes
 
-import akka.actor.{ActorRef, ActorRefFactory, ActorSelection}
+import akka.actor.ActorRefFactory
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.Directives._
 import akka.pattern.ask
-import akka.http.scaladsl.server.{Directives, Route}
 import akka.util.Timeout
 import io.circe.Json
 import io.circe.syntax._
 import mvp.actors.StateHolder.GetLastBlock
 import mvp.modifiers.blockchain.Block
-
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-case class BlockchainRoute(implicit val context: ActorRefFactory) extends Directives {
+case class BlockchainRoute(implicit val context: ActorRefFactory) {
 
   implicit val ec: ExecutionContextExecutor = context.dispatcher
 
