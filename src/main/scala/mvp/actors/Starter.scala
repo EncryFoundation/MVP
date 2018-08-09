@@ -25,7 +25,7 @@ class Starter extends Actor with StrictLogging {
     case Start if !settings.testMode => logger.info("real life baby on starter")
     case Heartbeat =>
       logger.info("heartbeat pong")
-      context.actorSelection("/user/starter/influxActor") ! CurrentBlockHeight()
+      if (settings.mvpStat.sendStat) context.actorSelection("/user/starter/influxActor") ! CurrentBlockHeight()
       HttpServer.request().onComplete {
         case Success(res) =>
           val result: String = res.entity.toStrict(1 second)(materializer).toString
