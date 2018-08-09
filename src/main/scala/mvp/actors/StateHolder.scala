@@ -1,6 +1,7 @@
 package mvp.actors
 
 import akka.actor.Actor
+import com.typesafe.scalalogging.StrictLogging
 import io.circe.{Decoder, Encoder, HCursor}
 import io.circe.syntax._
 import mvp.actors.StateHolder._
@@ -15,7 +16,7 @@ import mvp.view.blockchain.Blockchain
 import mvp.view.state.State
 import scorex.crypto.signatures.Curve25519
 
-class StateHolder extends Actor {
+class StateHolder extends Actor with StrictLogging {
 
   var blockChain: Blockchain = Blockchain.recoverBlockchain
   var state: State = State.recoverState
@@ -24,11 +25,14 @@ class StateHolder extends Actor {
 
   def apply(modifier: Modifier): Unit = modifier match {
     case header: Header =>
+      logger.info(s"Get header: ${Header.jsonEncoder(header)}")
       blockChain = blockChain.addHeader(header)
     case payload: Payload =>
+      logger.info(s"Get payload: ${Payload.jsonEncoder(payload)}")
       blockChain = blockChain.addPayload(payload)
       state = state.updateState(payload)
     case transaction: Transaction =>
+      logger.info(s"Get transaction: ${Transaction.jsonEncoder(transaction)}")
       val payload: Payload = Payload(Seq(transaction))
       val headerUnsigned: Header = Header(
         System.currentTimeMillis(),
@@ -46,8 +50,9 @@ class StateHolder extends Actor {
 
   def addMessage(message: UserMessage, previousMessage: Option[MessageInfo], outputId: Option[Array[Byte]]): Unit =
     if (!messagesHolder.contains(message)) {
+      logger.info(s"Get message: ${UserMessage.jsonEncoder(message)}")
       messagesHolder = messagesHolder :+ message
-      apply( Generator.generateMessageTx( keys.keys.head, previousMessage, outputId, message.message ) )
+      apply(Generator.generateMessageTx( keys.keys.head, previousMessage, outputId, message.message))
     }
 
   def validate(modifier: Modifier): Boolean = modifier match {
