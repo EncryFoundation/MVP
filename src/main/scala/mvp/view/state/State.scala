@@ -22,9 +22,6 @@ object State {
 
   val genesisState: State = State()
 
-  def recoverState: State = {
-
-    //TODO: Add support of levelDb, now always start from empty state
-    genesisState
-  }
+  //TODO: Add support of levelDb, now always start from empty state
+  def recoverState: State = genesisState
 }

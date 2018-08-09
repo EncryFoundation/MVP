@@ -5,7 +5,6 @@ import io.circe.{Decoder, Encoder, HCursor}
 import mvp.modifiers.Modifier
 import mvp.utils.Crypto.Sha256RipeMD160
 import io.circe.syntax._
-import mvp.modifiers.state.output.MessageOutput
 import scorex.crypto.encode.Base16
 
 case class Header(timestamp: Long,

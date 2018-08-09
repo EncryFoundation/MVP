@@ -15,7 +15,6 @@ class StateHolder extends Actor {
   var blockChain: Blockchain = Blockchain.recoverBlockchain
   var state: State = State.recoverState
   val keys: Keys = Keys.recoverKeys
-  //var mempool: Mempool = Mempool()
 
   def apply(modifier: Modifier): Unit = modifier match {
     case header: Header =>
@@ -35,7 +34,6 @@ class StateHolder extends Actor {
       val signedHeader: Header = headerUnsigned.copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
       self ! signedHeader
       self ! Payload
-      //mempool = mempool.put(Seq(transaction))
   }
 
   def validate(modifier: Modifier): Boolean = modifier match {

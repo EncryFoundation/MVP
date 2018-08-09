@@ -36,6 +36,4 @@ object Transaction {
     "inputs" -> b.inputs.map(_.asJson).asJson,
     "outputs" -> b.outputs.map(_.asJson).asJson
   ).asJson
-
-  type Address = Array[Byte]
 }

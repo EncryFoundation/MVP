@@ -4,7 +4,6 @@ import io.circe.{Decoder, Encoder, HCursor}
 import mvp.utils.Crypto.Sha256RipeMD160
 import scorex.crypto.encode.Base58
 import io.circe.syntax._
-import mvp.modifiers.state.output.PKIOutput.typeId
 
 case class MessageOutput(bundle: Array[Byte],
                          check: Array[Byte],
