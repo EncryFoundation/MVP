@@ -35,5 +35,6 @@ libraryDependencies ++= Seq(
   "org.iq80.leveldb" % "leveldb" % "0.7",
   "javax.xml.bind" % "jaxb-api" % "2.+",
   "org.scorexfoundation" %% "scrypto" % "2.1.1",
-  "com.iheart" %% "ficus" % "1.4.3"
-) ++ loggingDependencies ++ testingDependencies
+  "com.iheart" %% "ficus" % "1.4.3",
+  "org.influxdb" % "influxdb-java" % "2.10",
+) ++ loggingDependencies
