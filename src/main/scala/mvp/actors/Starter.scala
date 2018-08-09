@@ -11,10 +11,10 @@ import mvp.actors.Messages.{Heartbeat, Start}
 import mvp.modifiers.blockchain.Block
 import io.circe.parser.decode
 import mvp.actors.StateHolder.{Headers, Payloads}
-
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
+import mvp.stats.InfluxActor
 import scala.concurrent.Future
 
 class Starter extends Actor with StrictLogging {
@@ -52,6 +52,7 @@ class Starter extends Actor with StrictLogging {
       context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
     networker ! Start
     context.actorOf(Props[Zombie].withDispatcher("common-dispatcher"), "zombie")
+    if (settings.mvpSettings.sendStat) context.actorOf(Props[InfluxActor].withDispatcher("common-dispatcher"), "influxActor")
   }
 
 }

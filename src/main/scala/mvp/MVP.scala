@@ -11,7 +11,7 @@ import mvp.http.routes.BlockchainRoute
 
 import scala.concurrent.ExecutionContextExecutor
 
-object MVP extends App with Directives {
+object MVP extends App {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
