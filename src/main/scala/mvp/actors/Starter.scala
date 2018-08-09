@@ -25,7 +25,7 @@ class Starter extends Actor with StrictLogging {
     case Start if !settings.testMode => logger.info("real life baby on starter")
     case Heartbeat =>
       logger.info("heartbeat pong")
-      if (settings.mvpStat.sendStat) context.actorSelection("/user/starter/influxActor") ! CurrentBlockHeight()
+      if (settings.mvpSettings.sendStat) context.actorSelection("/user/starter/influxActor") ! CurrentBlockHeight()
       HttpServer.request().onComplete {
         case Success(res) =>
           val result: String = res.entity.toStrict(1 second)(materializer).toString
@@ -43,7 +43,7 @@ class Starter extends Actor with StrictLogging {
       context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
     networker ! Start
     context.actorOf(Props[Zombie].withDispatcher("common-dispatcher"), "zombie")
-    if (settings.mvpStat.sendStat) context.actorOf(Props[InfluxActor].withDispatcher("common-dispatcher"), "influxActor")
+    if (settings.mvpSettings.sendStat) context.actorOf(Props[InfluxActor].withDispatcher("common-dispatcher"), "influxActor")
   }
 
 }

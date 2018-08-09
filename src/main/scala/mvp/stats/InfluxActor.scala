@@ -14,7 +14,7 @@ class InfluxActor extends Actor with StrictLogging {
   influxDB.setRetentionPolicy("autogen")
 
   override def preStart(): Unit =
-    influxDB.write(8089, s"""nodesStartTime value="${settings.mvpStat.nodeName}"""")
+    influxDB.write(8089, s"""nodeStartTime value="${settings.mvpSettings.nodeName}"""")
 
   override def postStop(): Unit = {
     influxDB.close()
