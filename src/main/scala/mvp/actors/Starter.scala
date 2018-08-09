@@ -5,7 +5,6 @@ import akka.actor.{Actor, ActorRef, Props}
 import mvp.MVP.{materializer, settings}
 import mvp.actors.Messages.{Heartbeat, Start}
 import mvp.utils.{Data, HttpServer}
-
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -43,8 +42,10 @@ class Starter extends Actor with StrictLogging {
       context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
     networker ! Start
     context.actorOf(Props[Zombie].withDispatcher("common-dispatcher"), "zombie")
-    val cliActor: ActorRef = context.actorOf(Props[ConsoleActor].withDispatcher("common-dispatcher"), "cliActor")
-    if (settings.mvpSettings.enableCLI) cliActor ! StartListening
+    if (settings.mvpSettings.enableCLI) {
+      val cliActor: ActorRef = context.actorOf(Props[ConsoleActor].withDispatcher("common-dispatcher"), "cliActor")
+      cliActor ! StartListening
+    }
   }
 
 }
