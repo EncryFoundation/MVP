@@ -2,14 +2,13 @@ package mvp.http.routes
 
 import akka.actor.ActorRefFactory
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
-import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 import akka.pattern.ask
 import akka.util.Timeout
 import io.circe.Json
 import io.circe.syntax._
-import mvp.actors.StateHolder.GetLastBlock
-import mvp.modifiers.blockchain.Block
+import mvp.actors.StateHolder.{GetLastInfo, LastInfo}
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -26,9 +25,9 @@ case class BlockchainRoute(implicit val context: ActorRefFactory) {
     lastBlock
   }
 
-  private def getLastBlock: Future[Block] = (context.actorSelection("user/stateHolder") ? GetLastBlock).mapTo[Block]
+  private def getLastInfo: Future[LastInfo] = (context.actorSelection("user/stateHolder") ? GetLastInfo).mapTo[LastInfo]
 
-  def lastBlock: Route = pathPrefix("lastBlock") {
-    toJsonResponse(getLastBlock.map(_.asJson))
+  def lastBlock: Route = pathPrefix("lastInfo") {
+    toJsonResponse(getLastInfo.map(_.asJson))
   }
 }
