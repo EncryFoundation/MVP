@@ -11,6 +11,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 import mvp.cli.ConsoleActor
 import mvp.cli.ConsoleActor.StartListening
+import mvp.stats.InfluxActor
+import mvp.stats.InfluxActor._
 
 class Starter extends Actor with StrictLogging {
 
@@ -25,6 +27,7 @@ class Starter extends Actor with StrictLogging {
     case Start if !settings.testMode => logger.info("real life baby on starter")
     case Heartbeat =>
       logger.info("heartbeat pong")
+      if (settings.mvpSettings.sendStat) context.actorSelection("/user/starter/influxActor") ! CurrentBlockHeight()
       HttpServer.request().onComplete {
         case Success(res) =>
           val result: String = res.entity.toStrict(1 second)(materializer).toString
@@ -46,6 +49,7 @@ class Starter extends Actor with StrictLogging {
       val cliActor: ActorRef = context.actorOf(Props[ConsoleActor].withDispatcher("common-dispatcher"), "cliActor")
       cliActor ! StartListening
     }
+    if (settings.mvpSettings.sendStat) context.actorOf(Props[InfluxActor].withDispatcher("common-dispatcher"), "influxActor")
   }
 
 }
