@@ -43,8 +43,8 @@ class Starter extends Actor with StrictLogging {
       context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
     networker ! Start
     context.actorOf(Props[Zombie].withDispatcher("common-dispatcher"), "zombie")
-    context.actorOf(Props[ConsoleActor].withDispatcher("common-dispatcher"), "cliActor")
-//    if (settings.node.enableCLI) context. ! StartListening
+    val cliActor: ActorRef = context.actorOf(Props[ConsoleActor].withDispatcher("common-dispatcher"), "cliActor")
+    if (settings.mvpSettings.enableCLI) cliActor ! StartListening
   }
 
 }
