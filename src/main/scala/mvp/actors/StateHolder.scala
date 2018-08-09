@@ -49,7 +49,6 @@ class StateHolder extends Actor with StrictLogging {
       val signedHeader: Header =
         headerUnsigned
           .copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
-      println(Header.jsonEncoder(signedHeader))
       apply(signedHeader)
       apply(payload)
   }
@@ -115,23 +114,22 @@ object StateHolder {
   case class BlockchainAnswer(blockchain: Blockchain)
 
   case class HeadersAnswer(blockchain: Blockchain)
+}
 
-  case class LastInfo(blocks: Seq[Block], messages: Seq[UserMessage])
+case class LastInfo(blocks: Seq[Block], messages: Seq[UserMessage])
 
-  object LastInfo {
+object LastInfo {
 
-    implicit val jsonDecoder: Decoder[LastInfo] = (c: HCursor) => for {
-      blocks <- c.downField("blocks").as[Seq[Block]]
-      messages <- c.downField("proof").as[Seq[UserMessage]]
-    } yield LastInfo(
-      blocks,
-      messages
-    )
+  implicit val jsonDecoder: Decoder[LastInfo] = (c: HCursor) => for {
+    blocks <- c.downField("blocks").as[Seq[Block]]
+    messages <- c.downField("proof").as[Seq[UserMessage]]
+  } yield LastInfo(
+    blocks,
+    messages
+  )
 
-    implicit val jsonEncoder: Encoder[LastInfo] = (b: LastInfo) => Map(
-      "blocks" -> b.blocks.map(_.asJson).asJson,
-      "messages" -> b.messages.map(_.asJson).asJson
-    ).asJson
-  }
-
+  implicit val jsonEncoder: Encoder[LastInfo] = (b: LastInfo) => Map(
+    "blocks" -> b.blocks.map(_.asJson).asJson,
+    "messages" -> b.messages.map(_.asJson).asJson
+  ).asJson
 }

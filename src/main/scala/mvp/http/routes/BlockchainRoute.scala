@@ -8,7 +8,9 @@ import akka.pattern.ask
 import akka.util.Timeout
 import io.circe.Json
 import io.circe.syntax._
-import mvp.actors.StateHolder.{GetLastInfo, LastInfo}
+import mvp.actors.LastInfo
+import mvp.actors.StateHolder.GetLastInfo
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 

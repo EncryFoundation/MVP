@@ -10,7 +10,7 @@ import akka.util.ByteString
 import mvp.MVP.{materializer, settings, system}
 import mvp.actors.Messages.{Heartbeat, Start}
 import io.circe.parser.decode
-import mvp.actors.StateHolder.{Headers, LastInfo, Message, Payloads}
+import mvp.actors.StateHolder.{Headers, Message, Payloads}
 import mvp.http.HttpServer
 
 import scala.concurrent.duration._
@@ -21,6 +21,7 @@ import mvp.cli.{ConsoleActor, Response}
 import mvp.stats.InfluxActor
 import mvp.stats.InfluxActor._
 import mvp.cli.ConsoleActor._
+import mvp.modifiers.blockchain.Header
 import mvp.stats.InfluxActor
 
 import scala.concurrent.Future
@@ -37,7 +38,7 @@ class Starter extends Actor with StrictLogging {
       bornKids()
     case Start if !settings.testMode => logger.info("real life baby on starter")
     case Heartbeat =>
-      logger.info("heartbeat pong")
+      println("heartbeat pong")
       Http().singleRequest(HttpRequest(
         method = HttpMethods.GET,
         uri = "/blockchain/lastInfo"
@@ -45,8 +46,12 @@ class Starter extends Actor with StrictLogging {
         .flatMap(_.entity.dataBytes.runFold(ByteString.empty)(_ ++ _))
         .map(_.utf8String)
         .map(decode[LastInfo])
-        .flatMap(_.fold(Future.failed, Future.successful))
+        .flatMap(str => {
+          println(str)
+          str.fold(Future.failed, Future.successful)
+        })
         .onComplete(_.map { lastInfo =>
+          println(s"Get header: ${Header.jsonEncoder(lastInfo.blocks.head.header)}")
           context.system.actorSelection("user/stateHolder") ! Headers(lastInfo.blocks.map(_.header))
           context.system.actorSelection("user/stateHolder") ! Payloads(lastInfo.blocks.map(_.payload))
           lastInfo.messages.foreach(message =>
