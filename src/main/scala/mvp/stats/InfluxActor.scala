@@ -14,7 +14,7 @@ class InfluxActor extends Actor with StrictLogging {
   influxDB.setRetentionPolicy("autogen")
 
   override def preStart(): Unit =
-    influxDB.write(8089, s"""nodeStartTime value="${settings.mvpSettings.nodeName}"""")
+    influxDB.write(8089, s"""nodestarttime value="${settings.mvpSettings.nodeName}"""")
 
   override def postStop(): Unit = {
     influxDB.close()
@@ -27,7 +27,7 @@ class InfluxActor extends Actor with StrictLogging {
   }
 
   override def receive: Receive = {
-    case CurrentBlockHeight() => println(influxDB.ping())
+    case CurrentBlockHeight() =>
   }
 }
 
