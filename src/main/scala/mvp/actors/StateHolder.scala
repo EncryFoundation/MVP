@@ -41,7 +41,8 @@ class StateHolder extends Actor {
   def validate(modifier: Modifier): Boolean = modifier match {
     //TODO: Add semantic validation check
     case header: Header =>
-      blockChain.getHeaderAtHeight(header.height - 1).exists(prevHeader => header.previousBlockHash sameElements prevHeader.id)
+      blockChain.getHeaderAtHeight(header.height - 1).exists(prevHeader => header.previousBlockHash sameElements prevHeader.id) ||
+      header.height == 0
     case payload: Payload =>
       payload.transactions.forall(validate)
     case transaction: Transaction =>

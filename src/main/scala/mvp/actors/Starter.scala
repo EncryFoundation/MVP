@@ -5,19 +5,17 @@ import akka.actor.{Actor, ActorRef, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.headers.Host
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
-import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.util.ByteString
-import mvp.MVP.{materializer, settings, system}
+import mvp.MVP.{materializer, settings, stateHolder, system}
 import mvp.actors.Messages.{Heartbeat, Start}
 import mvp.modifiers.blockchain.Block
 import io.circe.parser.decode
+import mvp.actors.StateHolder.{Headers, Payloads}
 
-import scala.util.{Failure, Success}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-//import scala.util.{Failure, Success}
 
 class Starter extends Actor with StrictLogging {
 
@@ -40,7 +38,10 @@ class Starter extends Actor with StrictLogging {
         .map(_.utf8String)
         .map(decode[Block])
         .flatMap(_.fold(Future.failed, Future.successful))
-        .onComplete(block => println(s"Block: ${block.get}"))
+        .onComplete(_.map { block =>
+          stateHolder ! Headers(Seq(block.header))
+          stateHolder ! Payloads(Seq(block.payload))
+        })
     case _ =>
   }
 
