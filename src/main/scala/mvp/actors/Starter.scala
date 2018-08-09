@@ -2,15 +2,21 @@ package mvp.actors
 
 import com.typesafe.scalalogging.StrictLogging
 import akka.actor.{Actor, ActorRef, Props}
-import mvp.MVP.{materializer, settings}
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.headers.Host
+import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
+import akka.util.ByteString
+import mvp.MVP.{materializer, settings, system}
 import mvp.actors.Messages.{Heartbeat, Start}
-import mvp.utils.{Data, HttpServer}
+import mvp.modifiers.blockchain.Block
+import io.circe.parser.decode
+import mvp.actors.StateHolder.{Headers, Payloads}
+import mvp.http.HttpServer
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Failure, Success}
 import mvp.stats.InfluxActor
-import mvp.stats.InfluxActor._
+import scala.concurrent.Future
 
 class Starter extends Actor with StrictLogging {
 
@@ -25,14 +31,18 @@ class Starter extends Actor with StrictLogging {
     case Start if !settings.testMode => logger.info("real life baby on starter")
     case Heartbeat =>
       logger.info("heartbeat pong")
-      if (settings.mvpSettings.sendStat) context.actorSelection("/user/starter/influxActor") ! CurrentBlockHeight()
-      HttpServer.request().onComplete {
-        case Success(res) =>
-          val result: String = res.entity.toStrict(1 second)(materializer).toString
-          def parse(data: String): Data = Data(List.empty, List.empty, List.empty) //TODO
-        val parsedResult: Data = parse(result)
-        case Failure(_) =>
-      }
+      Http().singleRequest(HttpRequest(
+        method = HttpMethods.GET,
+        uri = "/blockchain/lastBlock"
+      ).withEffectiveUri(securedConnection = false, Host(settings.otherNodes.head.host,settings.otherNodes.head.port)))
+        .flatMap(_.entity.dataBytes.runFold(ByteString.empty)(_ ++ _))
+        .map(_.utf8String)
+        .map(decode[Block])
+        .flatMap(_.fold(Future.failed, Future.successful))
+        .onComplete(_.map { block =>
+          context.system.actorSelection("user/stateHolder") ! Headers(Seq(block.header))
+          context.system.actorSelection("user/stateHolder") ! Payloads(Seq(block.payload))
+        })
     case _ =>
   }
 
@@ -41,9 +51,11 @@ class Starter extends Actor with StrictLogging {
   def bornKids(): Unit = {
     val networker: ActorRef =
       context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
+    system.actorOf(Props[StateHolder], "stateHolder")
+    HttpServer.start
     networker ! Start
     context.actorOf(Props[Zombie].withDispatcher("common-dispatcher"), "zombie")
-    if (settings.mvpSettings.sendStat) context.actorOf(Props[InfluxActor].withDispatcher("common-dispatcher"), "influxActor")
+    if (settings.mvpSettings.sendStat)
+      context.actorOf(Props[InfluxActor].withDispatcher("common-dispatcher"), "influxActor")
   }
-
 }

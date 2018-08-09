@@ -13,7 +13,9 @@ object Generator {
 
   val iterCount: Int = 10
 
-  def generateMessageTx(privateKey: PrivateKey25519, previousMessage: Option[MessageInfo], outputId: Option[Array[Byte]]): Transaction = {
+  def generateMessageTx(privateKey: PrivateKey25519,
+                        previousMessage: Option[MessageInfo],
+                        outputId: Option[Array[Byte]]): Transaction = {
 
     val messageInfo: MessageInfo = MessageInfo(
       "Hello, world!".getBytes,
@@ -23,7 +25,9 @@ object Generator {
     val signature: Signature25519 = Signature25519(Curve25519.sign(privateKey.privKeyBytes, messageInfo.messageToSign))
 
     //first field
-    val proof: Array[Byte] = previousMessage.map(proverGenerator(_, iterCount - 1, privateKey.privKeyBytes)).getOrElse(Array.emptyByteArray)
+    val proof: Array[Byte] = previousMessage
+      .map(proverGenerator(_, iterCount - 1, privateKey.privKeyBytes))
+      .getOrElse(Array.emptyByteArray)
     //second field
     val bundle: Array[Byte] = proverGenerator(messageInfo, iterCount, privateKey.privKeyBytes)
     Transaction(
@@ -42,10 +46,8 @@ object Generator {
     )
   }
 
-  def proverGenerator(messageInfo: MessageInfo, iterCount: Int, salt: Array[Byte]): Array[Byte] = {
+  def proverGenerator(messageInfo: MessageInfo, iterCount: Int, salt: Array[Byte]): Array[Byte] =
     (0 to iterCount).foldLeft(salt) {
       case (prevHash, i) => Sha256RipeMD160(prevHash ++ messageInfo.messageToSign)
     }
-  }
-
 }
