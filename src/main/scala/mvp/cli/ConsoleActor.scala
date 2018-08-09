@@ -12,21 +12,21 @@ import scorex.util.encode.Base58
 class ConsoleActor extends Actor {
 
   override def receive: Receive = {
-    //    case Response("app help") => showHelp
-    //    case Response("node shutdown") => nodeShutdown()
+    case Response("app help") => showHelp
+    case Response("node shutdown") => nodeShutdown()
     case Response("blockchain height") => system.actorSelection("/user/stateHolder") ! BlockchainRequest
     case Response("headers height") => system.actorSelection("/user/stateHolder") ! HeadersRequest
     case Response("send my name") => system.actorSelection("/user/stateHolder") ! SendMyName
     case BlockchainAnswer(blockchain) => showCurrentBlockchainHight(blockchain)
     case HeadersAnswer(blockchain) => showCurrentHeadersHight(blockchain)
     case Response("send message") => println("Введите текст и outputID")
-//    case Response(string: String) =>
-//      val words: Array[String] = string.split('@')
-//      if (words.head == "out") {
-//        val outputID = if (words.length < 2) None else Some(Base58.decode(words.last).getOrElse(Array.emptyByteArray))
-//        system.actorSelection("/user/stateHolder") !
-//          UserMessageFromCLI(words., outputID)
-//      }
+    case Response(string: String) =>
+      val words: Array[String] = string.split(' ')
+      if (words.head == "sendTx") {
+        val outputID = if (words.length < 2) None else Some(Base58.decode(words.last).getOrElse(Array.emptyByteArray))
+        system.actorSelection("/user/stateHolder") !
+          UserMessageFromCLI(words.dropRight(1), outputID)
+      }
   }
 }
 
