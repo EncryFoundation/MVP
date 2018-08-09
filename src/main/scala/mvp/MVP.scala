@@ -19,4 +19,6 @@ object MVP extends App {
   system.actorSelection("/user/starter") ! Start
 
   HttpServer.start()
+
+  def forceStopApplication(code: Int = 0): Nothing = sys.exit(code)
 }
