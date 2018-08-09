@@ -6,11 +6,12 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.headers.Host
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.util.ByteString
-import mvp.MVP.{materializer, settings, stateHolder, system}
+import mvp.MVP.{materializer, settings, system}
 import mvp.actors.Messages.{Heartbeat, Start}
 import mvp.modifiers.blockchain.Block
 import io.circe.parser.decode
 import mvp.actors.StateHolder.{Headers, Payloads}
+import mvp.http.HttpServer
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -39,8 +40,8 @@ class Starter extends Actor with StrictLogging {
         .map(decode[Block])
         .flatMap(_.fold(Future.failed, Future.successful))
         .onComplete(_.map { block =>
-          stateHolder ! Headers(Seq(block.header))
-          stateHolder ! Payloads(Seq(block.payload))
+          context.system.actorSelection("user/stateHolder") ! Headers(Seq(block.header))
+          context.system.actorSelection("user/stateHolder") ! Payloads(Seq(block.payload))
         })
     case _ =>
   }
@@ -50,9 +51,11 @@ class Starter extends Actor with StrictLogging {
   def bornKids(): Unit = {
     val networker: ActorRef =
       context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
+    val stateHolder: ActorRef = system.actorOf(Props[StateHolder], "stateHolder")
+    HttpServer.start(stateHolder)
     networker ! Start
     context.actorOf(Props[Zombie].withDispatcher("common-dispatcher"), "zombie")
-    if (settings.mvpSettings.sendStat) context.actorOf(Props[InfluxActor].withDispatcher("common-dispatcher"), "influxActor")
+    if (settings.mvpSettings.sendStat)
+      context.actorOf(Props[InfluxActor].withDispatcher("common-dispatcher"), "influxActor")
   }
-
 }

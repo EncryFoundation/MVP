@@ -32,7 +32,8 @@ class StateHolder extends Actor {
         payload.id
       )
       val signedHeader: Header =
-        headerUnsigned.copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
+        headerUnsigned
+          .copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
       self ! signedHeader
       self ! Payload
   }
@@ -40,12 +41,15 @@ class StateHolder extends Actor {
   def validate(modifier: Modifier): Boolean = modifier match {
     //TODO: Add semantic validation check
     case header: Header =>
-      blockChain.getHeaderAtHeight(header.height - 1).exists(prevHeader => header.previousBlockHash sameElements prevHeader.id) ||
-      header.height == 0
+      blockChain.getHeaderAtHeight(header.height - 1)
+        .exists(prevHeader => header.previousBlockHash sameElements prevHeader.id) || header.height == 0
     case payload: Payload =>
       payload.transactions.forall(validate)
     case transaction: Transaction =>
-      transaction.inputs.forall(input => state.state.get(input.useOutputId).exists(outputToUnlock => outputToUnlock.unlock(input.proof)))
+      transaction
+        .inputs
+        .forall(input => state.state.get(input.useOutputId)
+          .exists(outputToUnlock => outputToUnlock.unlock(input.proof)))
   }
 
   override def receive: Receive = {

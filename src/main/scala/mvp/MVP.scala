@@ -18,11 +18,7 @@ object MVP extends App {
   implicit val context: ExecutionContextExecutor = system.dispatcher
 
   val settings: Settings = Settings.load
-  val stateHolder: ActorRef = system.actorOf(Props[StateHolder], "stateHolder")
+
   system.actorOf(Props[Starter], "starter")
   system.actorSelection("/user/starter") ! Start
-
-  val route : Route = BlockchainRoute(stateHolder).route
-
-  Http().bindAndHandle(route, settings.thisNode.host, settings.thisNode.port)
 }
