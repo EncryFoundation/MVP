@@ -28,15 +28,15 @@ object Header {
   implicit val jsonDecoder: Decoder[Header] = (c: HCursor) => for {
     timestamp <- c.downField("timestamp").as[Long]
     height <- c.downField("height").as[Int]
-    previousBlockHash <- c.downField("previousBlockHash").as[Array[Byte]]
-    minerSignature <- c.downField("minerSignature").as[Array[Byte]]
-    merkleTreeRoot <- c.downField("merkleTreeRoot").as[Array[Byte]]
+    previousBlockHash <- c.downField("previousBlockHash").as[String]
+    minerSignature <- c.downField("minerSignature").as[String]
+    merkleTreeRoot <- c.downField("merkleTreeRoot").as[String]
   } yield Header(
     timestamp,
     height,
-    previousBlockHash,
-    minerSignature,
-    merkleTreeRoot
+    Base16.decode(previousBlockHash).get,
+    Base16.decode(minerSignature).get,
+    Base16.decode(merkleTreeRoot).get
   )
 
   implicit val jsonEncoder: Encoder[Header] = (b: Header) => Map(
