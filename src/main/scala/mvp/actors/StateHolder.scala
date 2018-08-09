@@ -31,7 +31,8 @@ class StateHolder extends Actor {
         Array.emptyByteArray,
         payload.id
       )
-      val signedHeader: Header = headerUnsigned.copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
+      val signedHeader: Header =
+        headerUnsigned.copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
       self ! signedHeader
       self ! Payload
   }

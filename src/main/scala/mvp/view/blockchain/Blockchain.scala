@@ -12,7 +12,11 @@ case class Blockchain(headers: Seq[Header] = Seq.empty, blocks: Seq[Block] = Seq
 
   val lastBlock: Option[Block] = blocks.lastOption
 
-  def addPayload(payload: Payload): Blockchain = Blockchain(headers, headers.find(_.merkleTreeRoot sameElements payload.id).map(header => blocks :+ Block(header, payload)).getOrElse(blocks))
+  def addPayload(payload: Payload): Blockchain =
+    Blockchain(
+      headers,
+      headers.find(_.merkleTreeRoot sameElements payload.id).map(header => blocks :+ Block(header, payload)).getOrElse(blocks)
+    )
 
   def addHeader(headerToAdd: Header): Blockchain = Blockchain(headers :+ headerToAdd, blocks)
 
