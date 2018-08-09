@@ -1,7 +1,8 @@
 package mvp.actors
 
 import akka.actor.Actor
-import mvp.actors.StateHolder.{GetLastBlock, Headers, Payloads, Transactions}
+import mvp.actors.StateHolder._
+import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest}
 import mvp.local.Keys
 import mvp.modifiers.Modifier
 import mvp.modifiers.blockchain.{Header, Payload}
@@ -57,6 +58,8 @@ class StateHolder extends Actor {
     case Payloads(payloads: Seq[Payload]) => payloads.filter(validate).foreach(apply)
     case Transactions(transactions: Seq[Transaction]) => transactions.filter(validate).foreach(apply)
     case GetLastBlock => sender() ! blockChain.blocks.last
+    case BlockchainRequest => sender() ! BlockchainAnswer(blockChain)
+    case HeadersRequest => sender() ! HeadersAnswer(blockChain)
   }
 }
 
@@ -69,4 +72,8 @@ object StateHolder {
   case class Payloads(payloads: Seq[Payload])
 
   case class Transactions(transaction: Seq[Transaction])
+
+  case class BlockchainAnswer(blockchain: Blockchain)
+
+  case class HeadersAnswer(blockchain: Blockchain)
 }

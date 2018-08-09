@@ -5,7 +5,7 @@ import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import mvp.actors.Messages.Start
 import mvp.actors.Starter
-import mvp.utils.{HttpServer, Settings}
+import mvp.utils.{Settings}
 import mvp.actors.{Starter, StateHolder}
 import mvp.utils.Settings
 import akka.http.scaladsl.server.{Directives, Route}

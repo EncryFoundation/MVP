@@ -1,5 +1,7 @@
 package mvp.cli
 
+import mvp.view.blockchain.Blockchain
+
 object Commands {
 
   def showHelp: Unit =
@@ -14,4 +16,11 @@ app           help             None           Show all supported commands
       """)
 
   def nodeShutdown(code: Int = 0): Nothing = sys.exit(code)
+
+  def showCurrentBlockchainHight(blockchain: Blockchain): Unit =
+    println(blockchain.blockchainHeight)
+
+  def showCurrentHeadersHight(blockchain: Blockchain): Unit =
+    println(blockchain.headersHeight)
+
 }
