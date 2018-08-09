@@ -11,6 +11,13 @@ resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repos
 val akkaVersion = "2.5.13"
 val akkaHttpVersion = "10.0.9"
 
+val testingDependencies = Seq(
+  "com.typesafe.akka" %% "akka-testkit" % "2.4.+" % "test",
+  "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test",
+  "org.scalatest" %% "scalatest" % "3.0.3" % "test",
+  "org.scalacheck" %% "scalacheck" % "1.13.+" % "test",
+)
+
 val loggingDependencies = Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.+",
   "ch.qos.logback" % "logback-classic" % "1.+",
@@ -24,8 +31,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-persistence" % akkaVersion,
   "org.bouncycastle" % "bcprov-jdk15on" % "1.58",
   "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8",
+  "org.encry" %% "encry-common" % "0.1.2",
   "org.iq80.leveldb" % "leveldb" % "0.7",
-  "com.google.guava" % "guava" % "21.+",
   "javax.xml.bind" % "jaxb-api" % "2.+",
   "org.scorexfoundation" %% "scrypto" % "2.1.1",
   "com.iheart" %% "ficus" % "1.4.3",
