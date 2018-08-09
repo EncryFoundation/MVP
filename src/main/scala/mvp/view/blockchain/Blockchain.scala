@@ -12,7 +12,13 @@ case class Blockchain(headers: Seq[Header] = Seq.empty, blocks: Seq[Block] = Seq
 
   val lastBlock: Option[Block] = blocks.lastOption
 
-  def addPayload(payload: Payload): Blockchain = Blockchain(headers, headers.find(_.merkleTreeRoot sameElements payload.id).map(header => blocks :+ Block(header, payload)).getOrElse(blocks))
+  def addPayload(payload: Payload): Blockchain =
+    Blockchain(
+      headers,
+      headers.find(_.merkleTreeRoot sameElements payload.id)
+        .map(header => blocks :+ Block(header, payload))
+        .getOrElse(blocks)
+    )
 
   def addHeader(headerToAdd: Header): Blockchain = Blockchain(headers :+ headerToAdd, blocks)
 
@@ -23,8 +29,12 @@ object Blockchain {
 
   val genesisHeight: Int = -1
 
-  val emptyBlockchain: Blockchain = Blockchain()
+  val genesisBlockchain: Blockchain = {
+    val genesisBlock: Block =
+      Block(Header(1L, 0, Array.emptyByteArray, Array.emptyByteArray, Array.emptyByteArray), Payload(Seq.empty))
+    Blockchain(Seq(genesisBlock.header), Seq(genesisBlock))
+  }
 
   //TODO: Recover from levelDb
-  def recoverBlockchain: Blockchain = emptyBlockchain
+  def recoverBlockchain: Blockchain = genesisBlockchain
 }
