@@ -8,14 +8,14 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.util.ByteString
 import mvp.MVP.{materializer, settings, system}
 import mvp.actors.Messages.{Heartbeat, Start}
-import mvp.modifiers.blockchain.Block
 import io.circe.parser.decode
-import mvp.actors.StateHolder.{Headers, Payloads}
+import mvp.actors.StateHolder.{Headers, LastInfo, Payloads}
 import mvp.http.HttpServer
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
 import mvp.stats.InfluxActor
+
 import scala.concurrent.Future
 
 class Starter extends Actor with StrictLogging {
@@ -33,15 +33,15 @@ class Starter extends Actor with StrictLogging {
       logger.info("heartbeat pong")
       Http().singleRequest(HttpRequest(
         method = HttpMethods.GET,
-        uri = "/blockchain/lastBlock"
+        uri = "/blockchain/lastInfo"
       ).withEffectiveUri(securedConnection = false, Host(settings.otherNodes.head.host,settings.otherNodes.head.port)))
         .flatMap(_.entity.dataBytes.runFold(ByteString.empty)(_ ++ _))
         .map(_.utf8String)
-        .map(decode[Block])
+        .map(decode[LastInfo])
         .flatMap(_.fold(Future.failed, Future.successful))
-        .onComplete(_.map { block =>
-          context.system.actorSelection("user/stateHolder") ! Headers(Seq(block.header))
-          context.system.actorSelection("user/stateHolder") ! Payloads(Seq(block.payload))
+        .onComplete(_.map { lastInfo =>
+          context.system.actorSelection("user/stateHolder") ! Headers(lastInfo.blocks.map(_.header))
+          context.system.actorSelection("user/stateHolder") ! Payloads(lastInfo.blocks.map(_.payload))
         })
     case _ =>
   }

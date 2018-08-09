@@ -15,10 +15,11 @@ object Generator {
 
   def generateMessageTx(privateKey: PrivateKey25519,
                         previousMessage: Option[MessageInfo],
-                        outputId: Option[Array[Byte]]): Transaction = {
+                        outputId: Option[Array[Byte]],
+                        message: String = "Hello, world!"): Transaction = {
 
     val messageInfo: MessageInfo = MessageInfo(
-      "Hello, world!".getBytes,
+      message.getBytes,
       Longs.toByteArray(System.currentTimeMillis()),
       privateKey.publicKeyBytes
     )
