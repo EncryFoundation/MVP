@@ -2,11 +2,12 @@ package mvp.actors
 
 import akka.actor.Actor
 import mvp.actors.StateHolder._
-import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest}
+import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, SendMyName, UserMessageFromCLI}
 import mvp.local.Keys
 import com.typesafe.scalalogging.StrictLogging
 import io.circe.{Decoder, Encoder, HCursor}
 import io.circe.syntax._
+import mvp.MVP.settings
 import mvp.actors.StateHolder._
 import mvp.local.messageHolder.UserMessage
 import mvp.local.messageTransaction.MessageInfo
@@ -25,6 +26,7 @@ class StateHolder extends Actor with StrictLogging {
   var state: State = State.recoverState
   val keys: Keys = Keys.recoverKeys
   var messagesHolder: Seq[UserMessage] = Seq.empty
+  //keys.keys.head.publicKeyBytes
 
   def apply(modifier: Modifier): Unit = modifier match {
     case header: Header =>
@@ -47,22 +49,23 @@ class StateHolder extends Actor with StrictLogging {
       val signedHeader: Header =
         headerUnsigned
           .copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
-      self ! signedHeader
-      self ! Payload
+      println(Header.jsonEncoder(signedHeader))
+      apply(signedHeader)
+      apply(payload)
   }
 
   def addMessage(message: UserMessage, previousMessage: Option[MessageInfo], outputId: Option[Array[Byte]]): Unit =
     if (!messagesHolder.contains(message)) {
       logger.info(s"Get message: ${UserMessage.jsonEncoder(message)}")
       messagesHolder = messagesHolder :+ message
-      apply(Generator.generateMessageTx( keys.keys.head, previousMessage, outputId, message.message))
+      apply(Generator.generateMessageTx(keys.keys.head, previousMessage, outputId, message.message))
     }
 
   def validate(modifier: Modifier): Boolean = modifier match {
     //TODO: Add semantic validation check
     case header: Header =>
-       header.height == 0 || (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
-         .exists(prevHeader => header.previousBlockHash sameElements prevHeader.id))
+      header.height == 0 || (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
+        .exists(prevHeader => header.previousBlockHash sameElements prevHeader.id))
     case payload: Payload =>
       payload.transactions.forall(validate)
     case transaction: Transaction =>
@@ -76,7 +79,7 @@ class StateHolder extends Actor with StrictLogging {
     case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(apply)
     case Message(msg: UserMessage) =>
       val previousMessageInfo: Option[MessageInfo] =
-        msg.prevOutputId.flatMap( outputId => state
+        msg.prevOutputId.flatMap(outputId => state
           .state
           .get(outputId)
           .map(_.asInstanceOf[MessageOutput].toMessageInfo(msg.message)))
@@ -87,6 +90,11 @@ class StateHolder extends Actor with StrictLogging {
     case GetLastInfo => sender() ! LastInfo(blockChain.blocks, messagesHolder)
     case BlockchainRequest => sender() ! BlockchainAnswer(blockChain)
     case HeadersRequest => sender() ! HeadersAnswer(blockChain)
+    case SendMyName =>
+      self ! Message(UserMessage(settings.mvpSettings.nodeName, keys.keys.head.publicKeyBytes, None))
+    case UserMessageFromCLI(message, outputId) =>
+      println(message.mkString, keys.keys.head.publicKeyBytes, outputId)
+      UserMessage(message.mkString, keys.keys.head.publicKeyBytes, outputId)
   }
 }
 
@@ -125,4 +133,5 @@ object StateHolder {
       "messages" -> b.messages.map(_.asJson).asJson
     ).asJson
   }
+
 }
