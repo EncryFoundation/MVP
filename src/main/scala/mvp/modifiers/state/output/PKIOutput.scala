@@ -21,6 +21,8 @@ case class PKIOutput(bundle: Array[Byte],
 
 object PKIOutput {
 
+  val typeId: Byte = 1: Byte
+
   implicit val jsonDecoder: Decoder[PKIOutput] = (c: HCursor) => for {
     bundle <- c.downField("bundle").as[Array[Byte]]
     check <- c.downField("check").as[Array[Byte]]
@@ -38,6 +40,7 @@ object PKIOutput {
   )
 
   implicit val jsonEncoder: Encoder[PKIOutput] = (b: PKIOutput) => Map(
+    "type" -> typeId.asJson,
     "bundle" -> Base58.encode(b.bundle).asJson,
     "check" -> Base58.encode(b.check).asJson,
     "publicKeyHash" -> Base58.encode(b.publicKeyHash).asJson,

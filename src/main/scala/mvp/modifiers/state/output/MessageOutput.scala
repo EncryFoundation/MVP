@@ -4,6 +4,7 @@ import io.circe.{Decoder, Encoder, HCursor}
 import mvp.utils.Crypto.Sha256RipeMD160
 import scorex.crypto.encode.Base58
 import io.circe.syntax._
+import mvp.modifiers.state.output.PKIOutput.typeId
 
 case class MessageOutput(bundle: Array[Byte],
                          check: Array[Byte],
@@ -22,6 +23,8 @@ case class MessageOutput(bundle: Array[Byte],
 
 object MessageOutput {
 
+  val typeId: Byte = 1: Byte
+
   implicit val jsonDecoder: Decoder[MessageOutput] = (c: HCursor) => for {
     bundle <- c.downField("bundle").as[Array[Byte]]
     check <- c.downField("check").as[Array[Byte]]
@@ -39,6 +42,7 @@ object MessageOutput {
   )
 
   implicit val jsonEncoder: Encoder[MessageOutput] = (b: MessageOutput) => Map(
+    "type" -> typeId.asJson,
     "bundle" -> Base58.encode(b.bundle).asJson,
     "check" -> Base58.encode(b.check).asJson,
     "messageHash" -> Base58.encode(b.messageHash).asJson,

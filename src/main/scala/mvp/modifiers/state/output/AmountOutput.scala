@@ -16,6 +16,8 @@ case class AmountOutput(publicKey: Array[Byte],
 
 object AmountOutput {
 
+  val typeId: Byte = 0: Byte
+
   implicit val jsonDecoder: Decoder[AmountOutput] = (c: HCursor) => for {
     publicKey <- c.downField("publicKey").as[Array[Byte]]
     amount <- c.downField("amount").as[Long]
@@ -25,6 +27,7 @@ object AmountOutput {
   )
 
   implicit val jsonEncoder: Encoder[AmountOutput] = (b: AmountOutput) => Map(
+    "type" -> typeId.asJson,
     "publicKey" -> Base58.encode(b.publicKey).asJson,
     "amount" -> b.amount.asJson
   ).asJson
