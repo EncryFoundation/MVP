@@ -1,6 +1,6 @@
 package mvp.http
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, ActorSelection}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
@@ -14,8 +14,8 @@ object HttpServer {
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val context: ExecutionContextExecutor = system.dispatcher
 
-  def start(stateHolder: ActorRef): Unit = {
-    val route : Route = BlockchainRoute(stateHolder).route
+  def start: Unit = {
+    val route : Route = BlockchainRoute().route
     Http().bindAndHandle(route, settings.thisNode.host, settings.thisNode.port)
   }
 }
