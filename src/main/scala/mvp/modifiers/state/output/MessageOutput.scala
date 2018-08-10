@@ -13,7 +13,7 @@ case class MessageOutput(bundle: Array[Byte],
                          publicKey: Array[Byte],
                          signature: Array[Byte]) extends Output {
 
-  def toMessageInfo(msg: String): MessageInfo = MessageInfo(msg.getBytes, metadata, publicKey)
+  def toProofGenerator: MessageInfo = MessageInfo(messageHash, metadata, publicKey)
 
   override val id: Array[Byte] = Sha256RipeMD160(
     bundle ++ check ++ messageHash ++ metadata ++ publicKey ++ signature

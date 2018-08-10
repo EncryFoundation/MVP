@@ -46,10 +46,7 @@ class Starter extends Actor with StrictLogging {
         .flatMap(_.entity.dataBytes.runFold(ByteString.empty)(_ ++ _))
         .map(_.utf8String)
         .map(decode[LastInfo])
-        .flatMap(str => {
-          println(str)
-          str.fold(Future.failed, Future.successful)
-        })
+        .flatMap(_.fold(Future.failed, Future.successful))
         .onComplete(_.map { lastInfo =>
           context.system.actorSelection("user/stateHolder") ! Headers(lastInfo.blocks.map(_.header))
           context.system.actorSelection("user/stateHolder") ! Payloads(lastInfo.blocks.map(_.payload))

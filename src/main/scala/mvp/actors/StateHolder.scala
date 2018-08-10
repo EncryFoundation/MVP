@@ -19,6 +19,7 @@ import mvp.modifiers.state.output.MessageOutput
 import mvp.view.blockchain.Blockchain
 import mvp.view.state.State
 import scorex.crypto.signatures.Curve25519
+import scorex.util.encode.Base58
 
 class StateHolder extends Actor with StrictLogging {
 
@@ -49,7 +50,6 @@ class StateHolder extends Actor with StrictLogging {
       val signedHeader: Header =
         headerUnsigned
           .copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
-      println(Header.jsonEncoder(signedHeader))
       apply(signedHeader)
       apply(payload)
   }
@@ -58,7 +58,7 @@ class StateHolder extends Actor with StrictLogging {
     if (!messagesHolder.contains(message)) {
       logger.info(s"Get message: ${UserMessage.jsonEncoder(message)}")
       messagesHolder = messagesHolder :+ message
-      apply(Generator.generateMessageTx(keys.keys.head, previousMessage, outputId, message.message))
+      self ! Transactions(Seq(Generator.generateMessageTx(keys.keys.head, previousMessage, outputId, message.message)))
     }
 
   def validate(modifier: Modifier): Boolean = modifier match {
@@ -69,20 +69,25 @@ class StateHolder extends Actor with StrictLogging {
     case payload: Payload =>
       payload.transactions.forall(validate) && !blockChain.blocks.map(_.payload).contains(payload)
     case transaction: Transaction =>
+      //println(s"Going to validate: ${Transaction.jsonEncoder(transaction)}")
       transaction
         .inputs
-        .forall(input => state.state.get(input.useOutputId)
-          .exists(outputToUnlock => outputToUnlock.unlock(input.proof)))
+        .forall(input =>
+          state.state.get(Base58.encode(input.useOutputId))
+            .exists(outputToUnlock => outputToUnlock.unlock(input.proof))
+        )
   }
 
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(apply)
     case Message(msg: UserMessage) =>
       val previousMessageInfo: Option[MessageInfo] =
-        msg.prevOutputId.flatMap(outputId => state
-          .state
-          .get(outputId)
-          .map(_.asInstanceOf[MessageOutput].toMessageInfo(msg.message)))
+        msg.prevOutputId.flatMap(outputId =>
+          state
+            .state
+            .get(Base58.encode(outputId))
+            .map(_.asInstanceOf[MessageOutput].toProofGenerator)
+        )
       addMessage(msg, previousMessageInfo, msg.prevOutputId)
     case Payloads(payloads: Seq[Payload]) => payloads.filter(validate).foreach(apply)
     case Transactions(transactions: Seq[Transaction]) => transactions.filter(validate).foreach(apply)

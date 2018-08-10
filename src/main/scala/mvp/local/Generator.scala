@@ -8,6 +8,7 @@ import mvp.modifiers.state.output.MessageOutput
 import mvp.utils.Crypto.Sha256RipeMD160
 import org.encryfoundation.common.crypto.{PrivateKey25519, Signature25519}
 import scorex.crypto.signatures.Curve25519
+import scorex.util.encode.Base58
 
 object Generator {
 
@@ -27,7 +28,7 @@ object Generator {
 
     //first field
     val proof: Array[Byte] = previousMessage
-      .map(proverGenerator(_, iterCount - 1, privateKey.privKeyBytes))
+      .map(prevmsg => proverGenerator(prevmsg, iterCount - 1, privateKey.privKeyBytes))
       .getOrElse(Array.emptyByteArray)
     //second field
     val bundle: Array[Byte] = proverGenerator(messageInfo, iterCount, privateKey.privKeyBytes)
