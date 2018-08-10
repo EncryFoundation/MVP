@@ -24,19 +24,19 @@ object PKIOutput {
   val typeId: Byte = 1: Byte
 
   implicit val jsonDecoder: Decoder[PKIOutput] = (c: HCursor) => for {
-    bundle <- c.downField("bundle").as[Array[Byte]]
-    check <- c.downField("check").as[Array[Byte]]
-    publicKeyHash <- c.downField("publicKeyHash").as[Array[Byte]]
-    userData <- c.downField("userData").as[Array[Byte]]
-    publicKey <- c.downField("publicKey").as[Array[Byte]]
-    signature <- c.downField("signature").as[Array[Byte]]
+    bundle <- c.downField("bundle").as[String]
+    check <- c.downField("check").as[String]
+    publicKeyHash <- c.downField("publicKeyHash").as[String]
+    userData <- c.downField("userData").as[String]
+    publicKey <- c.downField("publicKey").as[String]
+    signature <- c.downField("signature").as[String]
   } yield PKIOutput(
-    bundle,
-    check,
-    publicKeyHash,
-    userData,
-    publicKey,
-    signature
+    Base58.decode(bundle).get,
+    Base58.decode(check).get,
+    Base58.decode(publicKeyHash).get,
+    Base58.decode(userData).get,
+    Base58.decode(publicKey).get,
+    Base58.decode(signature).get
   )
 
   implicit val jsonEncoder: Encoder[PKIOutput] = (b: PKIOutput) => Map(

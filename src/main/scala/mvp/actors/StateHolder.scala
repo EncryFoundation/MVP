@@ -49,6 +49,7 @@ class StateHolder extends Actor with StrictLogging {
       val signedHeader: Header =
         headerUnsigned
           .copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
+      println(Header.jsonEncoder(signedHeader))
       apply(signedHeader)
       apply(payload)
   }
@@ -63,10 +64,10 @@ class StateHolder extends Actor with StrictLogging {
   def validate(modifier: Modifier): Boolean = modifier match {
     //TODO: Add semantic validation check
     case header: Header =>
-      header.height == 0 || (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
-        .exists(prevHeader => header.previousBlockHash sameElements prevHeader.id))
+      (header.height == 0 || (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
+        .exists(prevHeader => header.previousBlockHash sameElements prevHeader.id))) && !blockChain.headers.contains(header)
     case payload: Payload =>
-      payload.transactions.forall(validate)
+      payload.transactions.forall(validate) && !blockChain.blocks.map(_.payload).contains(payload)
     case transaction: Transaction =>
       transaction
         .inputs
@@ -121,15 +122,15 @@ case class LastInfo(blocks: Seq[Block], messages: Seq[UserMessage])
 object LastInfo {
 
   implicit val jsonDecoder: Decoder[LastInfo] = (c: HCursor) => for {
-    blocks <- c.downField("blocks").as[Seq[Block]]
-    messages <- c.downField("proof").as[Seq[UserMessage]]
+    blocks <- c.downField( "blocks" ).as[Seq[Block]]
+    messages <- c.downField( "messages" ).as[Seq[UserMessage]]
   } yield LastInfo(
     blocks,
     messages
   )
 
   implicit val jsonEncoder: Encoder[LastInfo] = (b: LastInfo) => Map(
-    "blocks" -> b.blocks.map(_.asJson).asJson,
-    "messages" -> b.messages.map(_.asJson).asJson
+    "blocks" -> b.blocks.map( _.asJson ).asJson,
+    "messages" -> b.messages.map( _.asJson ).asJson
   ).asJson
 }

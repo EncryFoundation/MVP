@@ -25,22 +25,22 @@ case class MessageOutput(bundle: Array[Byte],
 
 object MessageOutput {
 
-  val typeId: Byte = 1: Byte
+  val typeId: Byte = 2: Byte
 
   implicit val jsonDecoder: Decoder[MessageOutput] = (c: HCursor) => for {
-    bundle <- c.downField("bundle").as[Array[Byte]]
-    check <- c.downField("check").as[Array[Byte]]
-    messageHash <- c.downField("messageHash").as[Array[Byte]]
-    metadata <- c.downField("metadata").as[Array[Byte]]
-    publicKey <- c.downField("publicKey").as[Array[Byte]]
-    signature <- c.downField("signature").as[Array[Byte]]
+    bundle <- c.downField("bundle").as[String]
+    check <- c.downField("check").as[String]
+    messageHash <- c.downField("messageHash").as[String]
+    metadata <- c.downField("metadata").as[String]
+    publicKey <- c.downField("publicKey").as[String]
+    signature <- c.downField("signature").as[String]
   } yield MessageOutput(
-    bundle,
-    check,
-    messageHash,
-    metadata,
-    publicKey,
-    signature
+    Base58.decode(bundle).get,
+    Base58.decode(check).get,
+    Base58.decode(messageHash).get,
+    Base58.decode(metadata).get,
+    Base58.decode(publicKey).get,
+    Base58.decode(signature).get
   )
 
   implicit val jsonEncoder: Encoder[MessageOutput] = (b: MessageOutput) => Map(
