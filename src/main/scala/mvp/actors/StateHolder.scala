@@ -93,8 +93,7 @@ class StateHolder extends Actor with StrictLogging {
     case SendMyName =>
       self ! Message(UserMessage(settings.mvpSettings.nodeName, keys.keys.head.publicKeyBytes, None))
     case UserMessageFromCLI(message, outputId) =>
-      println(message.mkString, keys.keys.head.publicKeyBytes, outputId)
-      UserMessage(message.mkString, keys.keys.head.publicKeyBytes, outputId)
+      self ! Message(UserMessage(message.mkString, keys.keys.head.publicKeyBytes, outputId))
   }
 }
 

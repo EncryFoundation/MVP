@@ -38,7 +38,7 @@ class Starter extends Actor with StrictLogging {
       bornKids()
     case Start if !settings.testMode => logger.info("real life baby on starter")
     case Heartbeat =>
-      println("heartbeat pong")
+      logger.info("heartbeat pong")
       Http().singleRequest(HttpRequest(
         method = HttpMethods.GET,
         uri = "/blockchain/lastInfo"
@@ -51,7 +51,6 @@ class Starter extends Actor with StrictLogging {
           str.fold(Future.failed, Future.successful)
         })
         .onComplete(_.map { lastInfo =>
-          println(s"Get header: ${Header.jsonEncoder(lastInfo.blocks.head.header)}")
           context.system.actorSelection("user/stateHolder") ! Headers(lastInfo.blocks.map(_.header))
           context.system.actorSelection("user/stateHolder") ! Payloads(lastInfo.blocks.map(_.payload))
           lastInfo.messages.foreach(message =>

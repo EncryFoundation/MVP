@@ -40,6 +40,7 @@ object PKIOutput {
   )
 
   implicit val jsonEncoder: Encoder[PKIOutput] = (b: PKIOutput) => Map(
+    "id" -> Base58.encode(b.id).asJson,
     "type" -> typeId.asJson,
     "bundle" -> Base58.encode(b.bundle).asJson,
     "check" -> Base58.encode(b.check).asJson,

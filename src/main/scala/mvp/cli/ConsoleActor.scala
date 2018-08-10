@@ -23,9 +23,11 @@ class ConsoleActor extends Actor {
     case Response(string: String) =>
       val words: Array[String] = string.split(' ')
       if (words.head == "sendTx") {
-        val outputID = if (words.length < 2) None else Some(Base58.decode(words.last).getOrElse(Array.emptyByteArray))
+        val (outputID, wordsToSend: Array[String]) =
+          if (words.length < 3) (None, words.tail)
+          else (Some(Base58.decode(words.last).getOrElse(Array.emptyByteArray)), words.tail.dropRight(1))
         system.actorSelection("/user/stateHolder") !
-          UserMessageFromCLI(words.dropRight(1), outputID)
+          UserMessageFromCLI(wordsToSend, outputID)
       }
   }
 }
