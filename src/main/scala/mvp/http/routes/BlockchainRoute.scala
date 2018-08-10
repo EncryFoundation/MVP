@@ -10,7 +10,6 @@ import io.circe.Json
 import io.circe.syntax._
 import mvp.actors.LastInfo
 import mvp.actors.StateHolder.GetLastInfo
-
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 

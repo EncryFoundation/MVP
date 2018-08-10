@@ -1,12 +1,10 @@
 package mvp.http
 
-import akka.actor.{ActorRef, ActorSelection}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
 import mvp.MVP.{settings, system}
 import mvp.http.routes.BlockchainRoute
-
 import scala.concurrent.ExecutionContextExecutor
 
 object HttpServer {

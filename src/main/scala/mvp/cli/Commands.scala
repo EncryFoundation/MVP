@@ -13,6 +13,9 @@ Group name    Command          Argument       Meaning
 --------------------------------------------------------------------------------
 node          shutdown         None           Shutdown the node
 app           help             None           Show all supported commands
+blockchain    height           None           Show current blockchain height
+headers       height           None           Show current headers height
+sendTx        'message'        'key'          Send message
       """)
 
   def nodeShutdown(code: Int = 0): Nothing = sys.exit(code)

@@ -14,9 +14,9 @@ class ConsoleActor extends Actor {
   override def receive: Receive = {
     case Response("app help") => showHelp
     case Response("node shutdown") => nodeShutdown()
-    case Response("blockchain height") => system.actorSelection("/user/stateHolder") ! BlockchainRequest
-    case Response("headers height") => system.actorSelection("/user/stateHolder") ! HeadersRequest
-    case Response("send my name") => system.actorSelection("/user/stateHolder") ! SendMyName
+    case Response("blockchain height") => context.system.actorSelection("/user/stateHolder") ! BlockchainRequest
+    case Response("headers height") => context.system.actorSelection("/user/stateHolder") ! HeadersRequest
+    case Response("send my name") => context.system.actorSelection("/user/stateHolder") ! SendMyName
     case BlockchainAnswer(blockchain) => showCurrentBlockchainHight(blockchain)
     case HeadersAnswer(blockchain) => showCurrentHeadersHight(blockchain)
     case Response("send message") => println("Введите текст и outputID")
@@ -46,5 +46,4 @@ object ConsoleActor {
   case object HeadersRequest
 
   case class UserMessageFromCLI(array: Array[String], array1: Option[Array[Byte]])
-
 }
