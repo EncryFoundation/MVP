@@ -1,35 +1,30 @@
 package mvp.actors
 
-import com.typesafe.scalalogging.StrictLogging
 import akka.actor.{Actor, ActorRef, Props}
-import mvp.MVP.{context, materializer, settings}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.headers.Host
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.util.ByteString
+import com.typesafe.scalalogging.StrictLogging
+import io.circe.parser.decode
 import mvp.MVP.{materializer, settings, system}
 import mvp.actors.Messages.{Heartbeat, Start}
-import io.circe.parser.decode
-import mvp.actors.StateHolder.{Headers, Message, Payloads}
+import mvp.actors.StateHolder.{Headers, Payloads}
+import mvp.cli.ConsoleActor
+import mvp.cli.ConsoleActor._
 import mvp.http.HttpServer
-
+import mvp.local.messageHolder.UserMessage
+import mvp.modifiers.blockchain.Block
+import mvp.stats.InfluxActor
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Failure, Success}
-import mvp.cli.{ConsoleActor, Response}
-import mvp.stats.InfluxActor
-import mvp.stats.InfluxActor._
-import mvp.cli.ConsoleActor._
-import mvp.modifiers.blockchain.Header
-import mvp.stats.InfluxActor
-
-import scala.concurrent.Future
 
 class Starter extends Actor with StrictLogging {
 
   override def preStart(): Unit = {
-    context.system.scheduler.schedule(initialDelay = 10 seconds, interval = settings.heartbeat seconds)(self ! Heartbeat)
+    context.system.scheduler.schedule(initialDelay = 1 seconds, interval = settings.heartbeat seconds)(self ! Heartbeat)
   }
 
   override def receive: Receive = {
@@ -46,13 +41,12 @@ class Starter extends Actor with StrictLogging {
         .flatMap(_.entity.dataBytes.runFold(ByteString.empty)(_ ++ _))
         .map(_.utf8String)
         .map(decode[LastInfo])
-        .flatMap(_.fold(Future.failed, Future.successful))
+        .flatMap(res => res.fold(Future.failed, Future.successful))
         .onComplete(_.map { lastInfo =>
+          logger.info(s"Get blocks from remote: ${lastInfo.blocks.map(block => Block.jsonEncoder(block)).mkString("\n")}")
+          logger.info(s"Get messages from remote: ${lastInfo.messages.map(msg => UserMessage.jsonEncoder(msg)).mkString("\n")}")
           context.system.actorSelection("user/stateHolder") ! Headers(lastInfo.blocks.map(_.header))
           context.system.actorSelection("user/stateHolder") ! Payloads(lastInfo.blocks.map(_.payload))
-          lastInfo.messages.foreach(message =>
-            context.system.actorSelection("user/stateHolder") ! Message(message)
-          )
         })
     case _ =>
   }

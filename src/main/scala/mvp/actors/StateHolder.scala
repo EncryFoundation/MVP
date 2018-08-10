@@ -1,9 +1,7 @@
 package mvp.actors
 
 import akka.actor.Actor
-import mvp.actors.StateHolder._
 import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, SendMyName, UserMessageFromCLI}
-import mvp.local.Keys
 import com.typesafe.scalalogging.StrictLogging
 import io.circe.{Decoder, Encoder, HCursor}
 import io.circe.syntax._
@@ -19,7 +17,7 @@ import mvp.modifiers.state.output.MessageOutput
 import mvp.view.blockchain.Blockchain
 import mvp.view.state.State
 import scorex.crypto.signatures.Curve25519
-import scorex.util.encode.Base58
+import scorex.util.encode.{Base16, Base58}
 
 class StateHolder extends Actor with StrictLogging {
 
@@ -27,7 +25,6 @@ class StateHolder extends Actor with StrictLogging {
   var state: State = State.recoverState
   val keys: Keys = Keys.recoverKeys
   var messagesHolder: Seq[UserMessage] = Seq.empty
-  //keys.keys.head.publicKeyBytes
 
   def apply(modifier: Modifier): Unit = modifier match {
     case header: Header =>
@@ -65,9 +62,11 @@ class StateHolder extends Actor with StrictLogging {
     //TODO: Add semantic validation check
     case header: Header =>
       (header.height == 0 || (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
-        .exists(prevHeader => header.previousBlockHash sameElements prevHeader.id))) && !blockChain.headers.contains(header)
+        .exists(prevHeader => header.previousBlockHash sameElements prevHeader.id))) &&
+        !blockChain.headers.map(header => Base16.encode(header.id)).contains(Base16.encode(header.id))
     case payload: Payload =>
-      payload.transactions.forall(validate) && !blockChain.blocks.map(_.payload).contains(payload)
+      payload.transactions.forall(validate) &&
+        !blockChain.blocks.map(block => Base16.encode(block.payload.id)).contains(Base16.encode(payload.id))
     case transaction: Transaction =>
       //println(s"Going to validate: ${Transaction.jsonEncoder(transaction)}")
       transaction
@@ -81,14 +80,16 @@ class StateHolder extends Actor with StrictLogging {
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(apply)
     case Message(msg: UserMessage) =>
-      val previousMessageInfo: Option[MessageInfo] =
-        msg.prevOutputId.flatMap(outputId =>
-          state
-            .state
-            .get(Base58.encode(outputId))
-            .map(_.asInstanceOf[MessageOutput].toProofGenerator)
-        )
-      addMessage(msg, previousMessageInfo, msg.prevOutputId)
+      if (!messagesHolder.contains(msg)) {
+        val previousMessageInfo: Option[MessageInfo] =
+          msg.prevOutputId.flatMap( outputId =>
+            state
+              .state
+              .get( Base58.encode( outputId ) )
+              .map( _.asInstanceOf[MessageOutput].toProofGenerator )
+          )
+        addMessage( msg, previousMessageInfo, msg.prevOutputId )
+      }
     case Payloads(payloads: Seq[Payload]) => payloads.filter(validate).foreach(apply)
     case Transactions(transactions: Seq[Transaction]) => transactions.filter(validate).foreach(apply)
     case GetLastBlock => sender() ! blockChain.blocks.last

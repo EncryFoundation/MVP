@@ -15,11 +15,11 @@ case class Input(useOutputId: Array[Byte],
 object Input {
 
   implicit val jsonDecoder: Decoder[Input] = (c: HCursor) => for {
-    useOutputId <- c.downField("useOutputId").as[Array[Byte]]
-    proof <- c.downField("proof").as[Array[Byte]]
+    useOutputId <- c.downField("useOutputId").as[String]
+    proof <- c.downField("proof").as[String]
   } yield Input(
-    useOutputId,
-    proof
+    Base58.decode(useOutputId).get,
+    Base58.decode(proof).get
   )
 
   implicit val jsonEncoder: Encoder[Input] = (b: Input) => Map(
