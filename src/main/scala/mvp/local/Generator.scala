@@ -13,6 +13,7 @@ object Generator {
 
   val iterCount: Int = 10
 
+  //Генерация транзакции, которая содержит сообщение
   def generateMessageTx(privateKey: PrivateKey25519,
                         previousMessage: Option[MessageInfo],
                         outputId: Option[Array[Byte]],
@@ -25,11 +26,11 @@ object Generator {
     )
     val signature: Signature25519 = Signature25519(Curve25519.sign(privateKey.privKeyBytes, messageInfo.messageToSign))
 
-    //first field
+    //Создание связки
     val proof: Array[Byte] = previousMessage
       .map(prevmsg => proverGenerator(prevmsg, iterCount - 1, privateKey.privKeyBytes))
       .getOrElse(Array.emptyByteArray)
-    //second field
+    //Создание проверки
     val bundle: Array[Byte] = proverGenerator(messageInfo, iterCount, privateKey.privKeyBytes)
     Transaction(
       System.currentTimeMillis(),
@@ -47,6 +48,7 @@ object Generator {
     )
   }
 
+  //Итеративное хеширование
   def proverGenerator(messageInfo: MessageInfo, iterCount: Int, salt: Array[Byte]): Array[Byte] =
     (0 to iterCount).foldLeft(salt) {
       case (prevHash, _) => Sha256RipeMD160(prevHash ++ messageInfo.messageToSign)
