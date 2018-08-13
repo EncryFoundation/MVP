@@ -20,6 +20,7 @@ case class MessageOutput(bundle: Array[Byte],
     bundle ++ check ++ messageHash ++ metadata ++ publicKey ++ signature
   )
 
+  //Проверка, "связки" и "проверки"
   override def unlock(proof: Array[Byte]): Boolean =
     check sameElements Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)
 
@@ -38,12 +39,12 @@ object MessageOutput {
     publicKey <- c.downField("publicKey").as[String]
     signature <- c.downField("signature").as[String]
   } yield MessageOutput(
-    Base16.decode(bundle).get,
-    Base16.decode(check).get,
-    Base16.decode(messageHash).get,
-    Base16.decode(metadata).get,
-    Base16.decode(publicKey).get,
-    Base16.decode(signature).get
+    Base16.decode(bundle).getOrElse(Array.emptyByteArray),
+    Base16.decode(check).getOrElse(Array.emptyByteArray),
+    Base16.decode(messageHash).getOrElse(Array.emptyByteArray),
+    Base16.decode(metadata).getOrElse(Array.emptyByteArray),
+    Base16.decode(publicKey).getOrElse(Array.emptyByteArray),
+    Base16.decode(signature).getOrElse(Array.emptyByteArray)
   )
 
   implicit val jsonEncoder: Encoder[MessageOutput] = (b: MessageOutput) => Map(

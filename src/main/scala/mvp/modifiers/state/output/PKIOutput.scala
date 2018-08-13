@@ -34,12 +34,12 @@ object PKIOutput {
     publicKey <- c.downField("publicKey").as[String]
     signature <- c.downField("signature").as[String]
   } yield PKIOutput(
-    Base16.decode(bundle).get,
-    Base16.decode(check).get,
-    Base16.decode(publicKeyHash).get,
-    Base16.decode(userData).get,
-    Base16.decode(publicKey).get,
-    Base16.decode(signature).get
+    Base16.decode(bundle).getOrElse(Array.emptyByteArray),
+    Base16.decode(check).getOrElse(Array.emptyByteArray),
+    Base16.decode(publicKeyHash).getOrElse(Array.emptyByteArray),
+    Base16.decode(userData).getOrElse(Array.emptyByteArray),
+    Base16.decode(publicKey).getOrElse(Array.emptyByteArray),
+    Base16.decode(signature).getOrElse(Array.emptyByteArray)
   )
 
   implicit val jsonEncoder: Encoder[PKIOutput] = (b: PKIOutput) => Map(

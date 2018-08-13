@@ -14,7 +14,7 @@ object UserMessage {
     prevOutputId <- c.downField("prevOutputId").as[Option[String]]
   } yield UserMessage(
     message,
-    Base16.decode(sender).get,
+    Base16.decode(sender).getOrElse(Array.emptyByteArray),
     prevOutputId.map(str => Base16.decode(str).getOrElse(Array.emptyByteArray))
   )
 

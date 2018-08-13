@@ -33,9 +33,9 @@ object Header {
   } yield Header(
     timestamp,
     height,
-    Base16.decode(previousBlockHash).get,
-    Base16.decode(minerSignature).get,
-    Base16.decode(merkleTreeRoot).get
+    Base16.decode(previousBlockHash).getOrElse(Array.emptyByteArray),
+    Base16.decode(minerSignature).getOrElse(Array.emptyByteArray),
+    Base16.decode(merkleTreeRoot).getOrElse(Array.emptyByteArray)
   )
 
   implicit val jsonEncoder: Encoder[Header] = (b: Header) => Map(
