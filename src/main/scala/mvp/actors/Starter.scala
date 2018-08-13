@@ -8,7 +8,7 @@ import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
 import io.circe.parser.decode
 import mvp.MVP.{materializer, settings, system}
-import mvp.actors.Messages.{Heartbeat, Start,Headers, Payloads}
+import mvp.actors.Messages.{Heartbeat, Start, Headers, Payloads}
 import mvp.cli.ConsoleActor
 import mvp.cli.ConsoleActor._
 import mvp.http.HttpServer
@@ -36,7 +36,7 @@ class Starter extends Actor with StrictLogging {
       Http().singleRequest(HttpRequest(
         method = HttpMethods.GET,
         uri = "/blockchain/lastInfo"
-      ).withEffectiveUri(securedConnection = false, Host(settings.otherNodes.head.host,settings.otherNodes.head.port)))
+      ).withEffectiveUri(securedConnection = false, Host(settings.otherNodes.head.host, settings.otherNodes.head.port)))
         .flatMap(_.entity.dataBytes.runFold(ByteString.empty)(_ ++ _))
         .map(_.utf8String)
         .map(decode[LastInfo])
@@ -65,6 +65,7 @@ class Starter extends Actor with StrictLogging {
     }
     if (settings.mvpSettings.sendStat)
       context.actorOf(Props[InfluxActor].withDispatcher("common-dispatcher"), "influxActor")
-    if (settings.levelDB.enable) system.actorOf(Props[ModifiersHolder].withDispatcher("common-dispatcher"), "modifiersHolder")
+    if (settings.levelDB.enable)
+      context.actorOf(Props[ModifiersHolder].withDispatcher("common-dispatcher"), "modifiersHolder")
   }
 }

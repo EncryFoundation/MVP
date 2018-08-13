@@ -1,5 +1,7 @@
 package mvp.view.blockchain
 
+import mvp.MVP.settings
+import mvp.actors.ModifiersHolder.{RequestBlock, RequestModifiers}
 import mvp.modifiers.blockchain.{Block, Header, Payload}
 
 //TODO: Blocks to levelDb
@@ -16,7 +18,13 @@ case class Blockchain(headers: Seq[Header] = Seq.empty, blocks: Seq[Block] = Seq
     Blockchain(
       headers,
       headers.find(_.merkleTreeRoot sameElements payload.id)
-        .map(header => blocks :+ Block(header, payload))
+        .map { header =>
+          if (settings.levelDB.enable) {
+            import mvp.MVP.system
+            system.actorSelection("/user/starter/modifiersHolder") ! RequestBlock(Block(header, payload))
+          }
+          blocks :+ Block(header, payload)
+        }
         .getOrElse(blocks)
     )
 

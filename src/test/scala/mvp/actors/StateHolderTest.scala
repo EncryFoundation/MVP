@@ -13,15 +13,15 @@ import utils.TestGenerator._
 class StateHolderTest extends PropSpec with Matchers {
 
   property("Dummy blockchain impl") {
-
-    val initialOutputsQty: Int = 10
-    val blockchainHeight: Int = 9
-
-    val initialOutput: Seq[Output] = generateDummyAmountOutputs(initialOutputsQty)
-    val inputs: Seq[Input] = initialOutput.map(output => Input(output.id, Random.randomBytes()))
-    val dummyBlockchain: Seq[Block] = generateBlockChainWithAmountPayloads(blockchainHeight + 1, inputs)
-
-    val blockchain: Blockchain = Blockchain.recoverBlockchain
+//
+//    val initialOutputsQty: Int = 10
+//    val blockchainHeight: Int = 9
+//
+//    val initialOutput: Seq[Output] = generateDummyAmountOutputs(initialOutputsQty)
+//    val inputs: Seq[Input] = initialOutput.map(output => Input(output.id, Random.randomBytes()))
+//    val dummyBlockchain: Seq[Block] = generateBlockChainWithAmountPayloads(blockchainHeight + 1, inputs)
+//
+//    val blockchain: Blockchain = Blockchain.recoverBlockchain
 //    val state: State = State(initialOutput.map(output => Base58.encode(output.id) -> output).toMap)
 //
 //    val newState: State = dummyBlockchain.foldLeft(state) {

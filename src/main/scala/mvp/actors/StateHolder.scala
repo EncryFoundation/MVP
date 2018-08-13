@@ -7,7 +7,7 @@ import io.circe.{Decoder, Encoder, HCursor}
 import io.circe.syntax._
 import mvp.MVP.settings
 import mvp.actors.Messages._
-import mvp.actors.ModifiersHolder.RequestModifiers
+import mvp.actors.ModifiersHolder.{RequestModifiers, RequestUserMessage}
 import mvp.local.messageHolder.UserMessage
 import mvp.local.messageTransaction.MessageInfo
 import mvp.local.{Generator, Keys}
@@ -18,7 +18,7 @@ import mvp.modifiers.state.output.MessageOutput
 import mvp.view.blockchain.Blockchain
 import mvp.view.state.State
 import scorex.crypto.signatures.Curve25519
-import scorex.util.encode.{Base16, Base58}
+import scorex.util.encode.Base16
 
 class StateHolder extends Actor with StrictLogging {
 
@@ -31,10 +31,14 @@ class StateHolder extends Actor with StrictLogging {
     case header: Header =>
       logger.info(s"Get header: ${Header.jsonEncoder(header)}")
       blockChain = blockChain.addHeader(header)
+      if (settings.levelDB.enable)
+        context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(header)
     case payload: Payload =>
       logger.info(s"Get payload: ${Payload.jsonEncoder(payload)}")
       blockChain = blockChain.addPayload(payload)
       state = state.updateState(payload)
+      if (settings.levelDB.enable)
+        context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(payload)
     case transaction: Transaction =>
       logger.info(s"Get transaction: ${Transaction.jsonEncoder(transaction)}")
       val payload: Payload = Payload(Seq(transaction))
@@ -50,10 +54,14 @@ class StateHolder extends Actor with StrictLogging {
           .copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
       apply(signedHeader)
       apply(payload)
+      if (settings.levelDB.enable)
+        context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(transaction)
   }
 
   def addMessage(message: UserMessage, previousMessage: Option[MessageInfo], outputId: Option[Array[Byte]]): Unit =
     if (!messagesHolder.contains(message)) {
+      if (settings.levelDB.enable)
+        context.actorSelection("/user/starter/modifiersHolder") ! RequestUserMessage(message)
       logger.info(s"Get message: ${UserMessage.jsonEncoder(message)}")
       messagesHolder = messagesHolder :+ message
       self ! Transactions(Seq(Generator.generateMessageTx(keys.keys.head, previousMessage, outputId, message.message)))
@@ -78,7 +86,6 @@ class StateHolder extends Actor with StrictLogging {
 
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) =>
-      context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(headers)
       headers.filter(validate).foreach(apply)
     case InfoMessage(msg: UserMessage) =>
       if (!messagesHolder.contains(msg)) {
@@ -92,10 +99,8 @@ class StateHolder extends Actor with StrictLogging {
         addMessage(msg, previousMessageInfo, msg.prevOutputId)
       }
     case Payloads(payloads: Seq[Payload]) =>
-      context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(payloads)
       payloads.filter(validate).foreach(apply)
     case Transactions(transactions: Seq[Transaction]) =>
-      context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(transactions)
       transactions.filter(validate).foreach(apply)
     case GetLastBlock => sender() ! blockChain.blocks.last
     case GetLastInfo => sender() ! LastInfo(blockChain.blocks, messagesHolder)
@@ -113,15 +118,15 @@ case class LastInfo(blocks: Seq[Block], messages: Seq[UserMessage])
 object LastInfo {
 
   implicit val jsonDecoder: Decoder[LastInfo] = (c: HCursor) => for {
-    blocks <- c.downField( "blocks" ).as[Seq[Block]]
-    messages <- c.downField( "messages" ).as[Seq[UserMessage]]
+    blocks <- c.downField("blocks").as[Seq[Block]]
+    messages <- c.downField("messages").as[Seq[UserMessage]]
   } yield LastInfo(
     blocks,
     messages
   )
 
   implicit val jsonEncoder: Encoder[LastInfo] = (b: LastInfo) => Map(
-    "blocks" -> b.blocks.map( _.asJson ).asJson,
-    "messages" -> b.messages.map( _.asJson ).asJson
+    "blocks" -> b.blocks.map(_.asJson).asJson,
+    "messages" -> b.messages.map(_.asJson).asJson
   ).asJson
 }
