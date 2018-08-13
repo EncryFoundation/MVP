@@ -66,7 +66,7 @@ class StateHolder extends Actor with StrictLogging {
       transaction
         .inputs
         .forall(input => state.state.get(input.useOutputId)
-          .exists(outputToUnlock => outputToUnlock.unlock(input.proof)))
+          .exists(outputToUnlock => outputToUnlock.unlock(input.proof) && outputToUnlock.canBeSpent))
   }
 
   override def receive: Receive = {
