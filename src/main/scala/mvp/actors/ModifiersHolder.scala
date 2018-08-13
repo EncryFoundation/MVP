@@ -2,7 +2,9 @@ package mvp.actors
 
 import akka.persistence.{PersistentActor, RecoveryCompleted}
 import com.typesafe.scalalogging.StrictLogging
+import mvp.actors.ModifiersHolder.RequestModifiers
 import mvp.modifiers.blockchain.{Block, Header, Payload}
+
 import scala.collection.immutable.SortedMap
 
 class ModifiersHolder extends PersistentActor with StrictLogging {
@@ -27,7 +29,14 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   }
 
   override def receiveCommand: Receive = {
+    case RequestModifiers(modifier: Header) => updateModifiers(modifier)
     case x: Any => logger.error(s"Strange input: $x.")
+  }
+
+  def updateModifiers(modifier: Header) = {
+    persist(modifier) { header =>
+      logger.debug(s"Header at height: ${header.height} with id: ${} is persisted successfully.")
+    }
   }
 
   def updateHeaders(header: Header): Unit = ???
@@ -41,5 +50,11 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   override def journalPluginId: String = "akka.persistence.journal.leveldb"
 
   override def snapshotPluginId: String = "akka.persistence.snapshot-store.local"
+
+}
+
+object ModifiersHolder {
+
+  case class RequestModifiers(modifier: Any)
 
 }
