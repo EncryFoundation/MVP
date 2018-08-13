@@ -113,15 +113,15 @@ case class LastInfo(blocks: Seq[Block], messages: Seq[UserMessage])
 object LastInfo {
 
   implicit val jsonDecoder: Decoder[LastInfo] = (c: HCursor) => for {
-    blocks <- c.downField("blocks").as[Seq[Block]]
-    messages <- c.downField("messages").as[Seq[UserMessage]]
+    blocks <- c.downField( "blocks" ).as[Seq[Block]]
+    messages <- c.downField( "messages" ).as[Seq[UserMessage]]
   } yield LastInfo(
     blocks,
     messages
   )
 
   implicit val jsonEncoder: Encoder[LastInfo] = (b: LastInfo) => Map(
-    "blocks" -> b.blocks.map(_.asJson).asJson,
-    "messages" -> b.messages.map(_.asJson).asJson
+    "blocks" -> b.blocks.map( _.asJson ).asJson,
+    "messages" -> b.messages.map( _.asJson ).asJson
   ).asJson
 }

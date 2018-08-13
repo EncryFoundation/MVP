@@ -63,7 +63,6 @@ class Starter extends Actor with StrictLogging {
       context.actorOf(Props[ConsoleActor].withDispatcher("common-dispatcher"), "cliActor")
       consoleListener
     }
-    if (settings.mvpSettings.sendStat) context.actorOf(Props[InfluxActor].withDispatcher("common-dispatcher"), "influxActor")
     if (settings.mvpSettings.sendStat)
       context.actorOf(Props[InfluxActor].withDispatcher("common-dispatcher"), "influxActor")
     if (settings.levelDB.enable) system.actorOf(Props[ModifiersHolder].withDispatcher("common-dispatcher"), "modifiersHolder")
