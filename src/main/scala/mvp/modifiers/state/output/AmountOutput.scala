@@ -30,6 +30,7 @@ object AmountOutput {
   )
 
   implicit val jsonEncoder: Encoder[AmountOutput] = (b: AmountOutput) => Map(
+    "id" -> Base58.encode(b.id).asJson,
     "type" -> typeId.asJson,
     "publicKey" -> Base58.encode(b.publicKey).asJson,
     "amount" -> b.amount.asJson
