@@ -3,22 +3,26 @@ package mvp.view.state
 import mvp.modifiers.blockchain.Payload
 import mvp.modifiers.state.output.{AmountOutput, Output}
 import mvp.utils.Crypto.Sha256RipeMD160
+import scorex.util.encode.Base16
 
-case class State(state: Map[Array[Byte], Output] = Map.empty[Array[Byte], Output]) {
+case class State(state: Map[String, Output] = Map.empty[String, Output]) {
 
-  val stateHash: Array[Byte] = Sha256RipeMD160(state.keys.foldLeft(Array.emptyByteArray)(_ ++ _))
+  val stateHash: Array[Byte] =
+    Sha256RipeMD160(
+      state.keys.map(key => Base16.decode(key).getOrElse(Array.emptyByteArray)).foldLeft(Array.emptyByteArray)(_ ++ _)
+    )
 
   def updateState(payload: Payload): State = {
-    val (toAddToState, toRemoveFromState) = payload.transactions.foldLeft( Seq.empty[Output] -> Seq.empty[Array[Byte]] ) {
+    val (toAddToState, toRemoveFromState) = payload.transactions.foldLeft(Seq.empty[Output] -> Seq.empty[String]) {
       case ((toAdd, toRemove), tx) =>
-        if (tx.outputs.forall( _.isInstanceOf[AmountOutput] )) (toAdd ++ tx.outputs, toRemove ++ tx.inputs.map( _.useOutputId ))
+        if (tx.outputs.forall(_.isInstanceOf[AmountOutput]))
+          (toAdd ++ tx.outputs, toRemove ++ tx.inputs.map(input => Base16.encode(input.useOutputId)))
         else (toAdd ++
           tx.outputs ++
-          tx.inputs.flatMap(input => state.get(input.useOutputId).map(_.closeForSpent)),
-          toRemove ++ tx.inputs.map( _.useOutputId
-          ))
+          tx.inputs.flatMap(input => state.get(Base16.encode(input.useOutputId)).map(_.closeForSpent)),
+          toRemove ++ tx.inputs.map(input => Base16.encode(input.useOutputId)))
     }
-    State(state = (state -- toRemoveFromState) ++ toAddToState.map(output => output.id -> output))
+    State(state = (state -- toRemoveFromState) ++ toAddToState.map(output => Base16.encode(output.id) -> output))
   }
 }
 

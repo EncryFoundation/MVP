@@ -17,7 +17,7 @@ import mvp.modifiers.state.output.MessageOutput
 import mvp.view.blockchain.Blockchain
 import mvp.view.state.State
 import scorex.crypto.signatures.Curve25519
-import scorex.util.encode.{Base16, Base58}
+import scorex.util.encode.Base16
 
 class StateHolder extends Actor with StrictLogging {
 
@@ -71,7 +71,7 @@ class StateHolder extends Actor with StrictLogging {
       //println(s"Going to validate: ${Transaction.jsonEncoder(transaction)}")
       transaction
         .inputs
-        .forall(input => state.state.get(input.useOutputId)
+        .forall(input => state.state.get(Base16.encode(input.useOutputId))
           .exists(outputToUnlock => outputToUnlock.unlock(input.proof) && outputToUnlock.canBeSpent))
   }
 
@@ -83,7 +83,7 @@ class StateHolder extends Actor with StrictLogging {
           msg.prevOutputId.flatMap( outputId =>
             state
               .state
-              .get(outputId)
+              .get(Base16.encode(outputId))
               .map( _.asInstanceOf[MessageOutput].toProofGenerator )
           )
         addMessage( msg, previousMessageInfo, msg.prevOutputId )

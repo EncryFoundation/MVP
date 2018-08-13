@@ -1,7 +1,7 @@
 package mvp.local.messageHolder
 
 import io.circe.{Decoder, Encoder, HCursor}
-import scorex.util.encode.Base58
+import scorex.util.encode.Base16
 import io.circe.syntax._
 
 case class UserMessage(message: String, sender: Array[Byte], prevOutputId: Option[Array[Byte]])
@@ -14,13 +14,13 @@ object UserMessage {
     prevOutputId <- c.downField("prevOutputId").as[Option[String]]
   } yield UserMessage(
     message,
-    Base58.decode(sender).get,
-    prevOutputId.map(str => Base58.decode(str).getOrElse(Array.emptyByteArray))
+    Base16.decode(sender).getOrElse(Array.emptyByteArray),
+    prevOutputId.map(str => Base16.decode(str).getOrElse(Array.emptyByteArray))
   )
 
   implicit val jsonEncoder: Encoder[UserMessage] = (b: UserMessage) => Map(
     "message" -> b.message.asJson,
-    "sender" -> Base58.encode(b.sender).asJson,
-    "prevOutputId" -> b.prevOutputId.flatMap(id => Some(Base58.encode(id))).asJson
+    "sender" -> Base16.encode(b.sender).asJson,
+    "prevOutputId" -> b.prevOutputId.flatMap(id => Some(Base16.encode(id))).asJson
   ).asJson
 }

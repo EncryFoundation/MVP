@@ -2,7 +2,7 @@ package mvp.modifiers.state.output
 
 import io.circe.{Decoder, Encoder, HCursor}
 import mvp.utils.Crypto.Sha256RipeMD160
-import scorex.crypto.encode.Base58
+import scorex.crypto.encode.Base16
 import io.circe.syntax._
 
 case class PKIOutput(bundle: Array[Byte],
@@ -34,22 +34,22 @@ object PKIOutput {
     publicKey <- c.downField("publicKey").as[String]
     signature <- c.downField("signature").as[String]
   } yield PKIOutput(
-    Base58.decode(bundle).get,
-    Base58.decode(check).get,
-    Base58.decode(publicKeyHash).get,
-    Base58.decode(userData).get,
-    Base58.decode(publicKey).get,
-    Base58.decode(signature).get
+    Base16.decode(bundle).getOrElse(Array.emptyByteArray),
+    Base16.decode(check).getOrElse(Array.emptyByteArray),
+    Base16.decode(publicKeyHash).getOrElse(Array.emptyByteArray),
+    Base16.decode(userData).getOrElse(Array.emptyByteArray),
+    Base16.decode(publicKey).getOrElse(Array.emptyByteArray),
+    Base16.decode(signature).getOrElse(Array.emptyByteArray)
   )
 
   implicit val jsonEncoder: Encoder[PKIOutput] = (b: PKIOutput) => Map(
-    "id" -> Base58.encode(b.id).asJson,
+    "id" -> Base16.encode(b.id).asJson,
     "type" -> typeId.asJson,
-    "bundle" -> Base58.encode(b.bundle).asJson,
-    "check" -> Base58.encode(b.check).asJson,
-    "publicKeyHash" -> Base58.encode(b.publicKeyHash).asJson,
-    "userData" -> Base58.encode(b.userData).asJson,
-    "publicKey" -> Base58.encode(b.publicKey).asJson,
-    "signature" -> Base58.encode(b.signature).asJson,
+    "bundle" -> Base16.encode(b.bundle).asJson,
+    "check" -> Base16.encode(b.check).asJson,
+    "publicKeyHash" -> Base16.encode(b.publicKeyHash).asJson,
+    "userData" -> Base16.encode(b.userData).asJson,
+    "publicKey" -> Base16.encode(b.publicKey).asJson,
+    "signature" -> Base16.encode(b.signature).asJson,
   ).asJson
 }
