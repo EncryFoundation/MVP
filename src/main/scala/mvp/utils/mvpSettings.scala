@@ -1,4 +1,5 @@
 package mvp.utils
 
-case class mvpSettings(nodeName: String,
+case class mvpSettings(enableCLI: Boolean,
+                       nodeName: String,
                        sendStat: Boolean)

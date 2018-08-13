@@ -11,9 +11,10 @@ case class MessageOutput(bundle: Array[Byte],
                          messageHash: Array[Byte],
                          metadata: Array[Byte],
                          publicKey: Array[Byte],
-                         signature: Array[Byte]) extends Output {
+                         signature: Array[Byte],
+                         override val canBeSpent: Boolean = true) extends Output {
 
-  def toMessageInfo(msg: String): MessageInfo = MessageInfo(msg.getBytes, metadata, publicKey)
+  def toProofGenerator: MessageInfo = MessageInfo(messageHash, metadata, publicKey)
 
   override val id: Array[Byte] = Sha256RipeMD160(
     bundle ++ check ++ messageHash ++ metadata ++ publicKey ++ signature
@@ -21,29 +22,32 @@ case class MessageOutput(bundle: Array[Byte],
 
   override def unlock(proof: Array[Byte]): Boolean =
     check sameElements Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)
+
+  override def closeForSpent: Output = this.copy(canBeSpent = false)
 }
 
 object MessageOutput {
 
-  val typeId: Byte = 1: Byte
+  val typeId: Byte = 2: Byte
 
   implicit val jsonDecoder: Decoder[MessageOutput] = (c: HCursor) => for {
-    bundle <- c.downField("bundle").as[Array[Byte]]
-    check <- c.downField("check").as[Array[Byte]]
-    messageHash <- c.downField("messageHash").as[Array[Byte]]
-    metadata <- c.downField("metadata").as[Array[Byte]]
-    publicKey <- c.downField("publicKey").as[Array[Byte]]
-    signature <- c.downField("signature").as[Array[Byte]]
+    bundle <- c.downField("bundle").as[String]
+    check <- c.downField("check").as[String]
+    messageHash <- c.downField("messageHash").as[String]
+    metadata <- c.downField("metadata").as[String]
+    publicKey <- c.downField("publicKey").as[String]
+    signature <- c.downField("signature").as[String]
   } yield MessageOutput(
-    bundle,
-    check,
-    messageHash,
-    metadata,
-    publicKey,
-    signature
+    Base58.decode(bundle).get,
+    Base58.decode(check).get,
+    Base58.decode(messageHash).get,
+    Base58.decode(metadata).get,
+    Base58.decode(publicKey).get,
+    Base58.decode(signature).get
   )
 
   implicit val jsonEncoder: Encoder[MessageOutput] = (b: MessageOutput) => Map(
+    "id" -> Base58.encode(b.id).asJson,
     "type" -> typeId.asJson,
     "bundle" -> Base58.encode(b.bundle).asJson,
     "check" -> Base58.encode(b.check).asJson,

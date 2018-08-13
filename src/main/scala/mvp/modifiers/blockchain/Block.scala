@@ -7,7 +7,7 @@ import io.circe.syntax._
 
 case class Block(header: Header, payload: Payload) extends Modifier {
 
-  override val id: Array[Byte] = Sha256RipeMD160(header.id ++ payload.id)
+  override val id: Array[Byte] = header.id
 }
 
 object Block {
