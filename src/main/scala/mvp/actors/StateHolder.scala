@@ -6,7 +6,7 @@ import com.typesafe.scalalogging.StrictLogging
 import io.circe.{Decoder, Encoder, HCursor}
 import io.circe.syntax._
 import mvp.MVP.settings
-import mvp.actors.StateHolder._
+import mvp.actors.Messages._
 import mvp.local.messageHolder.UserMessage
 import mvp.local.messageTransaction.MessageInfo
 import mvp.local.{Generator, Keys}
@@ -77,13 +77,13 @@ class StateHolder extends Actor with StrictLogging {
 
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(apply)
-    case Message(msg: UserMessage) =>
+    case ThisMessage(msg: UserMessage) =>
       if (!messagesHolder.contains(msg)) {
         val previousMessageInfo: Option[MessageInfo] =
           msg.prevOutputId.flatMap( outputId =>
             state
               .state
-              .get( Base58.encode( outputId ) )
+              .get(outputId)
               .map( _.asInstanceOf[MessageOutput].toProofGenerator )
           )
         addMessage( msg, previousMessageInfo, msg.prevOutputId )
@@ -95,29 +95,10 @@ class StateHolder extends Actor with StrictLogging {
     case BlockchainRequest => sender() ! BlockchainAnswer(blockChain)
     case HeadersRequest => sender() ! HeadersAnswer(blockChain)
     case SendMyName =>
-      self ! Message(UserMessage(settings.mvpSettings.nodeName, keys.keys.head.publicKeyBytes, None))
+      self ! ThisMessage(UserMessage(settings.mvpSettings.nodeName, keys.keys.head.publicKeyBytes, None))
     case UserMessageFromCLI(message, outputId) =>
-      self ! Message(UserMessage(message.mkString, keys.keys.head.publicKeyBytes, outputId))
+      self ! ThisMessage(UserMessage(message.mkString, keys.keys.head.publicKeyBytes, outputId))
   }
-}
-
-object StateHolder {
-
-  case object GetLastInfo
-
-  case class Message(msg: UserMessage)
-
-  case object GetLastBlock
-
-  case class Headers(headers: Seq[Header])
-
-  case class Payloads(payloads: Seq[Payload])
-
-  case class Transactions(transaction: Seq[Transaction])
-
-  case class BlockchainAnswer(blockchain: Blockchain)
-
-  case class HeadersAnswer(blockchain: Blockchain)
 }
 
 case class LastInfo(blocks: Seq[Block], messages: Seq[UserMessage])

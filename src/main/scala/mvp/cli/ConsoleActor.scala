@@ -4,7 +4,7 @@ import scala.io.StdIn
 import scala.concurrent.Future
 import akka.actor.Actor
 import mvp.MVP.{context, system}
-import mvp.actors.StateHolder.{BlockchainAnswer, HeadersAnswer}
+import mvp.actors.Messages.{BlockchainAnswer, HeadersAnswer}
 import mvp.cli.Commands._
 import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, SendMyName, UserMessageFromCLI}
 import scorex.util.encode.Base58

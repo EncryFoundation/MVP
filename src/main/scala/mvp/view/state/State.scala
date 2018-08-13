@@ -3,12 +3,10 @@ package mvp.view.state
 import mvp.modifiers.blockchain.Payload
 import mvp.modifiers.state.output.{AmountOutput, Output}
 import mvp.utils.Crypto.Sha256RipeMD160
-import scorex.util.encode.Base58
 
-case class State(state: Map[String, Output] = Map.empty[String, Output]) {
+case class State(state: Map[Array[Byte], Output] = Map.empty[Array[Byte], Output]) {
 
-  val stateHash: Array[Byte] =
-    Sha256RipeMD160(state.keys.map(key => Base58.decode(key).get).foldLeft(Array.emptyByteArray)(_ ++ _))
+  val stateHash: Array[Byte] = Sha256RipeMD160(state.keys.foldLeft(Array.emptyByteArray)(_ ++ _))
 
   def updateState(payload: Payload): State = {
     val (toAddToState, toRemoveFromState) = payload.transactions.foldLeft( Seq.empty[Output] -> Seq.empty[Array[Byte]] ) {

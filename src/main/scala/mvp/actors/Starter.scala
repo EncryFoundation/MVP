@@ -8,8 +8,7 @@ import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
 import io.circe.parser.decode
 import mvp.MVP.{materializer, settings, system}
-import mvp.actors.Messages.{Heartbeat, Start}
-import mvp.actors.StateHolder.{Headers, Payloads}
+import mvp.actors.Messages.{Heartbeat, Start,Headers, Payloads}
 import mvp.cli.ConsoleActor
 import mvp.cli.ConsoleActor._
 import mvp.http.HttpServer
