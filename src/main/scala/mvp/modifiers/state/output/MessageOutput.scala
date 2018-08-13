@@ -38,16 +38,16 @@ object MessageOutput {
     publicKey <- c.downField("publicKey").as[String]
     signature <- c.downField("signature").as[String]
   } yield MessageOutput(
-    Base58.decode(bundle).get,
-    Base58.decode(check).get,
-    Base58.decode(messageHash).get,
-    Base58.decode(metadata).get,
-    Base58.decode(publicKey).get,
-    Base58.decode(signature).get
+    Base16.decode(bundle).get,
+    Base16.decode(check).get,
+    Base16.decode(messageHash).get,
+    Base16.decode(metadata).get,
+    Base16.decode(publicKey).get,
+    Base16.decode(signature).get
   )
 
   implicit val jsonEncoder: Encoder[MessageOutput] = (b: MessageOutput) => Map(
-    "id" -> Base58.encode(b.id).asJson,
+    "id" -> Base16.encode(b.id).asJson,
     "type" -> typeId.asJson,
     "bundle" -> Base16.encode(b.bundle).asJson,
     "check" -> Base16.encode(b.check).asJson,

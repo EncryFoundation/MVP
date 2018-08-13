@@ -18,8 +18,8 @@ object Input {
     useOutputId <- c.downField("useOutputId").as[String]
     proof <- c.downField("proof").as[String]
   } yield Input(
-    Base58.decode(useOutputId).get,
-    Base58.decode(proof).get
+    Base16.decode(useOutputId).get,
+    Base16.decode(proof).get
   )
 
   implicit val jsonEncoder: Encoder[Input] = (b: Input) => Map(

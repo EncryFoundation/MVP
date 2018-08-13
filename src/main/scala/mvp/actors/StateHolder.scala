@@ -17,7 +17,7 @@ import mvp.modifiers.state.output.MessageOutput
 import mvp.view.blockchain.Blockchain
 import mvp.view.state.State
 import scorex.crypto.signatures.Curve25519
-import scorex.util.encode.{Base16, Base58}
+import scorex.util.encode.{Base16, Base16}
 
 class StateHolder extends Actor with StrictLogging {
 
