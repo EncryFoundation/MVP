@@ -13,20 +13,20 @@ object Messages {
 
   final case object Heartbeat extends Message
 
-  case object GetLastInfo
+  case object GetLastInfo extends Message
 
-  case class ThisMessage(msg: UserMessage)
+  case class InfoMessage(msg: UserMessage) extends Message
 
-  case object GetLastBlock
+  case object GetLastBlock extends Message
 
-  case class Headers(headers: Seq[Header])
+  case class Headers(headers: Seq[Header]) extends Message
 
-  case class Payloads(payloads: Seq[Payload])
+  case class Payloads(payloads: Seq[Payload]) extends Message
 
-  case class Transactions(transaction: Seq[Transaction])
+  case class Transactions(transaction: Seq[Transaction]) extends Message
 
-  case class BlockchainAnswer(blockchain: Blockchain)
+  case class BlockchainAnswer(blockchain: Blockchain) extends Message
 
-  case class HeadersAnswer(blockchain: Blockchain)
+  case class HeadersAnswer(blockchain: Blockchain) extends Message
 
 }

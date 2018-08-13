@@ -77,7 +77,7 @@ class StateHolder extends Actor with StrictLogging {
 
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(apply)
-    case ThisMessage(msg: UserMessage) =>
+    case InfoMessage(msg: UserMessage) =>
       if (!messagesHolder.contains(msg)) {
         val previousMessageInfo: Option[MessageInfo] =
           msg.prevOutputId.flatMap( outputId =>
@@ -95,9 +95,9 @@ class StateHolder extends Actor with StrictLogging {
     case BlockchainRequest => sender() ! BlockchainAnswer(blockChain)
     case HeadersRequest => sender() ! HeadersAnswer(blockChain)
     case SendMyName =>
-      self ! ThisMessage(UserMessage(settings.mvpSettings.nodeName, keys.keys.head.publicKeyBytes, None))
+      self ! InfoMessage(UserMessage(settings.mvpSettings.nodeName, keys.keys.head.publicKeyBytes, None))
     case UserMessageFromCLI(message, outputId) =>
-      self ! ThisMessage(UserMessage(message.mkString, keys.keys.head.publicKeyBytes, outputId))
+      self ! InfoMessage(UserMessage(message.mkString, keys.keys.head.publicKeyBytes, outputId))
   }
 }
 
