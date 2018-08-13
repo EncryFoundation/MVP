@@ -7,6 +7,7 @@ import io.circe.{Decoder, Encoder, HCursor}
 import io.circe.syntax._
 import mvp.MVP.settings
 import mvp.actors.Messages._
+import mvp.actors.ModifiersHolder.RequestModifiers
 import mvp.local.messageHolder.UserMessage
 import mvp.local.messageTransaction.MessageInfo
 import mvp.local.{Generator, Keys}
@@ -76,20 +77,26 @@ class StateHolder extends Actor with StrictLogging {
   }
 
   override def receive: Receive = {
-    case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(apply)
+    case Headers(headers: Seq[Header]) =>
+      context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(headers)
+      headers.filter(validate).foreach(apply)
     case InfoMessage(msg: UserMessage) =>
       if (!messagesHolder.contains(msg)) {
         val previousMessageInfo: Option[MessageInfo] =
-          msg.prevOutputId.flatMap( outputId =>
+          msg.prevOutputId.flatMap(outputId =>
             state
               .state
               .get(outputId)
-              .map( _.asInstanceOf[MessageOutput].toProofGenerator )
+              .map(_.asInstanceOf[MessageOutput].toProofGenerator)
           )
-        addMessage( msg, previousMessageInfo, msg.prevOutputId )
+        addMessage(msg, previousMessageInfo, msg.prevOutputId)
       }
-    case Payloads(payloads: Seq[Payload]) => payloads.filter(validate).foreach(apply)
-    case Transactions(transactions: Seq[Transaction]) => transactions.filter(validate).foreach(apply)
+    case Payloads(payloads: Seq[Payload]) =>
+      context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(payloads)
+      payloads.filter(validate).foreach(apply)
+    case Transactions(transactions: Seq[Transaction]) =>
+      context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(transactions)
+      transactions.filter(validate).foreach(apply)
     case GetLastBlock => sender() ! blockChain.blocks.last
     case GetLastInfo => sender() ! LastInfo(blockChain.blocks, messagesHolder)
     case BlockchainRequest => sender() ! BlockchainAnswer(blockChain)
@@ -106,15 +113,15 @@ case class LastInfo(blocks: Seq[Block], messages: Seq[UserMessage])
 object LastInfo {
 
   implicit val jsonDecoder: Decoder[LastInfo] = (c: HCursor) => for {
-    blocks <- c.downField( "blocks" ).as[Seq[Block]]
-    messages <- c.downField( "messages" ).as[Seq[UserMessage]]
+    blocks <- c.downField("blocks").as[Seq[Block]]
+    messages <- c.downField("messages").as[Seq[UserMessage]]
   } yield LastInfo(
     blocks,
     messages
   )
 
   implicit val jsonEncoder: Encoder[LastInfo] = (b: LastInfo) => Map(
-    "blocks" -> b.blocks.map( _.asJson ).asJson,
-    "messages" -> b.messages.map( _.asJson ).asJson
+    "blocks" -> b.blocks.map(_.asJson).asJson,
+    "messages" -> b.messages.map(_.asJson).asJson
   ).asJson
 }

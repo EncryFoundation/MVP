@@ -3,7 +3,9 @@ package mvp.actors
 import akka.persistence.{PersistentActor, RecoveryCompleted}
 import com.typesafe.scalalogging.StrictLogging
 import mvp.actors.ModifiersHolder.RequestModifiers
+import mvp.modifiers.Modifier
 import mvp.modifiers.blockchain.{Block, Header, Payload}
+import mvp.modifiers.mempool.Transaction
 
 import scala.collection.immutable.SortedMap
 
@@ -29,14 +31,29 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   }
 
   override def receiveCommand: Receive = {
-    case RequestModifiers(modifier: Header) => updateModifiers(modifier)
+    case RequestModifiers(modifier: Seq[Modifier]) => updateModifiers(modifier)
     case x: Any => logger.error(s"Strange input: $x.")
   }
 
-  def updateModifiers(modifier: Header) = {
-    persist(modifier) { header =>
-      logger.debug(s"Header at height: ${header.height} with id: ${} is persisted successfully.")
-    }
+  def updateModifiers(modifiers: Seq[Modifier]) = modifiers.foreach {
+    case header: Header =>
+      println(header.height)
+      persist(header) { header =>
+        logger.debug(s"Header at height: ${header.height} with id: ${header.id} persisted successfully.")
+      }
+    case payload: Payload =>
+      persist(payload) { payload =>
+        logger.debug(s"Payload with id: ${payload.id} persisted successfully.")
+      }
+    case block: Block =>
+      persist(block) { block =>
+        logger.debug(s"Header at height: ${block.header.height} with id: ${block.id} persisted successfully.")
+      }
+    case transaction: Transaction =>
+      persist(transaction) { transaction =>
+        logger.debug(s"Transaction ${transaction.id} persisted successfully.")
+      }
+    case x: Any => logger.error(s"Strange input $x")
   }
 
   def updateHeaders(header: Header): Unit = ???
@@ -55,6 +72,6 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
 
 object ModifiersHolder {
 
-  case class RequestModifiers(modifier: Any)
+  case class RequestModifiers(modifier: Seq[Modifier])
 
 }
