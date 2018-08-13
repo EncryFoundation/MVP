@@ -12,7 +12,7 @@ object HttpServer {
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val context: ExecutionContextExecutor = system.dispatcher
 
-  def start: Unit = {
+  def start(): Unit = {
     val route : Route = BlockchainRoute().route
     Http().bindAndHandle(route, settings.thisNode.host, settings.thisNode.port)
   }
