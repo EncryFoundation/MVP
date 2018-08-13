@@ -39,6 +39,7 @@ object Header {
   )
 
   implicit val jsonEncoder: Encoder[Header] = (b: Header) => Map(
+    "id" -> Base16.encode(b.id).asJson,
     "timestamp" -> b.timestamp.asJson,
     "height" -> b.height.asJson,
     "previousBlockHash" -> Base16.encode(b.previousBlockHash).asJson,
