@@ -1,6 +1,4 @@
-package mvp.view.mempool
-
-import mvp.modifiers.mempool.Transaction
+package mvp.data
 
 case class Mempool(txs: Seq[Transaction] = Seq.empty) {
 

@@ -2,7 +2,8 @@ package mvp.actors
 
 import akka.persistence.{PersistentActor, RecoveryCompleted}
 import com.typesafe.scalalogging.StrictLogging
-import mvp.modifiers.blockchain.{Block, Header, Payload}
+import mvp.data.{Block, Header, Payload}
+
 import scala.collection.immutable.SortedMap
 
 class ModifiersHolder extends PersistentActor with StrictLogging {

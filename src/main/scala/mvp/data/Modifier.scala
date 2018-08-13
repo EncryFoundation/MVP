@@ -1,4 +1,4 @@
-package mvp.modifiers
+package mvp.data
 
 trait Modifier {
 

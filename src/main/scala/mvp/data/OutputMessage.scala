@@ -1,12 +1,12 @@
-package mvp.modifiers.state.output
+package mvp.data
 
+import io.circe.syntax._
 import io.circe.{Decoder, Encoder, HCursor}
+import mvp.local.messageTransaction.MessageInfo
 import mvp.utils.Crypto.Sha256RipeMD160
 import scorex.crypto.encode.Base16
-import io.circe.syntax._
-import mvp.local.messageTransaction.MessageInfo
 
-case class MessageOutput(bundle: Array[Byte],
+case class OutputMessage(bundle: Array[Byte],
                          check: Array[Byte],
                          messageHash: Array[Byte],
                          metadata: Array[Byte],
@@ -27,18 +27,18 @@ case class MessageOutput(bundle: Array[Byte],
   override def closeForSpent: Output = this.copy(canBeSpent = false)
 }
 
-object MessageOutput {
+object OutputMessage {
 
   val typeId: Byte = 2: Byte
 
-  implicit val jsonDecoder: Decoder[MessageOutput] = (c: HCursor) => for {
+  implicit val jsonDecoder: Decoder[OutputMessage] = (c: HCursor) => for {
     bundle <- c.downField("bundle").as[String]
     check <- c.downField("check").as[String]
     messageHash <- c.downField("messageHash").as[String]
     metadata <- c.downField("metadata").as[String]
     publicKey <- c.downField("publicKey").as[String]
     signature <- c.downField("signature").as[String]
-  } yield MessageOutput(
+  } yield OutputMessage(
     Base16.decode(bundle).getOrElse(Array.emptyByteArray),
     Base16.decode(check).getOrElse(Array.emptyByteArray),
     Base16.decode(messageHash).getOrElse(Array.emptyByteArray),
@@ -47,7 +47,7 @@ object MessageOutput {
     Base16.decode(signature).getOrElse(Array.emptyByteArray)
   )
 
-  implicit val jsonEncoder: Encoder[MessageOutput] = (b: MessageOutput) => Map(
+  implicit val jsonEncoder: Encoder[OutputMessage] = (b: OutputMessage) => Map(
     "id" -> Base16.encode(b.id).asJson,
     "type" -> typeId.asJson,
     "bundle" -> Base16.encode(b.bundle).asJson,

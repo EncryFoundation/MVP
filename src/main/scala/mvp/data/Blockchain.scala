@@ -1,6 +1,4 @@
-package mvp.view.blockchain
-
-import mvp.modifiers.blockchain.{Block, Header, Payload}
+package mvp.data
 
 //TODO: Blocks to levelDb
 

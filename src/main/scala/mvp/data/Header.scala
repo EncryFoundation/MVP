@@ -1,10 +1,9 @@
-package mvp.modifiers.blockchain
+package mvp.data
 
 import com.google.common.primitives.{Bytes, Ints, Longs}
-import io.circe.{Decoder, Encoder, HCursor}
-import mvp.modifiers.Modifier
-import mvp.utils.Crypto.Sha256RipeMD160
 import io.circe.syntax._
+import io.circe.{Decoder, Encoder, HCursor}
+import mvp.utils.Crypto.Sha256RipeMD160
 import scorex.crypto.encode.Base16
 
 case class Header(timestamp: Long,
