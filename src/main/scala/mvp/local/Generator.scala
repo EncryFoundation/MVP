@@ -49,6 +49,6 @@ object Generator {
 
   def proverGenerator(messageInfo: MessageInfo, iterCount: Int, salt: Array[Byte]): Array[Byte] =
     (0 to iterCount).foldLeft(salt) {
-      case (prevHash, i) => Sha256RipeMD160(prevHash ++ messageInfo.messageToSign)
+      case (prevHash, _) => Sha256RipeMD160(prevHash ++ messageInfo.messageToSign)
     }
 }

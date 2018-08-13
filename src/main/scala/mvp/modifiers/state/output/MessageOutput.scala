@@ -2,7 +2,7 @@ package mvp.modifiers.state.output
 
 import io.circe.{Decoder, Encoder, HCursor}
 import mvp.utils.Crypto.Sha256RipeMD160
-import scorex.crypto.encode.Base58
+import scorex.crypto.encode.Base16
 import io.circe.syntax._
 import mvp.local.messageTransaction.MessageInfo
 
@@ -48,11 +48,11 @@ object MessageOutput {
 
   implicit val jsonEncoder: Encoder[MessageOutput] = (b: MessageOutput) => Map(
     "type" -> typeId.asJson,
-    "bundle" -> Base58.encode(b.bundle).asJson,
-    "check" -> Base58.encode(b.check).asJson,
-    "messageHash" -> Base58.encode(b.messageHash).asJson,
-    "metadata" -> Base58.encode(b.metadata).asJson,
-    "publicKey" -> Base58.encode(b.publicKey).asJson,
-    "signature" -> Base58.encode(b.signature).asJson,
+    "bundle" -> Base16.encode(b.bundle).asJson,
+    "check" -> Base16.encode(b.check).asJson,
+    "messageHash" -> Base16.encode(b.messageHash).asJson,
+    "metadata" -> Base16.encode(b.metadata).asJson,
+    "publicKey" -> Base16.encode(b.publicKey).asJson,
+    "signature" -> Base16.encode(b.signature).asJson,
   ).asJson
 }

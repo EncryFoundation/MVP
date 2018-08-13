@@ -4,7 +4,7 @@ import com.google.common.primitives.Longs
 import io.circe.{Decoder, Encoder, HCursor}
 import io.circe.syntax._
 import mvp.utils.Crypto.Sha256RipeMD160
-import scorex.crypto.encode.Base58
+import scorex.crypto.encode.Base16
 
 case class AmountOutput(publicKey: Array[Byte],
                         amount: Long,
@@ -31,7 +31,7 @@ object AmountOutput {
 
   implicit val jsonEncoder: Encoder[AmountOutput] = (b: AmountOutput) => Map(
     "type" -> typeId.asJson,
-    "publicKey" -> Base58.encode(b.publicKey).asJson,
+    "publicKey" -> Base16.encode(b.publicKey).asJson,
     "amount" -> b.amount.asJson
   ).asJson
 }
