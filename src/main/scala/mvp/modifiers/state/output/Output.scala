@@ -5,6 +5,10 @@ import mvp.modifiers.Modifier
 
 trait Output extends Modifier {
 
+  val canBeSpent: Boolean
+
+  def closeForSpent: Output
+
   def unlock(proof: Array[Byte]): Boolean
 }
 
