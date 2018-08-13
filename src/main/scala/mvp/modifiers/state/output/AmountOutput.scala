@@ -7,7 +7,10 @@ import mvp.utils.Crypto.Sha256RipeMD160
 import scorex.crypto.encode.Base58
 
 case class AmountOutput(publicKey: Array[Byte],
-                        amount: Long) extends Output {
+                        amount: Long,
+                        override val canBeSpent: Boolean = true) extends Output {
+
+  override def closeForSpent: Output = this.copy(canBeSpent = false)
 
   override def unlock(proof: Array[Byte]): Boolean = true
 

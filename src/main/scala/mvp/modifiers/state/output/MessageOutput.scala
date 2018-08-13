@@ -11,7 +11,8 @@ case class MessageOutput(bundle: Array[Byte],
                          messageHash: Array[Byte],
                          metadata: Array[Byte],
                          publicKey: Array[Byte],
-                         signature: Array[Byte]) extends Output {
+                         signature: Array[Byte],
+                         override val canBeSpent: Boolean = true) extends Output {
 
   def toProofGenerator: MessageInfo = MessageInfo(messageHash, metadata, publicKey)
 
@@ -21,6 +22,8 @@ case class MessageOutput(bundle: Array[Byte],
 
   override def unlock(proof: Array[Byte]): Boolean =
     check sameElements Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)
+
+  override def closeForSpent: Output = this.copy(canBeSpent = false)
 }
 
 object MessageOutput {
