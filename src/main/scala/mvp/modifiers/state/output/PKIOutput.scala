@@ -10,13 +10,16 @@ case class PKIOutput(bundle: Array[Byte],
                      publicKeyHash: Array[Byte],
                      userData: Array[Byte],
                      publicKey: Array[Byte],
-                     signature: Array[Byte]) extends Output {
+                     signature: Array[Byte],
+                     override val canBeSpent: Boolean = true) extends Output {
 
   override val id: Array[Byte] = Sha256RipeMD160(
     bundle ++ check ++ publicKeyHash ++ userData ++ publicKey ++ signature
   )
 
   override def unlock(proof: Array[Byte]): Boolean = ???
+
+  override def closeForSpent: Output = this.copy(canBeSpent = false)
 }
 
 object PKIOutput {
