@@ -18,7 +18,9 @@ case class Blockchain(headers: Seq[Header] = Seq.empty, blocks: Seq[Block] = Seq
       headers,
       headers.find(_.merkleTreeRoot sameElements payload.id)
         .map { header =>
-          blocks :+ Block(header, payload)
+          val a = blocks :+ Block(header, payload)
+          println(blockchainHeight + "blockchain height")
+          a
         }
         .getOrElse(blocks)
     )

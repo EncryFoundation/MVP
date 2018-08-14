@@ -24,18 +24,20 @@ class StateHolder extends Actor with StrictLogging {
 
   def apply(modifier: Modifier): Unit = modifier match {
     case header: Header =>
-//      logger.info(s"Get header: ${Header.jsonEncoder(header)}")
+      //      logger.info(s"Get header: ${Header.jsonEncoder(header)}")
       blockChain = blockChain.addHeader(header)
+      println(Base16.encode(header.id) + "Headers in aply in StateHolder")
+      println(sender().path)
       if (settings.levelDB.enable)
         context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(header)
     case payload: Payload =>
-//      logger.info(s"Get payload: ${Payload.jsonEncoder(payload)}")
+      //      logger.info(s"Get payload: ${Payload.jsonEncoder(payload)}")
       blockChain = blockChain.addPayload(payload)
       state = state.updateState(payload)
       if (settings.levelDB.enable)
         context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(payload)
     case transaction: Transaction =>
-//      logger.info(s"Get transaction: ${Transaction.jsonEncoder(transaction)}")
+      //      logger.info(s"Get transaction: ${Transaction.jsonEncoder(transaction)}")
       val payload: Payload = Payload(Seq(transaction))
       val headerUnsigned: Header = Header(
         System.currentTimeMillis(),
@@ -49,15 +51,13 @@ class StateHolder extends Actor with StrictLogging {
           .copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
       apply(signedHeader)
       apply(payload)
-      if (settings.levelDB.enable)
-        context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(transaction)
   }
 
   def addMessage(message: UserMessage, previousMessage: Option[MessageInfo], outputId: Option[Array[Byte]]): Unit =
     if (!messagesHolder.contains(message)) {
       if (settings.levelDB.enable)
         context.actorSelection("/user/starter/modifiersHolder") ! RequestUserMessage(message)
-//      logger.info(s"Get message: ${UserMessage.jsonEncoder(message)}")
+      //      logger.info(s"Get message: ${UserMessage.jsonEncoder(message)}")
       messagesHolder = messagesHolder :+ message
       self ! Transactions(Seq(Generator.generateMessageTx(keys.keys.head, previousMessage, outputId, message.message)))
     }
@@ -81,6 +81,7 @@ class StateHolder extends Actor with StrictLogging {
 
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) =>
+      headers.foreach(a => println(Base16.encode(a.id)))
       headers.filter(validate).foreach(apply)
     case InfoMessage(msg: UserMessage) =>
       if (!messagesHolder.contains(msg)) {
@@ -89,7 +90,7 @@ class StateHolder extends Actor with StrictLogging {
             state
               .state
               .get(Base16.encode(outputId))
-              .map( _.asInstanceOf[OutputMessage].toProofGenerator )
+              .map(_.asInstanceOf[OutputMessage].toProofGenerator)
           )
         addMessage(msg, previousMessageInfo, msg.prevOutputId)
       }
