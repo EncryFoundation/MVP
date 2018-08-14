@@ -1,6 +1,5 @@
 package mvp.modifiers.state.output
 
-import com.typesafe.scalalogging.StrictLogging
 import io.circe.{Decoder, Encoder, HCursor}
 import mvp.utils.Crypto.Sha256RipeMD160
 import scorex.crypto.encode.Base16
@@ -13,7 +12,7 @@ case class MessageOutput(bundle: Array[Byte],
                          metadata: Array[Byte],
                          publicKey: Array[Byte],
                          signature: Array[Byte],
-                         override val canBeSpent: Boolean = true) extends Output with StrictLogging {
+                         override val canBeSpent: Boolean = true) extends Output {
 
   def toProofGenerator: MessageInfo = MessageInfo(messageHash, metadata, publicKey)
 
@@ -27,12 +26,12 @@ case class MessageOutput(bundle: Array[Byte],
 
   //Проверка, "связки" и "проверки"
   override def unlock(proofs: Seq[Array[Byte]]): Boolean = {
-      val result: Boolean = check sameElements Sha256RipeMD160(proofs.last ++ messageHash ++ metadata ++ publicKey)
-      logger.info(s"Going to validate output: ${MessageOutput.jsonEncoder(this)}." +
-        s"Check is ${Base16.encode(check)}." +
-        s"Bundle from next tx is ${Base16.encode(proofs.last)}" +
-        s"Unlock condition \'check = Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)\' is $result")
-      result
+    val result: Boolean = check sameElements Sha256RipeMD160(proofs.last ++ messageHash ++ metadata ++ publicKey)
+    logger.info(s"Going to validate output: ${MessageOutput.jsonEncoder(this)}." +
+      s"Check is ${Base16.encode(check)}." +
+      s"Bundle from next tx is ${Base16.encode(proofs.last)}" +
+      s"Unlock condition \'check = Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)\' is $result")
+    result
   }
 
   override def closeForSpent: Output = this.copy(canBeSpent = false)

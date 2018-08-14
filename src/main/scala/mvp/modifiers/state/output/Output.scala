@@ -1,9 +1,12 @@
 package mvp.modifiers.state.output
 
+import com.typesafe.scalalogging.StrictLogging
 import io.circe.{Decoder, DecodingFailure, Encoder}
 import mvp.modifiers.Modifier
+import scorex.crypto.signatures.{Curve25519, PublicKey, Signature}
+import scorex.util.encode.Base16
 
-trait Output extends Modifier {
+trait Output extends Modifier with StrictLogging {
 
   val messageToSign: Array[Byte]
 
@@ -12,6 +15,12 @@ trait Output extends Modifier {
   val signature: Array[Byte]
 
   val canBeSpent: Boolean
+
+  def checkSignature: Boolean = {
+    val result: Boolean = Curve25519.verify(Signature @@ signature, messageToSign, PublicKey @@ publicKey)
+    logger.info(s"Going to check signature for output with id: ${Base16.encode(id)} and result is: $result")
+    result
+  }
 
   def closeForSpent: Output
 

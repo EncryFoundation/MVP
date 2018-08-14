@@ -24,7 +24,6 @@ object Generator {
       Longs.toByteArray(System.currentTimeMillis()),
       privateKey.publicKeyBytes
     )
-    val signature: Signature25519 = Signature25519(Curve25519.sign(privateKey.privKeyBytes, messageInfo.messageToSign))
 
     //Создание связки
     val proof: Array[Byte] = previousMessage
@@ -32,19 +31,21 @@ object Generator {
       .getOrElse(Array.emptyByteArray)
     //Создание проверки
     val bundle: Array[Byte] = proverGenerator(messageInfo, iterCount, privateKey.privKeyBytes)
+    val messageOutput: MessageOutput =  MessageOutput(
+      proof,
+      bundle,
+      messageInfo.message,
+      messageInfo.metaData,
+      messageInfo.publicKey,
+      Array.emptyByteArray
+    )
+
+    val signature: Signature25519 = Signature25519(Curve25519.sign(privateKey.privKeyBytes, messageOutput.messageToSign))
+
     Transaction(
       System.currentTimeMillis(),
       outputId.map(output => Seq(Input(output, Seq(proof)))).getOrElse(Seq.empty),
-      Seq(
-        MessageOutput(
-          proof,
-          bundle,
-          messageInfo.message,
-          messageInfo.metaData,
-          messageInfo.publicKey,
-          signature.signature
-        )
-      )
+      Seq(messageOutput.copy(signature = signature.signature))
     )
   }
 
