@@ -1,10 +1,10 @@
-package mvp.stats
+package mvp.actors
 
 import akka.actor.Actor
 import com.typesafe.scalalogging.StrictLogging
-import org.influxdb.{InfluxDB, InfluxDBFactory}
 import mvp.MVP.settings
-import mvp.stats.InfluxActor.CurrentBlockHeight
+import mvp.actors.Messages.CurrentBlockHeight
+import org.influxdb.{InfluxDB, InfluxDBFactory}
 
 class InfluxActor extends Actor with StrictLogging {
 
@@ -27,11 +27,6 @@ class InfluxActor extends Actor with StrictLogging {
   }
 
   override def receive: Receive = {
-    case CurrentBlockHeight() =>
+    case CurrentBlockHeight =>
   }
-}
-
-object InfluxActor {
-
-  case class CurrentBlockHeight()
 }

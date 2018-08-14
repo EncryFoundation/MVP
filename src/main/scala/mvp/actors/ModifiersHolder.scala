@@ -2,16 +2,8 @@ package mvp.actors
 
 import akka.persistence.{PersistentActor, RecoveryCompleted}
 import com.typesafe.scalalogging.StrictLogging
-import mvp.actors.ModifiersHolder.{RequestModifiers, RequestUserMessage, Statistics}
-import mvp.local.messageHolder.UserMessage
-import mvp.modifiers.Modifier
 import mvp.modifiers.blockchain.{Block, Header, Payload}
-import mvp.modifiers.mempool.Transaction
-import scorex.util.encode.Base16
 import scala.collection.immutable.SortedMap
-import mvp.MVP.settings
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class ModifiersHolder extends PersistentActor with StrictLogging {
 

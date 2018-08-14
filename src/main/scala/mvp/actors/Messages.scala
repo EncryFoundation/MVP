@@ -1,9 +1,7 @@
 package mvp.actors
 
+import mvp.data.{Blockchain, Header, Payload, Transaction}
 import mvp.local.messageHolder.UserMessage
-import mvp.modifiers.blockchain.{Header, Payload}
-import mvp.modifiers.mempool.Transaction
-import mvp.view.blockchain.Blockchain
 
 object Messages {
 
@@ -14,6 +12,8 @@ object Messages {
   final case object Heartbeat extends Message
 
   case object GetLastInfo extends Message
+
+  case object CurrentBlockHeight
 
   case class InfoMessage(msg: UserMessage) extends Message
 

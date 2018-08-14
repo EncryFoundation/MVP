@@ -3,6 +3,7 @@ package mvp.actors
 import akka.actor.Actor
 import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, SendMyName, UserMessageFromCLI}
 import com.typesafe.scalalogging.StrictLogging
+import mvp.data.{Blockchain, Modifier, State, _}
 import io.circe.{Decoder, Encoder, HCursor}
 import io.circe.syntax._
 import mvp.MVP.settings
@@ -11,12 +12,6 @@ import mvp.actors.ModifiersHolder.{RequestModifiers, RequestUserMessage}
 import mvp.local.messageHolder.UserMessage
 import mvp.local.messageTransaction.MessageInfo
 import mvp.local.{Generator, Keys}
-import mvp.modifiers.Modifier
-import mvp.modifiers.blockchain.{Block, Header, Payload}
-import mvp.modifiers.mempool.Transaction
-import mvp.modifiers.state.output.MessageOutput
-import mvp.view.blockchain.Blockchain
-import mvp.view.state.State
 import scorex.crypto.signatures.Curve25519
 import scorex.util.encode.Base16
 
@@ -80,7 +75,7 @@ class StateHolder extends Actor with StrictLogging {
       //println(s"Going to validate: ${Transaction.jsonEncoder(transaction)}")
       transaction
         .inputs
-        .forall(input => state.state.get(input.useOutputId)
+        .forall(input => state.state.get(Base16.encode(input.useOutputId))
           .exists(outputToUnlock => outputToUnlock.unlock(input.proof) && outputToUnlock.canBeSpent))
   }
 
@@ -93,8 +88,8 @@ class StateHolder extends Actor with StrictLogging {
           msg.prevOutputId.flatMap(outputId =>
             state
               .state
-              .get(outputId)
-              .map(_.asInstanceOf[MessageOutput].toProofGenerator)
+              .get(Base16.encode(outputId))
+              .map( _.asInstanceOf[OutputMessage].toProofGenerator )
           )
         addMessage(msg, previousMessageInfo, msg.prevOutputId)
       }
