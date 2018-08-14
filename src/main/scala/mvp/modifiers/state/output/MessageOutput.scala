@@ -1,5 +1,6 @@
 package mvp.modifiers.state.output
 
+import com.typesafe.scalalogging.StrictLogging
 import io.circe.{Decoder, Encoder, HCursor}
 import mvp.utils.Crypto.Sha256RipeMD160
 import scorex.crypto.encode.Base16
@@ -12,7 +13,7 @@ case class MessageOutput(bundle: Array[Byte],
                          metadata: Array[Byte],
                          publicKey: Array[Byte],
                          signature: Array[Byte],
-                         override val canBeSpent: Boolean = true) extends Output {
+                         override val canBeSpent: Boolean = true) extends Output with StrictLogging {
 
   def toProofGenerator: MessageInfo = MessageInfo(messageHash, metadata, publicKey)
 
@@ -21,8 +22,14 @@ case class MessageOutput(bundle: Array[Byte],
   )
 
   //Проверка, "связки" и "проверки"
-  override def unlock(proof: Array[Byte]): Boolean =
-    check sameElements Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)
+  override def unlock(proof: Array[Byte]): Boolean = {
+    val result: Boolean = check sameElements Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)
+    logger.info(s"Going to validate output: ${MessageOutput.jsonEncoder(this)}." +
+      s"Check is ${Base16.encode(check)}." +
+      s"Bundle from next tx is ${Base16.encode(proof)}" +
+      s"Unlock condition \"check = Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)\" is $result")
+    result
+  }
 
   override def closeForSpent: Output = this.copy(canBeSpent = false)
 }

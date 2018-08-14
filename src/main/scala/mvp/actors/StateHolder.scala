@@ -61,14 +61,15 @@ class StateHolder extends Actor with StrictLogging {
   def validate(modifier: Modifier): Boolean = modifier match {
     //TODO: Add semantic validation check
     case header: Header =>
-      (header.height == 0 || (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
-        .exists(prevHeader => header.previousBlockHash sameElements prevHeader.id))) &&
-        !blockChain.headers.map(header => Base16.encode(header.id)).contains(Base16.encode(header.id))
+      !blockChain.headers.map(header => Base16.encode(header.id)).contains(Base16.encode(header.id)) &&
+      (header.height == 0 ||
+        (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
+        .exists(prevHeader => header.previousBlockHash sameElements prevHeader.id)))
     case payload: Payload =>
-      payload.transactions.forall(validate) &&
-        !blockChain.blocks.map(block => Base16.encode(block.payload.id)).contains(Base16.encode(payload.id))
+        !blockChain.blocks.map(block => Base16.encode(block.payload.id)).contains(Base16.encode(payload.id)) &&
+          payload.transactions.forall(validate)
     case transaction: Transaction =>
-      //println(s"Going to validate: ${Transaction.jsonEncoder(transaction)}")
+      logger.info(s"Going to validate tx: ${Transaction.jsonEncoder(transaction)}")
       transaction
         .inputs
         .forall(input => state.state.get(Base16.encode(input.useOutputId))
