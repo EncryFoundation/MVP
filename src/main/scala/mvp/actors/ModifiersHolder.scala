@@ -2,7 +2,7 @@ package mvp.actors
 
 import akka.persistence.{PersistentActor, RecoveryCompleted}
 import com.typesafe.scalalogging.StrictLogging
-import mvp.actors.ModifiersHolder.{RequestBlock, RequestModifiers, RequestUserMessage}
+import mvp.actors.ModifiersHolder.{RequestModifiers, RequestUserMessage, Statistics}
 import mvp.local.messageHolder.UserMessage
 import mvp.modifiers.Modifier
 import mvp.modifiers.blockchain.{Block, Header, Payload}
@@ -10,6 +10,8 @@ import mvp.modifiers.mempool.Transaction
 import scorex.util.encode.Base16
 import scala.collection.immutable.SortedMap
 import mvp.MVP.settings
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class ModifiersHolder extends PersistentActor with StrictLogging {
 
@@ -18,6 +20,10 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   var transactions: Map[String, (Transaction, Int)] = Map.empty
   var blocks: SortedMap[Int, Block] = SortedMap.empty
   var messages: SortedMap[String, UserMessage] = SortedMap.empty
+
+  context.system.scheduler.schedule(5.second, 5.second) {
+    logger.debug(Statistics(headers.size, payloads.size, blocks.size, transactions.size, messages.size).toString)
+  }
 
   override def preStart(): Unit = logger.info(s"ModifiersHolder actor is started.")
 
@@ -49,7 +55,6 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   override def receiveCommand: Receive = {
     case RequestModifiers(modifier: Modifier) => saveModifiers(modifier)
     case RequestUserMessage(message: UserMessage) => saveUserMessage(message)
-    case RequestBlock(block: Block) => saveBlock(block)
     case x: Any => logger.error(s"Strange input: $x.")
   }
 
@@ -75,13 +80,6 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
       }
       updateTransactions(transaction)
     case x: Any => logger.error(s"Strange input $x")
-  }
-
-  def saveBlock(block: Block): Unit = {
-    persist(block) { block =>
-      logger.debug(s"Block ${block.header} with id ${Base16.encode(block.id)} persisted successfully.")
-    }
-    updateBlocks(block)
   }
 
   def saveUserMessage(message: UserMessage): Unit = {
@@ -122,8 +120,17 @@ object ModifiersHolder {
 
   case class RequestModifiers(modifier: Modifier)
 
-  case class RequestBlock(block: Block)
-
   case class RequestUserMessage(messages: UserMessage)
+
+  case class Statistics(receivedHeaders: Int,
+                        receivedPayloads: Int,
+                        receivedBlocks: Int,
+                        receivedTransactions: Int,
+                        receivedMessages: Int) {
+    override def toString: String = s"Stats: $receivedHeaders headers, " +
+      s"$receivedPayloads payloads, " +
+      s"$receivedBlocks blocks, " +
+      s"$receivedTransactions transactions"
+  }
 
 }
