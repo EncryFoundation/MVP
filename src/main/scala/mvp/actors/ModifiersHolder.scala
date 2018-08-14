@@ -36,7 +36,7 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
       logger.debug(s"Payload recovered from leveldb.")
     case block: Block =>
       updateBlocks(block)
-      logger.debug(s"Block ${block.header.height} recovered from leveldb.")
+      logger.debug(s"Block ${block.header.height} with id ${Base16.encode(block.id)} recovered from leveldb.")
     case transaction: Transaction =>
       updateTransactions(transaction)
       logger.debug(s"Transaction with id ${Base16.encode(transaction.id)} recovered from leveldb")
@@ -68,9 +68,10 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
       }
       updatePayloads(payload)
     case block: Block =>
-      persist(block) { block =>
-        logger.debug(s"Header at height: ${block.header.height} with id: ${Base16.encode(block.id)} persisted successfully.")
-      }
+      if (!blocks.values.toSeq.contains(block))
+        persist(block) { block =>
+          logger.debug(s"Header at height: ${block.header.height} with id: ${Base16.encode(block.id)} persisted successfully.")
+        }
       updateBlocks(block)
     case transaction: Transaction =>
       persist(transaction) { transaction =>

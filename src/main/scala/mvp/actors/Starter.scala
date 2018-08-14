@@ -41,8 +41,8 @@ class Starter extends Actor with StrictLogging {
         .map(decode[LastInfo])
         .flatMap(res => res.fold(Future.failed, Future.successful))
         .onComplete(_.map { lastInfo =>
-          logger.info(s"Get blocks from remote: ${lastInfo.blocks.map(block => Block.jsonEncoder(block)).mkString("\n")}")
-          logger.info(s"Get messages from remote: ${lastInfo.messages.map(msg => UserMessage.jsonEncoder(msg)).mkString("\n")}")
+//          logger.info(s"Get blocks from remote: ${lastInfo.blocks.map(block => Block.jsonEncoder(block)).mkString("\n")}")
+//          logger.info(s"Get messages from remote: ${lastInfo.messages.map(msg => UserMessage.jsonEncoder(msg)).mkString("\n")}")
           context.system.actorSelection("user/stateHolder") ! Headers(lastInfo.blocks.map(_.header))
           context.system.actorSelection("user/stateHolder") ! Payloads(lastInfo.blocks.map(_.payload))
         })
