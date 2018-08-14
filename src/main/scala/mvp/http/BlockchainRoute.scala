@@ -1,4 +1,4 @@
-package mvp.http.routes
+package mvp.http
 
 import akka.actor.ActorRefFactory
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
@@ -10,6 +10,7 @@ import io.circe.Json
 import io.circe.syntax._
 import mvp.actors.LastInfo
 import mvp.actors.Messages.GetLastInfo
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 

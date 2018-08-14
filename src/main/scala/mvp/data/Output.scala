@@ -1,7 +1,6 @@
-package mvp.modifiers.state.output
+package mvp.data
 
 import io.circe.{Decoder, DecodingFailure, Encoder}
-import mvp.modifiers.Modifier
 
 trait Output extends Modifier {
 
@@ -18,9 +17,9 @@ object Output {
     Decoder.instance { ins =>
       ins.downField("type").as[Byte] match {
         case Right(outputTypeId) => outputTypeId match {
-          case AmountOutput.typeId => AmountOutput.jsonDecoder(ins)
-          case PKIOutput.typeId => PKIOutput.jsonDecoder(ins)
-          case MessageOutput.typeId => MessageOutput.jsonDecoder(ins)
+          case OutputAmount.typeId => OutputAmount.jsonDecoder(ins)
+          case OutputPKI.typeId => OutputPKI.jsonDecoder(ins)
+          case OutputMessage.typeId => OutputMessage.jsonDecoder(ins)
         }
         case Left(_) => Left(DecodingFailure("None typeId", ins.history))
       }
@@ -29,8 +28,8 @@ object Output {
   }
 
   implicit val jsonEncoder: Encoder[Output] = {
-    case ab: AmountOutput => AmountOutput.jsonEncoder(ab)
-    case db: PKIOutput => PKIOutput.jsonEncoder(db)
-    case aib: MessageOutput => MessageOutput.jsonEncoder(aib)
+    case ab: OutputAmount => OutputAmount.jsonEncoder(ab)
+    case db: OutputPKI => OutputPKI.jsonEncoder(db)
+    case aib: OutputMessage => OutputMessage.jsonEncoder(aib)
   }
 }

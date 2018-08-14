@@ -1,12 +1,12 @@
-package mvp.modifiers.state.output
+package mvp.data
 
-import io.circe.{Decoder, Encoder, HCursor}
-import mvp.utils.Crypto.Sha256RipeMD160
-import scorex.crypto.encode.Base58
 import io.circe.syntax._
+import io.circe.{Decoder, Encoder, HCursor}
 import mvp.local.messageTransaction.MessageInfo
+import mvp.utils.Crypto.Sha256RipeMD160
+import scorex.crypto.encode.Base16
 
-case class MessageOutput(bundle: Array[Byte],
+case class OutputMessage(bundle: Array[Byte],
                          check: Array[Byte],
                          messageHash: Array[Byte],
                          metadata: Array[Byte],
@@ -20,40 +20,41 @@ case class MessageOutput(bundle: Array[Byte],
     bundle ++ check ++ messageHash ++ metadata ++ publicKey ++ signature
   )
 
+  //Проверка, "связки" и "проверки"
   override def unlock(proof: Array[Byte]): Boolean =
     check sameElements Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)
 
   override def closeForSpent: Output = this.copy(canBeSpent = false)
 }
 
-object MessageOutput {
+object OutputMessage {
 
   val typeId: Byte = 2: Byte
 
-  implicit val jsonDecoder: Decoder[MessageOutput] = (c: HCursor) => for {
+  implicit val jsonDecoder: Decoder[OutputMessage] = (c: HCursor) => for {
     bundle <- c.downField("bundle").as[String]
     check <- c.downField("check").as[String]
     messageHash <- c.downField("messageHash").as[String]
     metadata <- c.downField("metadata").as[String]
     publicKey <- c.downField("publicKey").as[String]
     signature <- c.downField("signature").as[String]
-  } yield MessageOutput(
-    Base58.decode(bundle).get,
-    Base58.decode(check).get,
-    Base58.decode(messageHash).get,
-    Base58.decode(metadata).get,
-    Base58.decode(publicKey).get,
-    Base58.decode(signature).get
+  } yield OutputMessage(
+    Base16.decode(bundle).getOrElse(Array.emptyByteArray),
+    Base16.decode(check).getOrElse(Array.emptyByteArray),
+    Base16.decode(messageHash).getOrElse(Array.emptyByteArray),
+    Base16.decode(metadata).getOrElse(Array.emptyByteArray),
+    Base16.decode(publicKey).getOrElse(Array.emptyByteArray),
+    Base16.decode(signature).getOrElse(Array.emptyByteArray)
   )
 
-  implicit val jsonEncoder: Encoder[MessageOutput] = (b: MessageOutput) => Map(
-    "id" -> Base58.encode(b.id).asJson,
+  implicit val jsonEncoder: Encoder[OutputMessage] = (b: OutputMessage) => Map(
+    "id" -> Base16.encode(b.id).asJson,
     "type" -> typeId.asJson,
-    "bundle" -> Base58.encode(b.bundle).asJson,
-    "check" -> Base58.encode(b.check).asJson,
-    "messageHash" -> Base58.encode(b.messageHash).asJson,
-    "metadata" -> Base58.encode(b.metadata).asJson,
-    "publicKey" -> Base58.encode(b.publicKey).asJson,
-    "signature" -> Base58.encode(b.signature).asJson,
+    "bundle" -> Base16.encode(b.bundle).asJson,
+    "check" -> Base16.encode(b.check).asJson,
+    "messageHash" -> Base16.encode(b.messageHash).asJson,
+    "metadata" -> Base16.encode(b.metadata).asJson,
+    "publicKey" -> Base16.encode(b.publicKey).asJson,
+    "signature" -> Base16.encode(b.signature).asJson,
   ).asJson
 }

@@ -1,10 +1,8 @@
-package mvp.modifiers.blockchain
+package mvp.data
 
-import io.circe.{Decoder, Encoder, HCursor}
-import mvp.modifiers.Modifier
-import mvp.modifiers.mempool.Transaction
-import mvp.utils.BlockchainUtils
 import io.circe.syntax._
+import io.circe.{Decoder, Encoder, HCursor}
+import mvp.utils.BlockchainUtils
 
 case class Payload(transactions: Seq[Transaction]) extends Modifier {
 
