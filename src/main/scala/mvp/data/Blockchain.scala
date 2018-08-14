@@ -1,9 +1,7 @@
-package mvp.view.blockchain
+package mvp.data
 
 import mvp.MVP.settings
 import mvp.actors.ModifiersHolder.RequestModifiers
-import mvp.modifiers.blockchain.{Block, Header, Payload}
-package mvp.data
 
 //TODO: Blocks to levelDb
 

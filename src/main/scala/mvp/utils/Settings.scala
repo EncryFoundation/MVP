@@ -9,7 +9,8 @@ case class Settings(thisNode: Node,
                     testMode: Boolean,
                     heartbeat: Int,
                     influxDB: InfluxDBSettings,
-                    mvpSettings: mvpSettings)
+                    mvpSettings: mvpSettings,
+                    levelDB: LevelDBSettings)
 
 case class Node(host: String, port: Int)
 
@@ -21,6 +22,10 @@ case class InfluxDBSettings(url: String,
 case class mvpSettings(enableCLI: Boolean,
                        nodeName: String,
                        sendStat: Boolean)
+
+case class LevelDBSettings(enable: Boolean,
+                           recoverMode: Boolean,
+                           batchSize: Int)
 
 object Settings {
   def load: Settings = ConfigFactory.load("local.conf")

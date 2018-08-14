@@ -9,13 +9,11 @@ import com.typesafe.scalalogging.StrictLogging
 import mvp.data.Block
 import io.circe.parser.decode
 import mvp.MVP.{materializer, settings, system}
-import mvp.actors.Messages.{Headers, Heartbeat, Payloads, Start}
 import mvp.actors.Messages.{Heartbeat, Start, Headers, Payloads}
 import mvp.cli.ConsoleActor
 import mvp.cli.ConsoleActor._
 import mvp.http.HttpServer
 import mvp.local.messageHolder.UserMessage
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
