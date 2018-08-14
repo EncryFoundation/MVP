@@ -5,11 +5,17 @@ import mvp.modifiers.Modifier
 
 trait Output extends Modifier {
 
+  val messageToSign: Array[Byte]
+
+  val publicKey: Array[Byte]
+
+  val signature: Array[Byte]
+
   val canBeSpent: Boolean
 
   def closeForSpent: Output
 
-  def unlock(proof: Array[Byte]): Boolean
+  def unlock(proofs: Seq[Array[Byte]]): Boolean
 }
 
 object Output {

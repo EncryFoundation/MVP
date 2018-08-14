@@ -34,7 +34,7 @@ object Generator {
     val bundle: Array[Byte] = proverGenerator(messageInfo, iterCount, privateKey.privKeyBytes)
     Transaction(
       System.currentTimeMillis(),
-      outputId.map(output => Seq(Input(output, proof))).getOrElse(Seq.empty),
+      outputId.map(output => Seq(Input(output, Seq(proof)))).getOrElse(Seq.empty),
       Seq(
         MessageOutput(
           proof,
