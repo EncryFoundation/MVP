@@ -33,7 +33,7 @@ libraryDependencies ++= Seq(
   "org.scorexfoundation" %% "scrypto" % "2.1.1",
   "com.iheart" %% "ficus" % "1.4.3",
   "org.influxdb" % "influxdb-java" % "2.10",
-  "org.iq80.leveldb" % "leveldb" % "0.7",
+  "org.iq80.leveldb" % "leveldb" % "0.7"
 ) ++ loggingDependencies ++ testingDependencies
 
 resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",
