@@ -26,10 +26,10 @@ object TestGenerator {
         }
     }
 
-  def generateDummyAmountOutputs(qty: Int): Seq[Output] = (0 until qty).map(i => AmountOutput(Random.randomBytes(), 100L, Random.randomBytes()))
+  def generateDummyAmountOutputs(qty: Int): Seq[Output] = (0 until qty).map(i => OutputAmount(Random.randomBytes(), 100L, Random.randomBytes()))
 
   def generatePaymentTxs(inputs: Seq[Input]): Seq[Transaction] = inputs.foldLeft(Seq.empty[Transaction]) {
     case (transatcions, input) =>
-      transatcions :+ Transaction(0L, Seq(input), Seq(AmountOutput(Random.randomBytes(), 100, Random.randomBytes())))
+      transatcions :+ Transaction(0L, Seq(input), Seq(OutputAmount(Random.randomBytes(), 100, Random.randomBytes())))
   }
 }

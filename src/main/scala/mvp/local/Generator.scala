@@ -29,7 +29,7 @@ object Generator {
       .getOrElse(Array.emptyByteArray)
     //Создание проверки
     val bundle: Array[Byte] = proverGenerator(messageInfo, iterCount, privateKey.privKeyBytes)
-    val messageOutput: MessageOutput =  MessageOutput(
+    val messageOutput: OutputMessage = OutputMessage(
       proof,
       bundle,
       messageInfo.message,

@@ -28,7 +28,7 @@ object OutputAmount {
     publicKey <- c.downField("publicKey").as[String]
     amount <- c.downField("amount").as[Long]
     signature <- c.downField("signature").as[String]
-  } yield AmountOutput(
+  } yield OutputAmount(
     Base16.decode(publicKey).getOrElse(Array.emptyByteArray),
     amount,
     Base16.decode(signature).getOrElse(Array.emptyByteArray)
