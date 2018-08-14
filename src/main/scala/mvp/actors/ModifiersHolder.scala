@@ -7,7 +7,7 @@ import mvp.local.messageHolder.UserMessage
 import mvp.modifiers.Modifier
 import mvp.modifiers.blockchain.{Block, Header, Payload}
 import mvp.modifiers.mempool.Transaction
-import scorex.util.encode.Base58
+import scorex.util.encode.Base16
 
 import scala.collection.immutable.SortedMap
 
@@ -42,27 +42,31 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   def updateModifiers(modifiers: Modifier): Unit = modifiers match {
     case header: Header =>
       persist(header) { header =>
-        logger.debug(s"Header at height: ${header.height} with id: ${Base58.encode(header.id)} persisted successfully.")
+        logger.debug(s"Header at height: ${header.height} with id: ${Base16.encode(header.id)} persisted successfully.")
       }
+      updateHeaders(header)
     case payload: Payload =>
       persist(payload) { payload =>
-        logger.debug(s"Payload with id: ${Base58.encode(payload.id)} persisted successfully.")
+        logger.debug(s"Payload with id: ${Base16.encode(payload.id)} persisted successfully.")
       }
+      updatePayloads(payload)
     case block: Block =>
       persist(block) { block =>
-        logger.debug(s"Header at height: ${block.header.height} with id: ${Base58.encode(block.id)} persisted successfully.")
+        logger.debug(s"Header at height: ${block.header.height} with id: ${Base16.encode(block.id)} persisted successfully.")
       }
+      updateBlocks(block)
     case transaction: Transaction =>
       persist(transaction) { transaction =>
-        logger.debug(s"Transaction ${Base58.encode(transaction.id)} persisted successfully.")
+        logger.debug(s"Transaction ${Base16.encode(transaction.id)} persisted successfully.")
       }
     case x: Any => logger.error(s"Strange input $x")
   }
 
   def updateBlock(block: Block) = {
     persist(block) { block =>
-      logger.debug(s"Block ${block.header} with id ${Base58.encode(block.id)} persisted successfully.")
+      logger.debug(s"Block ${block.header} with id ${Base16.encode(block.id)} persisted successfully.")
     }
+    updateBlocks(block)
   }
 
   def updateUserMessage(message: UserMessage): Unit = {
@@ -71,17 +75,21 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
     }
   }
 
-  def updateHeaders(header: Header): Unit = ???
+  def updateHeaders(header: Header): Unit = {
+    val prevValue: (Header, Int) = headers.getOrElse(Base16.encode(header.id), (header, -1))
+    headers += Base16.encode(header.id) -> (prevValue._1, prevValue._2 + 1)
+  }
 
-  def updatePayloads(payload: Payload): Unit = ???
+  def updatePayloads(payload: Payload): Unit = {
+    val prevValue: (Payload, Int) = payloads.getOrElse(Base16.encode(payload.id), (payload, -1))
+    payloads += Base16.encode(payload.id) -> (prevValue._1, prevValue._2 + 1)
+  }
 
-  def updateBlocks(pblock: Block): Unit = ???
+  def updateBlocks(block: Block): Unit = blocks += block.header.height -> block
 
   override def persistenceId: String = "persistent actor"
 
   override def journalPluginId: String = "akka.persistence.journal.leveldb"
-
-  override def snapshotPluginId: String = "akka.persistence.snapshot-store.local"
 
 }
 
