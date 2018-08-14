@@ -1,7 +1,5 @@
-package mvp.view.state
+package mvp.data
 
-import mvp.modifiers.blockchain.Payload
-import mvp.modifiers.state.output.{AmountOutput, Output}
 import mvp.utils.Crypto.Sha256RipeMD160
 import scorex.util.encode.Base16
 
@@ -15,7 +13,7 @@ case class State(state: Map[String, Output] = Map.empty[String, Output]) {
   def updateState(payload: Payload): State = {
     val (toAddToState, toRemoveFromState) = payload.transactions.foldLeft(Seq.empty[Output] -> Seq.empty[String]) {
       case ((toAdd, toRemove), tx) =>
-        if (tx.outputs.forall(_.isInstanceOf[AmountOutput]))
+        if (tx.outputs.forall(_.isInstanceOf[OutputAmount]))
           (toAdd ++ tx.outputs, toRemove ++ tx.inputs.map(input => Base16.encode(input.useOutputId)))
         else (toAdd ++
           tx.outputs ++

@@ -1,9 +1,6 @@
 package utils
 
-import mvp.modifiers.blockchain.{Block, Header, Payload}
-import mvp.modifiers.mempool.Transaction
-import mvp.modifiers.state.input.Input
-import mvp.modifiers.state.output.{AmountOutput, Output}
+import mvp.data.{OutputAmount, _}
 import scorex.utils.Random
 
 object TestGenerator {

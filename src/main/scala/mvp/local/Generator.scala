@@ -1,10 +1,8 @@
 package mvp.local
 
 import com.google.common.primitives.Longs
+import mvp.data.{Input, OutputMessage, Transaction}
 import mvp.local.messageTransaction.MessageInfo
-import mvp.modifiers.mempool.Transaction
-import mvp.modifiers.state.input.Input
-import mvp.modifiers.state.output.MessageOutput
 import mvp.utils.Crypto.Sha256RipeMD160
 import org.encryfoundation.common.crypto.{PrivateKey25519, Signature25519}
 import scorex.crypto.signatures.Curve25519

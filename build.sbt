@@ -1,12 +1,7 @@
 name := "mvp"
 version := "0.1"
 scalaVersion := "2.12.6"
-organization := "org.encry"
-
-resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",
-  "SonaType" at "https://oss.sonatype.org/content/groups/public",
-  "Typesafe maven releases" at "http://repo.typesafe.com/typesafe/maven-releases/",
-  "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/")
+organization := "org.encryfoundation"
 
 val akkaVersion = "2.5.13"
 val akkaHttpVersion = "10.0.9"
@@ -15,7 +10,7 @@ val testingDependencies = Seq(
   "com.typesafe.akka" %% "akka-testkit" % "2.4.+" % "test",
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test",
   "org.scalatest" %% "scalatest" % "3.0.3" % "test",
-  "org.scalacheck" %% "scalacheck" % "1.13.+" % "test",
+  "org.scalacheck" %% "scalacheck" % "1.13.+" % "test"
 )
 
 val loggingDependencies = Seq(
@@ -37,5 +32,10 @@ libraryDependencies ++= Seq(
   "javax.xml.bind" % "jaxb-api" % "2.+",
   "org.scorexfoundation" %% "scrypto" % "2.1.1",
   "com.iheart" %% "ficus" % "1.4.3",
-  "org.influxdb" % "influxdb-java" % "2.10",
+  "org.influxdb" % "influxdb-java" % "2.10"
 ) ++ loggingDependencies ++ testingDependencies
+
+resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",
+  "SonaType" at "https://oss.sonatype.org/content/groups/public",
+  "Typesafe maven releases" at "http://repo.typesafe.com/typesafe/maven-releases/",
+  "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/")

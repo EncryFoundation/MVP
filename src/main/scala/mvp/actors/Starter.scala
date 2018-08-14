@@ -6,15 +6,15 @@ import akka.http.scaladsl.model.headers.Host
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
+import mvp.data.Block
 import io.circe.parser.decode
 import mvp.MVP.{materializer, settings, system}
-import mvp.actors.Messages.{Heartbeat, Start,Headers, Payloads}
+import mvp.actors.Messages.{Headers, Heartbeat, Payloads, Start}
 import mvp.cli.ConsoleActor
 import mvp.cli.ConsoleActor._
 import mvp.http.HttpServer
 import mvp.local.messageHolder.UserMessage
-import mvp.modifiers.blockchain.Block
-import mvp.stats.InfluxActor
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._

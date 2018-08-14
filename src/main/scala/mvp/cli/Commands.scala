@@ -1,6 +1,6 @@
 package mvp.cli
 
-import mvp.view.blockchain.Blockchain
+import mvp.data.Blockchain
 
 object Commands {
 

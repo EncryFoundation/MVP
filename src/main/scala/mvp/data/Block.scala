@@ -1,9 +1,7 @@
-package mvp.modifiers.blockchain
+package mvp.data
 
-import io.circe.{Decoder, Encoder, HCursor}
-import mvp.modifiers.Modifier
-import mvp.utils.Crypto.Sha256RipeMD160
 import io.circe.syntax._
+import io.circe.{Decoder, Encoder, HCursor}
 
 case class Block(header: Header, payload: Payload) extends Modifier {
 
