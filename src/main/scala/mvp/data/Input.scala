@@ -1,10 +1,9 @@
-package mvp.modifiers.state.input
+package mvp.data
 
+import io.circe.syntax._
 import io.circe.{Decoder, Encoder, HCursor}
-import mvp.modifiers.Modifier
 import mvp.utils.Crypto.Sha256RipeMD160
 import scorex.crypto.encode.Base16
-import io.circe.syntax._
 
 case class Input(useOutputId: Array[Byte],
                  proof: Array[Byte]) extends Modifier {

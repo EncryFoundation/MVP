@@ -1,10 +1,6 @@
 package mvp.actors
 
-import mvp.modifiers.blockchain.Block
-import mvp.modifiers.state.input.Input
-import mvp.modifiers.state.output.Output
-import mvp.view.blockchain.Blockchain
-import mvp.view.state.State
+import mvp.data._
 import org.scalatest.{Matchers, PropSpec}
 import scorex.util.encode.Base16
 import scorex.utils.Random

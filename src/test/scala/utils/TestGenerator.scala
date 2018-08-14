@@ -1,9 +1,6 @@
 package utils
 
-import mvp.modifiers.blockchain.{Block, Header, Payload}
-import mvp.modifiers.mempool.Transaction
-import mvp.modifiers.state.input.Input
-import mvp.modifiers.state.output.{AmountOutput, Output}
+import mvp.data.{OutputAmount, _}
 import scorex.utils.Random
 
 object TestGenerator {
@@ -29,10 +26,10 @@ object TestGenerator {
         }
     }
 
-  def generateDummyAmountOutputs(qty: Int): Seq[Output] = (0 until qty).map(i => AmountOutput(Random.randomBytes(), 100L))
+  def generateDummyAmountOutputs(qty: Int): Seq[Output] = (0 until qty).map(i => OutputAmount(Random.randomBytes(), 100L))
 
   def generatePaymentTxs(inputs: Seq[Input]): Seq[Transaction] = inputs.foldLeft(Seq.empty[Transaction]) {
     case (transatcions, input) =>
-      transatcions :+ Transaction(0L, Seq(input), Seq(AmountOutput(Random.randomBytes(), 100)))
+      transatcions :+ Transaction(0L, Seq(input), Seq(OutputAmount(Random.randomBytes(), 100)))
   }
 }
