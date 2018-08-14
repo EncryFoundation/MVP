@@ -32,7 +32,7 @@ libraryDependencies ++= Seq(
   "javax.xml.bind" % "jaxb-api" % "2.+",
   "org.scorexfoundation" %% "scrypto" % "2.1.1",
   "com.iheart" %% "ficus" % "1.4.3",
-  "org.influxdb" % "influxdb-java" % "2.10",
+  "org.influxdb" % "influxdb-java" % "2.10"
 ) ++ loggingDependencies ++ testingDependencies
 
 resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",
