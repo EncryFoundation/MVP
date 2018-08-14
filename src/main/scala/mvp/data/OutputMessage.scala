@@ -28,9 +28,9 @@ case class OutputMessage(bundle: Array[Byte],
   override def unlock(proofs: Seq[Array[Byte]]): Boolean = {
     val result: Boolean = check sameElements Sha256RipeMD160(proofs.last ++ messageHash ++ metadata ++ publicKey)
     logger.info(s"Going to validate output: ${OutputMessage.jsonEncoder(this)}." +
-      s"Check is ${Base16.encode(check)}." +
-      s"Bundle from next tx is ${Base16.encode(proofs.last)}" +
-      s"Unlock condition \'check = Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)\' is $result")
+      s"\nCheck is ${Base16.encode(check)}." +
+      s"\nBundle from next tx is ${Base16.encode(proofs.last)}" +
+      s"\nUnlock condition \'check = Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)\' is $result")
     result
   }
 
