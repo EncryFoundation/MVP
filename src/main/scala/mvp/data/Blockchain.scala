@@ -18,10 +18,6 @@ case class Blockchain(headers: Seq[Header] = Seq.empty, blocks: Seq[Block] = Seq
       headers,
       headers.find(_.merkleTreeRoot sameElements payload.id)
         .map { header =>
-          if (settings.levelDB.enable) {
-            import mvp.MVP.system
-            system.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(Block(header, payload))
-          }
           blocks :+ Block(header, payload)
         }
         .getOrElse(blocks)
