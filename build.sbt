@@ -40,3 +40,22 @@ resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repos
   "SonaType" at "https://oss.sonatype.org/content/groups/public",
   "Typesafe maven releases" at "http://repo.typesafe.com/typesafe/maven-releases/",
   "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/")
+
+assemblyJarName in assembly := "mvp.jar"
+
+mainClass in assembly := Some("mvp.MVP")
+
+test in assembly := {}
+
+assemblyMergeStrategy in assembly := {
+  case "logback.xml" => MergeStrategy.first
+  case "module-info.class" => MergeStrategy.discard
+  case "META-INF/MANIFEST.MF" => MergeStrategy.discard
+  case "META-INF/*.DSA" => MergeStrategy.discard
+  case "META-INF/*.RSA" => MergeStrategy.discard
+  case "META-INF/*.SF" => MergeStrategy.discard
+  case "META-INF/BC1024KE.SF" => MergeStrategy.discard
+  case "META-INF/BC2048KE.SF" => MergeStrategy.discard
+  case PathList("reference.conf") => MergeStrategy.concat
+  case _ => MergeStrategy.first
+}
