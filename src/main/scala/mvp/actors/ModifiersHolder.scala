@@ -10,6 +10,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.immutable.SortedMap
 import mvp.MVP.settings
 import mvp.actors.Messages.{Headers, Payloads}
+import mvp.utils.Crypto.Sha256RipeMD160
 import scala.concurrent.duration._
 
 class ModifiersHolder extends PersistentActor with StrictLogging {
@@ -21,7 +22,7 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   var transactions: Map[String, (Transaction, Int)] = Map.empty
 
   context.system.scheduler.schedule(5.second, 5.second) {
-    logger.debug(Statistics(headers.size, payloads.size, messages.size).toString)
+    logger.debug(Statistics(headers, payloads, messages, transactions, blocks).toString)
   }
 
   //TODO cant send Seq[Header] to StateHolder actor
@@ -59,6 +60,8 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
       messages.foreach(messages =>
         context.system.actorSelection("user/stateHolder") ! MessagesFromLevelDB(messages._2))
       logger.debug("Messages succesfully recovered!")
+      if (blocks.nonEmpty) logger.debug("Blocks successfully recovered!")
+      if (transactions.nonEmpty) logger.debug("Transactions successfully recovered!")
       logger.info("Recovery completed.")
     case _ =>
   }
@@ -93,9 +96,9 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
         }
       updateTransactions(transaction)
     case block: Block =>
-      if (blocks.values.toSeq.contains(block))
+      if (!blocks.values.toSeq.contains(block))
         persist(block) { block =>
-          logger.debug(s"Transaction with id: ${Base16.encode(block.id)} persisted successfully.")
+          logger.debug(s"Block with id: ${Base16.encode(block.id)} persisted successfully.")
         }
       updateBlock(block)
     case x: Any => logger.error(s"Strange input $x")
@@ -124,7 +127,11 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
     transactions += Base16.encode(transaction.id) -> (prevValue._1, prevValue._2 + 1)
   }
 
-  def updateMessages(message: UserMessage): Unit = messages += message.message -> message
+  def updateMessages(message: UserMessage): Unit = {
+    val messageHash: String =
+      Sha256RipeMD160(message.message.getBytes ++ message.sender ++ message.prevOutputId.getOrElse(Array.emptyByteArray)).mkString
+    messages += messageHash -> message
+  }
 
   def updateBlock(block: Block): Unit = blocks += block.header.height -> block
 
@@ -146,9 +153,36 @@ object ModifiersHolder {
 
   case class Statistics(receivedHeaders: Int,
                         receivedPayloads: Int,
-                        receivedMessages: Int) {
-    override def toString: String = s"Stats: $receivedHeaders headers, " +
-      s"$receivedPayloads payloads, " +
-      s"$receivedMessages messages "
+                        receivedMessages: Int,
+                        receivedTransactions: Int,
+                        receivedBlocks: Int,
+                        currentBlockChainHeight: Option[Int],
+                        currentHeadersHeight: Option[Int]) {
+    override def toString: String =
+      s"${currentBlockChainHeight.getOrElse(0)} blockChain height, " +
+        s"${currentHeadersHeight.getOrElse(0)} headersHeight" +
+        s"Stats: $receivedHeaders headers, " +
+        s"$receivedPayloads payloads, " +
+        s"$receivedMessages messages, " +
+        s"$receivedTransactions transactions, " +
+        s"$receivedBlocks blocks."
   }
+
+  object Statistics {
+    def apply(receivedHeaders: Map[String, (Header, Int)],
+              receivedPayloads: Map[String, (Payload, Int)],
+              receivedMessages: SortedMap[String, UserMessage],
+              receivedTransactions: Map[String, (Transaction, Int)],
+              receivedBlocks: SortedMap[Int, Block]): Statistics =
+      Statistics(
+        receivedHeaders.size,
+        receivedPayloads.size,
+        receivedMessages.size,
+        receivedTransactions.size,
+        receivedBlocks.size,
+        receivedBlocks.values.toSeq.sortBy(_.header.height).lastOption.map(_.header.height),
+        receivedHeaders.values.toSeq.sortBy(_._1.height).lastOption.map(_._1.height)
+      )
+  }
+
 }

@@ -48,6 +48,8 @@ class StateHolder extends Actor with StrictLogging {
           .copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
       apply(signedHeader)
       apply(payload)
+      if (settings.levelDB.enable)
+        context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(transaction)
   }
 
   def addMessage(message: UserMessage, previousMessage: Option[MessageInfo], outputId: Option[Array[Byte]]): Unit =
