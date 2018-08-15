@@ -39,3 +39,13 @@ resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repos
   "SonaType" at "https://oss.sonatype.org/content/groups/public",
   "Typesafe maven releases" at "http://repo.typesafe.com/typesafe/maven-releases/",
   "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/")
+
+mainClass in assembly := Some("mvp.MVP")
+
+test in assembly := {}
+
+assemblyMergeStrategy in assembly := {
+  case "module-info.class" => MergeStrategy.discard
+  case "META-INF/MANIFEST.MF" => MergeStrategy.discard
+  case _ => MergeStrategy.first
+}
