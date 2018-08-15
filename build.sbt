@@ -40,6 +40,8 @@ resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repos
   "Typesafe maven releases" at "http://repo.typesafe.com/typesafe/maven-releases/",
   "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/")
 
+assemblyJarName in assembly := "mvp.jar"
+
 mainClass in assembly := Some("mvp.MVP")
 
 test in assembly := {}

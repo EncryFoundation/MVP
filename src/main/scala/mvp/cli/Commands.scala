@@ -25,5 +25,4 @@ sendTx        'message'        'key'          Send message
 
   def showCurrentHeadersHight(blockchain: Blockchain): Unit =
     println(blockchain.headersHeight)
-
 }
