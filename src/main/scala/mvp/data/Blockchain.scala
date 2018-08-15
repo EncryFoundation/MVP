@@ -1,8 +1,5 @@
 package mvp.data
 
-import mvp.MVP.settings
-import mvp.actors.ModifiersHolder.RequestModifiers
-
 //TODO: Blocks to levelDb
 
 case class Blockchain(headers: Seq[Header] = Seq.empty, blocks: Seq[Block] = Seq.empty) {
@@ -17,11 +14,9 @@ case class Blockchain(headers: Seq[Header] = Seq.empty, blocks: Seq[Block] = Seq
     Blockchain(
       headers,
       headers.find(_.merkleTreeRoot sameElements payload.id)
-        .map { header =>
-          val a = blocks :+ Block(header, payload)
-          println(blockchainHeight + "blockchain height")
-          a
-        }
+        .map(header =>
+          (blocks :+ Block(header, payload))
+            .sortWith((blockOne, blockTwo) => blockOne.header.height < blockTwo.header.height))
         .getOrElse(blocks)
     )
 

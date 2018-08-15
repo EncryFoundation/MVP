@@ -2,14 +2,14 @@ package mvp.actors
 
 import akka.persistence.{PersistentActor, RecoveryCompleted}
 import com.typesafe.scalalogging.StrictLogging
-import mvp.actors.ModifiersHolder.{ModifierFromLevelDB, RequestModifiers, RequestUserMessage, Statistics}
+import mvp.actors.ModifiersHolder.{MessagesFromLevelDB, RequestModifiers, RequestUserMessage, Statistics}
 import mvp.data._
 import mvp.local.messageHolder.UserMessage
 import scorex.util.encode.Base16
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.immutable.SortedMap
 import mvp.MVP.settings
-import mvp.actors.Messages.{Headers, InfoMessage, Payloads}
+import mvp.actors.Messages.{Headers, Payloads}
 import scala.concurrent.duration._
 
 class ModifiersHolder extends PersistentActor with StrictLogging {
@@ -17,11 +17,14 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   var headers: Map[String, (Header, Int)] = Map.empty
   var payloads: Map[String, (Payload, Int)] = Map.empty
   var messages: SortedMap[String, UserMessage] = SortedMap.empty
+  var blocks: SortedMap[Int, Block] = SortedMap.empty
+  var transactions: Map[String, (Transaction, Int)] = Map.empty
 
   context.system.scheduler.schedule(5.second, 5.second) {
     logger.debug(Statistics(headers.size, payloads.size, messages.size).toString)
   }
 
+  //TODO cant send Seq[Header] to StateHolder actor
   override def preStart(): Unit = logger.info(s"ModifiersHolder actor is started.")
 
   override def receiveRecover: Receive = if (settings.levelDB.recoverMode) receiveRecoveryEnable else receiveRecoveryDisable
@@ -36,20 +39,25 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
     case message: UserMessage =>
       updateMessages(message)
       logger.debug(s"Message from ${Base16.encode(message.sender)} recovered from leveldb")
+    case transaction: Transaction =>
+      updateTransactions(transaction)
+      logger.debug(s"Transaction with id ${Base16.encode(transaction.id)} recovered from leveldb")
+    case block: Block =>
+      updateBlock(block)
+      logger.debug(s"Block with id ${Base16.encode(block.id)} recovered from leveldb")
     case RecoveryCompleted =>
-      val test: Seq[Header] = Seq.empty
-      val headers1: Seq[Header] = headers.foldLeft(test) { case (a, b) => a :+ b._2._1 }
-      headers1.foreach(a => println(Base16.encode(a.id) + "RecoveryComlete"))
-      context.system.actorSelection("user/stateHolder") ! Headers(headers1)
+      headers
+        .values
+        .map(_._1)
+        .toSeq
+        .sortWith((headerOne, headerTwo) => headerOne.height < headerTwo.height).foreach(header =>
+        context.system.actorSelection("user/stateHolder") ! Headers(Seq(header)))
       logger.debug("Headers succesfully recovered!")
-      logger.debug("Transactions succesfully recovered!")
       payloads.foreach(payload =>
-        context.system.actorSelection("user/stateHolder") ! Payloads(Seq(payload._2._1))
-      )
+        context.system.actorSelection("user/stateHolder") ! Payloads(Seq(payload._2._1)))
       logger.debug("Payloads succesfully recovered!")
       messages.foreach(messages =>
-        context.system.actorSelection("user/stateHolder") ! InfoMessage(messages._2)
-      )
+        context.system.actorSelection("user/stateHolder") ! MessagesFromLevelDB(messages._2))
       logger.debug("Messages succesfully recovered!")
       logger.info("Recovery completed.")
     case _ =>
@@ -73,17 +81,28 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
         }
       updateHeaders(header)
     case payload: Payload =>
-      if (!payloads.contains(Base16.encode(payload.id))) {
+      if (!payloads.contains(Base16.encode(payload.id)))
         persist(payload) { payload =>
           logger.debug(s"Payload with id: ${Base16.encode(payload.id)} persisted successfully.")
         }
-        updatePayloads(payload)
-      }
+      updatePayloads(payload)
+    case transaction: Transaction =>
+      if (!transactions.contains(Base16.encode(transaction.id)))
+        persist(transaction) { tx =>
+          logger.debug(s"Transaction with id: ${Base16.encode(tx.id)} persisted successfully.")
+        }
+      updateTransactions(transaction)
+    case block: Block =>
+      if (blocks.values.toSeq.contains(block))
+        persist(block) { block =>
+          logger.debug(s"Transaction with id: ${Base16.encode(block.id)} persisted successfully.")
+        }
+      updateBlock(block)
     case x: Any => logger.error(s"Strange input $x")
   }
 
   def saveUserMessage(message: UserMessage): Unit = {
-    if (messages.contains(Base16.encode(message.sender)))
+    if (!messages.contains(message.message))
       persist(message) { message =>
         logger.debug(s"Message ${message.message} with prevId ${message.prevOutputId} persisted successfully.")
       }
@@ -100,7 +119,14 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
     payloads += Base16.encode(payload.id) -> (prevValue._1, prevValue._2 + 1)
   }
 
-  def updateMessages(message: UserMessage): Unit = messages += Base16.encode(message.sender) -> message
+  def updateTransactions(transaction: Transaction): Unit = {
+    val prevValue: (Transaction, Int) = transactions.getOrElse(Base16.encode(transaction.id), (transaction, -1))
+    transactions += Base16.encode(transaction.id) -> (prevValue._1, prevValue._2 + 1)
+  }
+
+  def updateMessages(message: UserMessage): Unit = messages += message.message -> message
+
+  def updateBlock(block: Block): Unit = blocks += block.header.height -> block
 
   override def persistenceId: String = "persistent actor"
 
@@ -116,14 +142,13 @@ object ModifiersHolder {
 
   case class RequestUserMessage(messages: UserMessage)
 
-  case class ModifierFromLevelDB(modifier: Modifier)
+  case class MessagesFromLevelDB(message: UserMessage)
 
   case class Statistics(receivedHeaders: Int,
                         receivedPayloads: Int,
                         receivedMessages: Int) {
     override def toString: String = s"Stats: $receivedHeaders headers, " +
       s"$receivedPayloads payloads, " +
-      s"$receivedMessages messages, "
+      s"$receivedMessages messages "
   }
-
 }

@@ -8,7 +8,7 @@ import io.circe.{Decoder, Encoder, HCursor}
 import io.circe.syntax._
 import mvp.MVP.settings
 import mvp.actors.Messages._
-import mvp.actors.ModifiersHolder.{RequestModifiers, RequestUserMessage}
+import mvp.actors.ModifiersHolder.{MessagesFromLevelDB, RequestModifiers, RequestUserMessage}
 import mvp.local.messageHolder.UserMessage
 import mvp.local.messageTransaction.MessageInfo
 import mvp.local.{Generator, Keys}
@@ -16,7 +16,6 @@ import scorex.crypto.signatures.Curve25519
 import scorex.util.encode.Base16
 
 class StateHolder extends Actor with StrictLogging {
-
   var blockChain: Blockchain = Blockchain.recoverBlockchain
   var state: State = State.recoverState
   val keys: Keys = Keys.recoverKeys
@@ -26,8 +25,6 @@ class StateHolder extends Actor with StrictLogging {
     case header: Header =>
       //      logger.info(s"Get header: ${Header.jsonEncoder(header)}")
       blockChain = blockChain.addHeader(header)
-      println(Base16.encode(header.id) + "Headers in aply in StateHolder")
-      println(sender().path)
       if (settings.levelDB.enable)
         context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(header)
     case payload: Payload =>
@@ -72,7 +69,6 @@ class StateHolder extends Actor with StrictLogging {
       payload.transactions.forall(validate) &&
         !blockChain.blocks.map(block => Base16.encode(block.payload.id)).contains(Base16.encode(payload.id))
     case transaction: Transaction =>
-      //println(s"Going to validate: ${Transaction.jsonEncoder(transaction)}")
       transaction
         .inputs
         .forall(input => state.state.get(Base16.encode(input.useOutputId))
@@ -81,7 +77,6 @@ class StateHolder extends Actor with StrictLogging {
 
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) =>
-      headers.foreach(a => println(Base16.encode(a.id)))
       headers.filter(validate).foreach(apply)
     case InfoMessage(msg: UserMessage) =>
       if (!messagesHolder.contains(msg)) {
@@ -94,6 +89,8 @@ class StateHolder extends Actor with StrictLogging {
           )
         addMessage(msg, previousMessageInfo, msg.prevOutputId)
       }
+    case MessagesFromLevelDB(message: UserMessage) =>
+      messagesHolder +:= message
     case Payloads(payloads: Seq[Payload]) =>
       payloads.filter(validate).foreach(apply)
     case Transactions(transactions: Seq[Transaction]) =>
