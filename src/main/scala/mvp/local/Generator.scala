@@ -9,16 +9,16 @@ import scorex.crypto.signatures.Curve25519
 
 object Generator {
 
-  val iterCount: Int = 10
-
   //Генерация транзакции, которая содержит сообщение
   def generateMessageTx(privateKey: PrivateKey25519,
                         previousMessage: Option[MessageInfo],
                         outputId: Option[Array[Byte]],
-                        message: String = "Hello, world!"): Transaction = {
+                        message: String = "Hello, world!",
+                        txNum: Int,
+                        salt: Array[Byte]): Transaction = {
 
     val messageInfo: MessageInfo = MessageInfo(
-      message.getBytes,
+      Sha256RipeMD160(message.getBytes),
       Longs.toByteArray(System.currentTimeMillis()),
       privateKey.publicKeyBytes
     )
@@ -26,10 +26,10 @@ object Generator {
 
     //Создание связки
     val proof: Array[Byte] = previousMessage
-      .map(prevmsg => proverGenerator(prevmsg, iterCount - 1, privateKey.privKeyBytes))
+      .map(prevmsg => proverGenerator(prevmsg, txNum, salt))
       .getOrElse(Array.emptyByteArray)
     //Создание проверки
-    val bundle: Array[Byte] = proverGenerator(messageInfo, iterCount, privateKey.privKeyBytes)
+    val bundle: Array[Byte] = proverGenerator(messageInfo, txNum, salt)
     Transaction(
       System.currentTimeMillis(),
       outputId.map(output => Seq(Input(output, proof))).getOrElse(Seq.empty),
@@ -40,7 +40,8 @@ object Generator {
           messageInfo.message,
           messageInfo.metaData,
           messageInfo.publicKey,
-          signature.signature
+          signature.signature,
+          txNum - 1
         )
       )
     )

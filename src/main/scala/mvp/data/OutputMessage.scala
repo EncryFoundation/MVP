@@ -12,6 +12,7 @@ case class OutputMessage(bundle: Array[Byte],
                          metadata: Array[Byte],
                          publicKey: Array[Byte],
                          signature: Array[Byte],
+                         txNum: Int,
                          override val canBeSpent: Boolean = true) extends Output {
 
   def toProofGenerator: MessageInfo = MessageInfo(messageHash, metadata, publicKey)
@@ -20,9 +21,8 @@ case class OutputMessage(bundle: Array[Byte],
     bundle ++ check ++ messageHash ++ metadata ++ publicKey ++ signature
   )
 
-  //Проверка, "связки" и "проверки"
-  override def unlock(proof: Array[Byte]): Boolean =
-    check sameElements Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)
+  //Проверка, "связки" и "проверки" и кол-ва транзакций в цепочке
+  override def unlock(proof: Array[Byte]): Boolean = (check sameElements Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)) && txNum > 0
 
   override def closeForSpent: Output = this.copy(canBeSpent = false)
 }
@@ -38,13 +38,15 @@ object OutputMessage {
     metadata <- c.downField("metadata").as[String]
     publicKey <- c.downField("publicKey").as[String]
     signature <- c.downField("signature").as[String]
+    txNum <- c.downField("txNum").as[Int]
   } yield OutputMessage(
     Base16.decode(bundle).getOrElse(Array.emptyByteArray),
     Base16.decode(check).getOrElse(Array.emptyByteArray),
     Base16.decode(messageHash).getOrElse(Array.emptyByteArray),
     Base16.decode(metadata).getOrElse(Array.emptyByteArray),
     Base16.decode(publicKey).getOrElse(Array.emptyByteArray),
-    Base16.decode(signature).getOrElse(Array.emptyByteArray)
+    Base16.decode(signature).getOrElse(Array.emptyByteArray),
+    txNum
   )
 
   implicit val jsonEncoder: Encoder[OutputMessage] = (b: OutputMessage) => Map(
@@ -56,5 +58,6 @@ object OutputMessage {
     "metadata" -> Base16.encode(b.metadata).asJson,
     "publicKey" -> Base16.encode(b.publicKey).asJson,
     "signature" -> Base16.encode(b.signature).asJson,
+    "txNum" -> b.txNum.asJson,
   ).asJson
 }
