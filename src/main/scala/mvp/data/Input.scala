@@ -15,7 +15,7 @@ object Input {
 
   implicit val jsonDecoder: Decoder[Input] = (c: HCursor) => for {
     useOutputId <- c.downField("useOutputId").as[String]
-    proofs <- c.downField("proof").as[Seq[String]]
+    proofs <- c.downField("proofs").as[Seq[String]]
   } yield Input(
     Base16.decode(useOutputId).getOrElse(Array.emptyByteArray),
     proofs.map(proof => Base16.decode(proof).getOrElse(Array.emptyByteArray))
