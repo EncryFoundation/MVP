@@ -17,7 +17,11 @@ case class OutputPKI(bundle: Array[Byte],
     bundle ++ check ++ publicKeyHash ++ userData ++ publicKey ++ signature
   )
 
-  override def unlock(proof: Array[Byte]): Boolean = ???
+  override val messageToSign: Array[Byte] = Sha256RipeMD160(
+    bundle ++ check ++ publicKeyHash ++ userData ++ publicKey
+  )
+
+  override def unlock(proofs: Seq[Array[Byte]]): Boolean = ???
 
   override def closeForSpent: Output = this.copy(canBeSpent = false)
 }

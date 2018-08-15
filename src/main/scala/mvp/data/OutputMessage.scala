@@ -20,9 +20,19 @@ case class OutputMessage(bundle: Array[Byte],
     bundle ++ check ++ messageHash ++ metadata ++ publicKey ++ signature
   )
 
+  override val messageToSign: Array[Byte] = Sha256RipeMD160(
+    bundle ++ check ++ messageHash ++ metadata ++ publicKey
+  )
+
   //Проверка, "связки" и "проверки"
-  override def unlock(proof: Array[Byte]): Boolean =
-    check sameElements Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)
+  override def unlock(proofs: Seq[Array[Byte]]): Boolean = {
+    val result: Boolean = check sameElements Sha256RipeMD160(proofs.last ++ messageHash ++ metadata ++ publicKey)
+    logger.info(s"Going to validate output: ${OutputMessage.jsonEncoder(this)}." +
+      s"\nCheck is ${Base16.encode(check)}." +
+      s"\nBundle from next tx is ${Base16.encode(proofs.last)}" +
+      s"\nUnlock condition \'check = Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)\' is $result")
+    result
+  }
 
   override def closeForSpent: Output = this.copy(canBeSpent = false)
 }
