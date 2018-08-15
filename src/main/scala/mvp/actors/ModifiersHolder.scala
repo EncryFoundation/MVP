@@ -159,9 +159,9 @@ object ModifiersHolder {
                         currentBlockChainHeight: Option[Int],
                         currentHeadersHeight: Option[Int]) {
     override def toString: String =
-      s"${currentBlockChainHeight.getOrElse(0)} blockChain height, " +
-        s"${currentHeadersHeight.getOrElse(0)} headersHeight" +
-        s"Stats: $receivedHeaders headers, " +
+      s"Stats: ${currentBlockChainHeight.getOrElse(0)} blockChain height, " +
+        s"${currentHeadersHeight.getOrElse(0)} headers height " +
+        s"$receivedHeaders headers, " +
         s"$receivedPayloads payloads, " +
         s"$receivedMessages messages, " +
         s"$receivedTransactions transactions, " +

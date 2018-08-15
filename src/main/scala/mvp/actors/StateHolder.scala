@@ -30,6 +30,7 @@ class StateHolder extends Actor with StrictLogging {
     case payload: Payload =>
       //      logger.info(s"Get payload: ${Payload.jsonEncoder(payload)}")
       blockChain = blockChain.addPayload(payload)
+      blockChain.SendBlock
       state = state.updateState(payload)
       if (settings.levelDB.enable)
         context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(payload)

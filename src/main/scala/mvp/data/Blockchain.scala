@@ -17,14 +17,15 @@ case class Blockchain(headers: Seq[Header] = Seq.empty, blocks: Seq[Block] = Seq
     Blockchain(
       headers,
       headers.find(_.merkleTreeRoot sameElements payload.id)
-        .map { header =>
-          if (settings.levelDB.enable)
-            system.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(Block(header, payload))
+        .map(header =>
           (blocks :+ Block(header, payload))
-            .sortWith((blockOne, blockTwo) => blockOne.header.height < blockTwo.header.height)
-        }
+            .sortWith((blockOne, blockTwo) => blockOne.header.height < blockTwo.header.height))
         .getOrElse(blocks)
     )
+
+  def SendBlock: Unit = blocks.lastOption.map(block =>
+    system.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(block))
+
 
   def addHeader(headerToAdd: Header): Blockchain = Blockchain(headers :+ headerToAdd, blocks)
 
