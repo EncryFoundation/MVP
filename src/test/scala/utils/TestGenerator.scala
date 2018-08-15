@@ -20,16 +20,16 @@ object TestGenerator {
         }
         else {
           val payload: Payload = Payload(
-            generatePaymentTxs(blocks.last.payload.transactions.flatMap(_.outputs.map(output => Input(output.id, Random.randomBytes()))))
+            generatePaymentTxs(blocks.last.payload.transactions.flatMap(_.outputs.map(output => Input(output.id, Seq(Random.randomBytes())))))
           )
           blocks :+ Block(header.copy(merkleTreeRoot = payload.id), payload)
         }
     }
 
-  def generateDummyAmountOutputs(qty: Int): Seq[Output] = (0 until qty).map(i => OutputAmount(Random.randomBytes(), 100L))
+  def generateDummyAmountOutputs(qty: Int): Seq[Output] = (0 until qty).map(i => OutputAmount(Random.randomBytes(), 100L, Random.randomBytes()))
 
   def generatePaymentTxs(inputs: Seq[Input]): Seq[Transaction] = inputs.foldLeft(Seq.empty[Transaction]) {
     case (transatcions, input) =>
-      transatcions :+ Transaction(0L, Seq(input), Seq(OutputAmount(Random.randomBytes(), 100)))
+      transatcions :+ Transaction(0L, Seq(input), Seq(OutputAmount(Random.randomBytes(), 100, Random.randomBytes())))
   }
 }
