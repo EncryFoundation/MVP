@@ -1,6 +1,7 @@
 package mvp.actors
 
 import akka.actor.Actor
+import com.google.common.primitives.Longs
 import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, SendMyName, UserMessageFromCLI}
 import com.typesafe.scalalogging.StrictLogging
 import mvp.data.{Blockchain, Modifier, State, _}
@@ -65,7 +66,7 @@ class StateHolder extends Actor with StrictLogging {
           Generator.generateMessageTx(keys.keys.head,
             prevMessage.map(_._1),
             prevMessage.map(_._2),
-            message.message,
+            message,
             txNum,
             currentSalt
           )
@@ -98,10 +99,13 @@ class StateHolder extends Actor with StrictLogging {
       if (!messagesHolder.contains(msg)) {
         //TODO: Remove .asInstanceOf[OutputMessage]
         val previousMessageInfoWithTxNumAndOutput: Option[(MessageInfo, Int, Array[Byte])] =
-          state.state.values.toSeq.find(output =>
-            output.asInstanceOf[OutputMessage].messageHash sameElements
-              Sha256RipeMD160(messagesHolder.last.message.getBytes))
-            .map{output =>
+          state.state.values.toSeq.find(output => {
+            val outputMes: OutputMessage = output.asInstanceOf[OutputMessage]
+            outputMes.messageHash ++ outputMes.metadata ++ outputMes.publicKey sameElements
+              Sha256RipeMD160(messagesHolder.last.message.getBytes) ++
+                messagesHolder.last.metadata ++
+                  messagesHolder.last.sender
+          }).map{output =>
               val message = output.asInstanceOf[OutputMessage]
               (message.toProofGenerator, message.txNum, output.id)
             }
@@ -120,11 +124,19 @@ class StateHolder extends Actor with StrictLogging {
     case HeadersRequest => sender() ! HeadersAnswer(blockChain)
     case SendMyName =>
       self ! InfoMessage(
-        UserMessage(settings.mvpSettings.nodeName, keys.keys.head.publicKeyBytes, None, messagesHolder.size + 1)
+        UserMessage(settings.mvpSettings.nodeName,
+          Longs.toByteArray(System.currentTimeMillis()),
+          keys.keys.head.publicKeyBytes,
+          None,
+          messagesHolder.size + 1)
       )
     case UserMessageFromCLI(message, outputId) =>
       self ! InfoMessage(
-        UserMessage(message.mkString, keys.keys.head.publicKeyBytes, outputId, messagesHolder.size + 1)
+        UserMessage(message.mkString,
+          Longs.toByteArray(System.currentTimeMillis()),
+          keys.keys.head.publicKeyBytes,
+          outputId,
+          messagesHolder.size + 1)
       )
   }
 }

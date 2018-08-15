@@ -2,6 +2,7 @@ package mvp.local
 
 import com.google.common.primitives.Longs
 import mvp.data.{Input, OutputMessage, Transaction}
+import mvp.local.messageHolder.UserMessage
 import mvp.local.messageTransaction.MessageInfo
 import mvp.utils.Crypto.Sha256RipeMD160
 import org.encryfoundation.common.crypto.{PrivateKey25519, Signature25519}
@@ -13,15 +14,11 @@ object Generator {
   def generateMessageTx(privateKey: PrivateKey25519,
                         previousMessage: Option[MessageInfo],
                         outputId: Option[Array[Byte]],
-                        message: String = "Hello, world!",
+                        message: UserMessage,
                         txNum: Int,
                         salt: Array[Byte]): Transaction = {
 
-    val messageInfo: MessageInfo = MessageInfo(
-      Sha256RipeMD160(message.getBytes),
-      Longs.toByteArray(System.currentTimeMillis()),
-      privateKey.publicKeyBytes
-    )
+    val messageInfo: MessageInfo = message.toMsgInfo
 
     //Создание связки
     val proof: Array[Byte] = previousMessage
