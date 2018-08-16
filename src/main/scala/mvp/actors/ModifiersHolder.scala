@@ -15,11 +15,11 @@ import scala.concurrent.duration._
 
 class ModifiersHolder extends PersistentActor with StrictLogging {
 
-  var headers: Map[String, (Header, Int)] = Map.empty
-  var payloads: Map[String, (Payload, Int)] = Map.empty
+  var headers: Map[String, Header] = Map.empty
+  var payloads: Map[String, Payload] = Map.empty
   var messages: SortedMap[String, UserMessage] = SortedMap.empty
   var blocks: SortedMap[Int, Block] = SortedMap.empty
-  var transactions: Map[String, (Transaction, Int)] = Map.empty
+  var transactions: Map[String, Transaction] = Map.empty
 
   context.system.scheduler.schedule(5.second, 5.second) {
     logger.debug(Statistics(headers, payloads, messages, transactions, blocks).toString)
@@ -49,13 +49,12 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
     case RecoveryCompleted =>
       headers
         .values
-        .map(_._1)
         .toSeq
         .sortWith((headerOne, headerTwo) => headerOne.height < headerTwo.height).foreach(header =>
         context.system.actorSelection("user/stateHolder") ! Headers(Seq(header)))
       logger.debug("Headers succesfully recovered!")
       payloads.foreach(payload =>
-        context.system.actorSelection("user/stateHolder") ! Payloads(Seq(payload._2._1)))
+        context.system.actorSelection("user/stateHolder") ! Payloads(Seq(payload._2)))
       logger.debug("Payloads succesfully recovered!")
       messages.foreach(messages =>
         context.system.actorSelection("user/stateHolder") ! MessagesFromLevelDB(messages._2))
@@ -112,26 +111,19 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
     updateMessages(message)
   }
 
-  def updateHeaders(header: Header): Unit = {
-    val prevValue: (Header, Int) = headers.getOrElse(Base16.encode(header.id), (header, -1))
-    headers += Base16.encode(header.id) -> (prevValue._1, prevValue._2 + 1)
-  }
+  def updateHeaders(header: Header): Unit =
+    headers += Base16.encode(header.id) -> header
 
-  def updatePayloads(payload: Payload): Unit = {
-    val prevValue: (Payload, Int) = payloads.getOrElse(Base16.encode(payload.id), (payload, -1))
-    payloads += Base16.encode(payload.id) -> (prevValue._1, prevValue._2 + 1)
-  }
+  def updatePayloads(payload: Payload): Unit =
+    payloads += Base16.encode(payload.id) -> payload
 
-  def updateTransactions(transaction: Transaction): Unit = {
-    val prevValue: (Transaction, Int) = transactions.getOrElse(Base16.encode(transaction.id), (transaction, -1))
-    transactions += Base16.encode(transaction.id) -> (prevValue._1, prevValue._2 + 1)
-  }
+  def updateTransactions(transaction: Transaction): Unit =
+    transactions += Base16.encode(transaction.id) -> transaction
 
-  def updateMessages(message: UserMessage): Unit = {
-    val messageHash: String =
-      Sha256RipeMD160(message.message.getBytes ++ message.sender ++ message.prevOutputId.getOrElse(Array.emptyByteArray)).mkString
-    messages += messageHash -> message
-  }
+  def updateMessages(message: UserMessage): Unit =
+    messages +=
+      Sha256RipeMD160(message.message.getBytes ++ message.sender ++ message.prevOutputId.getOrElse(Array.emptyByteArray))
+        .mkString -> message
 
   def updateBlock(block: Block): Unit = blocks += block.header.height -> block
 
@@ -169,10 +161,10 @@ object ModifiersHolder {
   }
 
   object Statistics {
-    def apply(receivedHeaders: Map[String, (Header, Int)],
-              receivedPayloads: Map[String, (Payload, Int)],
+    def apply(receivedHeaders: Map[String, Header],
+              receivedPayloads: Map[String, Payload],
               receivedMessages: SortedMap[String, UserMessage],
-              receivedTransactions: Map[String, (Transaction, Int)],
+              receivedTransactions: Map[String, Transaction],
               receivedBlocks: SortedMap[Int, Block]): Statistics =
       Statistics(
         receivedHeaders.size,
@@ -181,7 +173,7 @@ object ModifiersHolder {
         receivedTransactions.size,
         receivedBlocks.size,
         receivedBlocks.values.toSeq.sortBy(_.header.height).lastOption.map(_.header.height),
-        receivedHeaders.values.toSeq.sortBy(_._1.height).lastOption.map(_._1.height)
+        receivedHeaders.values.toSeq.sortBy(_.height).lastOption.map(_.height)
       )
   }
 
