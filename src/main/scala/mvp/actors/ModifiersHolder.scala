@@ -21,7 +21,7 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   var blocks: SortedMap[Int, Block] = SortedMap.empty
   var transactions: Map[String, Transaction] = Map.empty
 
-  context.system.scheduler.schedule(5.second, 5.second) {
+  context.system.scheduler.schedule(5.second, 60.second) {
     logger.debug(Statistics(headers, payloads, messages, transactions, blocks).toString)
   }
 

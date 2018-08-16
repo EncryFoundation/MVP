@@ -24,9 +24,7 @@ case class mvpSettings(enableCLI: Boolean,
                        sendStat: Boolean)
 
 case class LevelDBSettings(enable: Boolean,
-                           recoverMode: Boolean,
-                           batchSize: Int)
-
+                           recoverMode: Boolean)
 object Settings {
   def load: Settings = ConfigFactory.load("local.conf")
     .withFallback(ConfigFactory.load).as[Settings]
