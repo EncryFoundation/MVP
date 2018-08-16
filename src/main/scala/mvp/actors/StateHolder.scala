@@ -23,19 +23,19 @@ class StateHolder extends Actor with StrictLogging {
 
   def apply(modifier: Modifier): Unit = modifier match {
     case header: Header =>
-      //      logger.info(s"Get header: ${Header.jsonEncoder(header)}")
+      logger.info(s"Get header: ${Header.jsonEncoder(header)}")
       blockChain = blockChain.addHeader(header)
       if (settings.levelDB.enable)
         context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(header)
     case payload: Payload =>
-      //      logger.info(s"Get payload: ${Payload.jsonEncoder(payload)}")
+      logger.info(s"Get payload: ${Payload.jsonEncoder(payload)}")
       blockChain = blockChain.addPayload(payload)
       blockChain.SendBlock
       state = state.updateState(payload)
       if (settings.levelDB.enable)
         context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(payload)
     case transaction: Transaction =>
-      //      logger.info(s"Get transaction: ${Transaction.jsonEncoder(transaction)}")
+      logger.info(s"Get transaction: ${Transaction.jsonEncoder(transaction)}")
       val payload: Payload = Payload(Seq(transaction))
       val headerUnsigned: Header = Header(
         System.currentTimeMillis(),
@@ -57,7 +57,7 @@ class StateHolder extends Actor with StrictLogging {
     if (!messagesHolder.contains(message)) {
       if (settings.levelDB.enable)
         context.actorSelection("/user/starter/modifiersHolder") ! RequestUserMessage(message)
-      //      logger.info(s"Get message: ${UserMessage.jsonEncoder(message)}")
+      logger.info(s"Get message: ${UserMessage.jsonEncoder(message)}")
       messagesHolder = messagesHolder :+ message
       self ! Transactions(Seq(Generator.generateMessageTx(keys.keys.head, previousMessage, outputId, message.message)))
     }
@@ -66,12 +66,12 @@ class StateHolder extends Actor with StrictLogging {
     //TODO: Add semantic validation check
     case header: Header =>
       !blockChain.headers.map(header => Base16.encode(header.id)).contains(Base16.encode(header.id)) &&
-      (header.height == 0 ||
-        (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
-        .exists(prevHeader => header.previousBlockHash sameElements prevHeader.id)))
+        (header.height == 0 ||
+          (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
+            .exists(prevHeader => header.previousBlockHash sameElements prevHeader.id)))
     case payload: Payload =>
-        !blockChain.blocks.map(block => Base16.encode(block.payload.id)).contains(Base16.encode(payload.id)) &&
-          payload.transactions.forall(validate)
+      !blockChain.blocks.map(block => Base16.encode(block.payload.id)).contains(Base16.encode(payload.id)) &&
+        payload.transactions.forall(validate)
     case transaction: Transaction =>
       logger.info(s"Going to validate tx: ${Transaction.jsonEncoder(transaction)}")
       transaction
