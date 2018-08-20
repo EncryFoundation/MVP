@@ -49,25 +49,39 @@ class StateHolder extends Actor with StrictLogging {
       apply(payload)
   }
 
-  def addMessage(message: UserMessage,
-                 previousOutput: Option[OutputMessage]): Unit =
-    if (!messagesHolder.contains(message)) {
-      logger.info(s"Get message: ${UserMessage.jsonEncoder(message)}")
-      messagesHolder = messagesHolder :+ message
-      self ! Transactions(
-        Seq(
-          Generator.generateMessageTx(keys.keys.head,
-            previousOutput.map(_.toProofGenerator),
-            previousOutput.map(_.id),
-            message,
-            previousOutput.map(output =>
-              if (output.txNum == 1) settings.mvpSettings.messagesQtyInChain + 1 else output.txNum)
-              .getOrElse(settings.mvpSettings.messagesQtyInChain + 1),
-            currentSalt
-          )
-        )
-      )
-    }
+  def addMessageAndCreateTx(msg: UserMessage): Option[Transaction] =
+    if (!messagesHolder.contains(msg)) {
+      if (messagesHolder.size % settings.mvpSettings.messagesQtyInChain == 0) {
+      // Реинициализация
+      currentSalt = Random.randomBytes()
+      logger.info(s"Init new txChain with new salt: ${Base16.encode(currentSalt)}")
+      }
+    val previousOutput: Option[OutputMessage] =
+      state.state.values.toSeq.find {
+        case output: OutputMessage =>
+          output.messageHash ++ output.metadata ++ output.publicKey sameElements
+            Sha256RipeMD160(messagesHolder.last.message.getBytes) ++
+              messagesHolder.last.metadata ++
+              messagesHolder.last.sender
+        case _ => false
+      }.map(_.asInstanceOf[OutputMessage])
+    Some(createMessageTx(msg, previousOutput))
+  } else None
+
+  def createMessageTx(message: UserMessage,
+                      previousOutput: Option[OutputMessage]): Transaction = {
+    logger.info(s"Get message: ${UserMessage.jsonEncoder(message)}")
+    messagesHolder = messagesHolder :+ message
+    Generator.generateMessageTx(keys.keys.head,
+      previousOutput.map(_.toProofGenerator),
+      previousOutput.map(_.id),
+      message,
+      previousOutput.map(output =>
+        if (output.txNum == 1) settings.mvpSettings.messagesQtyInChain + 1 else output.txNum)
+        .getOrElse(settings.mvpSettings.messagesQtyInChain + 1),
+      currentSalt
+    )
+  }
 
   def validate(modifier: Modifier): Boolean = modifier match {
     //TODO: Add semantic validation check
@@ -90,38 +104,13 @@ class StateHolder extends Actor with StrictLogging {
 
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(apply)
-    case InfoMessage(msg: UserMessage) =>
-      if (!messagesHolder.contains(msg)) {
-        if (messagesHolder.size % settings.mvpSettings.messagesQtyInChain == 0) {
-          // Реинициализация
-          currentSalt = Random.randomBytes()
-          logger.info(s"Init new txChain with new salt: ${Base16.encode(currentSalt)}")
-        }
-        val previousOutput: Option[OutputMessage] =
-          state.state.values.toSeq.find {
-            case output: OutputMessage =>
-              output.messageHash ++ output.metadata ++ output.publicKey sameElements
-              Sha256RipeMD160(messagesHolder.last.message.getBytes) ++
-                messagesHolder.last.metadata ++
-                messagesHolder.last.sender
-            case _ => false
-          }.map(_.asInstanceOf[OutputMessage])
-        addMessage(msg, previousOutput)
-      }
+    case InfoMessage(msg: UserMessage) => addMessageAndCreateTx(msg).foreach(tx => self ! Transactions(Seq(tx)))
     case Payloads(payloads: Seq[Payload]) => payloads.filter(validate).foreach(apply)
     case Transactions(transactions: Seq[Transaction]) => transactions.filter(validate).foreach(apply)
     case GetLastBlock => sender() ! blockChain.blocks.last
     case GetLastInfo => sender() ! LastInfo(blockChain.blocks, messagesHolder)
     case BlockchainRequest => sender() ! BlockchainAnswer(blockChain)
     case HeadersRequest => sender() ! HeadersAnswer(blockChain)
-    case SendMyName =>
-      self ! InfoMessage(
-        UserMessage(settings.mvpSettings.nodeName,
-          Longs.toByteArray(System.currentTimeMillis()),
-          keys.keys.head.publicKeyBytes,
-          None,
-          messagesHolder.size + 1)
-      )
     case UserMessageFromCLI(message, outputId) =>
       self ! InfoMessage(
         UserMessage(message.mkString,
