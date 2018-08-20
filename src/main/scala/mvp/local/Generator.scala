@@ -1,7 +1,7 @@
 package mvp.local
 
-import com.google.common.primitives.Longs
 import mvp.data.{Input, OutputMessage, Transaction}
+import mvp.local.messageHolder.UserMessage
 import mvp.local.messageTransaction.MessageInfo
 import mvp.utils.Crypto.Sha256RipeMD160
 import org.encryfoundation.common.crypto.{PrivateKey25519, Signature25519}
@@ -9,33 +9,30 @@ import scorex.crypto.signatures.Curve25519
 
 object Generator {
 
-  val iterCount: Int = 10
-
   //Генерация транзакции, которая содержит сообщение
   def generateMessageTx(privateKey: PrivateKey25519,
                         previousMessage: Option[MessageInfo],
                         outputId: Option[Array[Byte]],
-                        message: String = "Hello, world!"): Transaction = {
+                        message: UserMessage,
+                        txNum: Int,
+                        salt: Array[Byte]): Transaction = {
 
-    val messageInfo: MessageInfo = MessageInfo(
-      message.getBytes,
-      Longs.toByteArray(System.currentTimeMillis()),
-      privateKey.publicKeyBytes
-    )
+    val messageInfo: MessageInfo = message.toMsgInfo
 
     //Создание связки
     val proof: Array[Byte] = previousMessage
-      .map(prevmsg => proverGenerator(prevmsg, iterCount - 1, privateKey.privKeyBytes))
+      .map(prevmsg => proverGenerator(prevmsg, txNum, salt))
       .getOrElse(Array.emptyByteArray)
     //Создание проверки
-    val bundle: Array[Byte] = proverGenerator(messageInfo, iterCount, privateKey.privKeyBytes)
+    val bundle: Array[Byte] = proverGenerator(messageInfo, txNum, salt)
     val messageOutput: OutputMessage = OutputMessage(
       proof,
       bundle,
       messageInfo.message,
       messageInfo.metaData,
       messageInfo.publicKey,
-      Array.emptyByteArray
+      Array.emptyByteArray,
+      txNum - 1
     )
 
     val signature: Signature25519 = Signature25519(Curve25519.sign(privateKey.privKeyBytes, messageOutput.messageToSign))
