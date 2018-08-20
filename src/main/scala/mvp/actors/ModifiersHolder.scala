@@ -28,37 +28,38 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   //TODO cant send Seq[Header] to StateHolder actor
   override def preStart(): Unit = logger.info(s"ModifiersHolder actor is started.")
 
-  override def receiveRecover: Receive = if (settings.levelDB.recoverMode) receiveRecoveryEnable else receiveRecoveryDisable
+  override def receiveRecover: Receive =
+    if (settings.levelDB.recoverMode) receiveRecoveryEnable else receiveRecoveryDisable
 
   def receiveRecoveryEnable: Receive = {
     case header: Header =>
       updateHeaders(header)
-      logger.debug(s"Header ${header.height} with id ${Base16.encode(header.id)} recovered from leveldb.")
+      logger.debug(s"Header ${header.height} with id ${Base16.encode(header.id)} is recovered from leveldb.")
     case payload: Payload =>
       updatePayloads(payload)
-      logger.debug(s"Payload recovered from leveldb.")
+      logger.debug(s"Payload is recovered from leveldb.")
     case message: UserMessage =>
       updateMessages(message)
-      logger.debug(s"Message from ${Base16.encode(message.sender)} recovered from leveldb")
+      logger.debug(s"Message from ${Base16.encode(message.sender)} is recovered from leveldb")
     case transaction: Transaction =>
       updateTransactions(transaction)
-      logger.debug(s"Transaction with id ${Base16.encode(transaction.id)} recovered from leveldb")
+      logger.debug(s"Transaction with id ${Base16.encode(transaction.id)} is recovered from leveldb")
     case block: Block =>
       updateBlock(block)
-      logger.debug(s"Block with id ${Base16.encode(block.id)} recovered from leveldb")
+      logger.debug(s"Block with id ${Base16.encode(block.id)} is recovered from leveldb")
     case RecoveryCompleted =>
       headers
         .values
         .toSeq
         .sortWith((headerOne, headerTwo) => headerOne.height < headerTwo.height).foreach(header =>
         context.system.actorSelection("user/stateHolder") ! Headers(Seq(header)))
-      logger.debug("Headers succesfully recovered!")
+      logger.debug("Headers are successfully recovered.")
       payloads.foreach(payload =>
         context.system.actorSelection("user/stateHolder") ! Payloads(Seq(payload._2)))
-      logger.debug("Payloads succesfully recovered!")
+      logger.debug("Payloads are successfully recovered.")
       messages.foreach(messages =>
         context.system.actorSelection("user/stateHolder") ! MessagesFromLevelDB(messages._2))
-      logger.debug("Messages succesfully recovered!")
+      logger.debug("Messages are successfully recovered.")
       if (blocks.nonEmpty) logger.debug("Blocks successfully recovered!")
       if (transactions.nonEmpty) logger.debug("Transactions successfully recovered!")
       logger.info("Recovery completed.")
@@ -66,7 +67,7 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   }
 
   def receiveRecoveryDisable: Receive = {
-    case _ => logger.info("Recovery disabled")
+    case _ => logger.info("Recovery is disabled.")
   }
 
   override def receiveCommand: Receive = {
@@ -79,25 +80,26 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
     case header: Header =>
       if (!headers.contains(Base16.encode(header.id)))
         persist(header) { header =>
-          logger.debug(s"Header at height: ${header.height} with id: ${Base16.encode(header.id)} persisted successfully.")
+          logger.debug(s"Header at height: ${header.height} with id: ${Base16.encode(header.id)} " +
+            s"is persisted successfully.")
         }
       updateHeaders(header)
     case payload: Payload =>
       if (!payloads.contains(Base16.encode(payload.id)))
         persist(payload) { payload =>
-          logger.debug(s"Payload with id: ${Base16.encode(payload.id)} persisted successfully.")
+          logger.debug(s"Payload with id: ${Base16.encode(payload.id)} is persisted successfully.")
         }
       updatePayloads(payload)
     case transaction: Transaction =>
       if (!transactions.contains(Base16.encode(transaction.id)))
         persist(transaction) { tx =>
-          logger.debug(s"Transaction with id: ${Base16.encode(tx.id)} persisted successfully.")
+          logger.debug(s"Transaction with id: ${Base16.encode(tx.id)} is persisted successfully.")
         }
       updateTransactions(transaction)
     case block: Block =>
       if (!blocks.values.toSeq.contains(block))
         persist(block) { block =>
-          logger.debug(s"Block with id: ${Base16.encode(block.id)} persisted successfully.")
+          logger.debug(s"Block with id: ${Base16.encode(block.id)} is persisted successfully.")
         }
       updateBlock(block)
     case x: Any => logger.error(s"Strange input $x")
@@ -106,19 +108,16 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   def saveUserMessage(message: UserMessage): Unit = {
     if (!messages.contains(message.message))
       persist(message) { message =>
-        logger.debug(s"Message ${message.message} with prevId ${message.prevOutputId} persisted successfully.")
+        logger.debug(s"Message ${message.message} with prevId ${message.prevOutputId} is persisted successfully.")
       }
     updateMessages(message)
   }
 
-  def updateHeaders(header: Header): Unit =
-    headers += Base16.encode(header.id) -> header
+  def updateHeaders(header: Header): Unit = headers += Base16.encode(header.id) -> header
 
-  def updatePayloads(payload: Payload): Unit =
-    payloads += Base16.encode(payload.id) -> payload
+  def updatePayloads(payload: Payload): Unit = payloads += Base16.encode(payload.id) -> payload
 
-  def updateTransactions(transaction: Transaction): Unit =
-    transactions += Base16.encode(transaction.id) -> transaction
+  def updateTransactions(transaction: Transaction): Unit = transactions += Base16.encode(transaction.id) -> transaction
 
   def updateMessages(message: UserMessage): Unit =
     messages +=
