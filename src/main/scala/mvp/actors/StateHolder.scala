@@ -60,7 +60,9 @@ class StateHolder extends Actor with StrictLogging {
             previousOutput.map(_.toProofGenerator),
             previousOutput.map(_.id),
             message,
-            previousOutput.map(output => if (output.txNum == 1) 4 else output.txNum).getOrElse(4),
+            previousOutput.map(output =>
+              if (output.txNum == 1) settings.mvpSettings.messagesQtyInChain + 1 else output.txNum)
+              .getOrElse(settings.mvpSettings.messagesQtyInChain + 1),
             currentSalt
           )
         )
@@ -90,7 +92,7 @@ class StateHolder extends Actor with StrictLogging {
     case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(apply)
     case InfoMessage(msg: UserMessage) =>
       if (!messagesHolder.contains(msg)) {
-        if (messagesHolder.size % 3 == 0) {
+        if (messagesHolder.size % settings.mvpSettings.messagesQtyInChain == 0) {
           // Реинициализация
           currentSalt = Random.randomBytes()
           logger.info(s"Init new txChain with new salt: ${Base16.encode(currentSalt)}")

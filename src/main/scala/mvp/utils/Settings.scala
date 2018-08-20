@@ -20,7 +20,8 @@ case class InfluxDBSettings(url: String,
 
 case class mvpSettings(enableCLI: Boolean,
                        nodeName: String,
-                       sendStat: Boolean)
+                       sendStat: Boolean,
+                       messagesQtyInChain: Int)
 
 object Settings {
   def load: Settings = ConfigFactory.load("local.conf")

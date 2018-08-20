@@ -1,6 +1,5 @@
 package mvp.local
 
-import com.google.common.primitives.Longs
 import mvp.data.{Input, OutputMessage, Transaction}
 import mvp.local.messageHolder.UserMessage
 import mvp.local.messageTransaction.MessageInfo
