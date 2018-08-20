@@ -24,7 +24,26 @@ class StateHolder extends Actor with StrictLogging {
   var messagesHolder: Seq[UserMessage] = Seq.empty
   var currentSalt: Array[Byte] = Random.randomBytes()
 
-  def apply(modifier: Modifier): Unit = modifier match {
+  override def receive: Receive = {
+    case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(add)
+    case InfoMessage(msg: UserMessage) => addMessageAndCreateTx(msg).foreach(tx => self ! Transactions(Seq(tx)))
+    case Payloads(payloads: Seq[Payload]) => payloads.filter(validate).foreach(add)
+    case Transactions(transactions: Seq[Transaction]) => transactions.filter(validate).foreach(add)
+    case GetLastBlock => sender() ! blockChain.blocks.last
+    case GetLastInfo => sender() ! LastInfo(blockChain.blocks, messagesHolder)
+    case BlockchainRequest => sender() ! BlockchainAnswer(blockChain)
+    case HeadersRequest => sender() ! HeadersAnswer(blockChain)
+    case UserMessageFromCLI(message, outputId) =>
+      self ! InfoMessage(
+        UserMessage(message.mkString,
+          Longs.toByteArray(System.currentTimeMillis()),
+          keys.keys.head.publicKeyBytes,
+          outputId,
+          messagesHolder.size + 1)
+      )
+  }
+
+  def add(modifier: Modifier): Unit = modifier match {
     case header: Header =>
       logger.info(s"Get header: ${Header.jsonEncoder(header)}")
       blockChain = blockChain.addHeader(header)
@@ -45,8 +64,8 @@ class StateHolder extends Actor with StrictLogging {
       val signedHeader: Header =
         headerUnsigned
           .copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
-      apply(signedHeader)
-      apply(payload)
+      add(signedHeader)
+      add(payload)
   }
 
   def addMessageAndCreateTx(msg: UserMessage): Option[Transaction] =
@@ -100,25 +119,6 @@ class StateHolder extends Actor with StrictLogging {
         .forall(input => state.state.get(Base16.encode(input.useOutputId))
           .exists(outputToUnlock => outputToUnlock.unlock(input.proofs) &&
             outputToUnlock.canBeSpent && outputToUnlock.checkSignature))
-  }
-
-  override def receive: Receive = {
-    case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(apply)
-    case InfoMessage(msg: UserMessage) => addMessageAndCreateTx(msg).foreach(tx => self ! Transactions(Seq(tx)))
-    case Payloads(payloads: Seq[Payload]) => payloads.filter(validate).foreach(apply)
-    case Transactions(transactions: Seq[Transaction]) => transactions.filter(validate).foreach(apply)
-    case GetLastBlock => sender() ! blockChain.blocks.last
-    case GetLastInfo => sender() ! LastInfo(blockChain.blocks, messagesHolder)
-    case BlockchainRequest => sender() ! BlockchainAnswer(blockChain)
-    case HeadersRequest => sender() ! HeadersAnswer(blockChain)
-    case UserMessageFromCLI(message, outputId) =>
-      self ! InfoMessage(
-        UserMessage(message.mkString,
-          Longs.toByteArray(System.currentTimeMillis()),
-          keys.keys.head.publicKeyBytes,
-          outputId,
-          messagesHolder.size + 1)
-      )
   }
 }
 
