@@ -9,7 +9,8 @@ case class Settings(thisNode: Node,
                     testMode: Boolean,
                     heartbeat: Int,
                     influxDB: InfluxDBSettings,
-                    mvpSettings: mvpSettings)
+                    mvpSettings: mvpSettings,
+                    levelDB: LevelDBSettings)
 
 case class Node(host: String, port: Int)
 
@@ -23,6 +24,8 @@ case class mvpSettings(enableCLI: Boolean,
                        sendStat: Boolean,
                        messagesQtyInChain: Int)
 
+case class LevelDBSettings(enable: Boolean,
+                           recoverMode: Boolean)
 object Settings {
   def load: Settings = ConfigFactory.load("local.conf")
     .withFallback(ConfigFactory.load).as[Settings]

@@ -2,13 +2,14 @@ package mvp.actors
 
 import akka.actor.Actor
 import com.google.common.primitives.Longs
-import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, SendMyName, UserMessageFromCLI}
+import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, UserMessageFromCLI}
 import com.typesafe.scalalogging.StrictLogging
 import mvp.data.{Blockchain, Modifier, State, _}
 import io.circe.{Decoder, Encoder, HCursor}
 import io.circe.syntax._
 import mvp.MVP.settings
 import mvp.actors.Messages._
+import mvp.actors.ModifiersHolder.RequestModifiers
 import mvp.local.messageHolder.UserMessage
 import mvp.local.{Generator, Keys}
 import mvp.utils.Crypto.Sha256RipeMD160
@@ -17,7 +18,6 @@ import scorex.util.encode.Base16
 import scorex.utils.Random
 
 class StateHolder extends Actor with StrictLogging {
-
   var blockChain: Blockchain = Blockchain.recoverBlockchain
   var state: State = State.recoverState
   val keys: Keys = Keys.recoverKeys
@@ -47,10 +47,16 @@ class StateHolder extends Actor with StrictLogging {
     case header: Header =>
       logger.info(s"Get header: ${Header.jsonEncoder(header)}")
       blockChain = blockChain.addHeader(header)
+      if (settings.levelDB.enable)
+        context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(header)
     case payload: Payload =>
       logger.info(s"Get payload: ${Payload.jsonEncoder(payload)}")
       blockChain = blockChain.addPayload(payload)
+      if (settings.levelDB.enable)
+        blockChain.SendBlock
       state = state.updateState(payload)
+      if (settings.levelDB.enable)
+        context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(payload)
     case transaction: Transaction =>
       logger.info(s"Get transaction: ${Transaction.jsonEncoder(transaction)}")
       val payload: Payload = Payload(Seq(transaction))
@@ -66,6 +72,8 @@ class StateHolder extends Actor with StrictLogging {
           .copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
       add(signedHeader)
       add(payload)
+      if (settings.levelDB.enable)
+        context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(transaction)
   }
 
   def addMessageAndCreateTx(msg: UserMessage): Option[Transaction] =
