@@ -48,9 +48,7 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
       updateBlock(block)
       logger.debug(s"Block with id ${Base16.encode(block.id)} is recovered from leveldb")
     case RecoveryCompleted =>
-      headers
-        .values
-        .toSeq
+      headers.values.toSeq
         .sortWith((headerOne, headerTwo) => headerOne.height < headerTwo.height).foreach(header =>
         context.system.actorSelection("user/stateHolder") ! Headers(Seq(header)))
       logger.debug("Headers are successfully recovered.")
@@ -60,9 +58,9 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
       messages.foreach(messages =>
         context.system.actorSelection("user/stateHolder") ! MessagesFromLevelDB(messages._2))
       logger.debug("Messages are successfully recovered.")
-      if (blocks.nonEmpty) logger.debug("Blocks successfully recovered!")
-      if (transactions.nonEmpty) logger.debug("Transactions successfully recovered!")
-      logger.info("Recovery completed.")
+      if (blocks.nonEmpty) logger.debug("Blocks are successfully recovered!")
+      if (transactions.nonEmpty) logger.debug("Transactions are successfully recovered!")
+      logger.info("Recovery is completed.")
     case _ =>
   }
 
