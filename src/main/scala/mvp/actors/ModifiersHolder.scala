@@ -25,7 +25,7 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
     logger.debug(Statistics(headers, payloads, messages, transactions, blocks).toString)
   }
 
-  //TODO cant send Seq[Header] to StateHolder actor
+  // TODO cant send Seq[Header] to StateHolder actor
   override def preStart(): Unit = logger.info(s"ModifiersHolder actor is started.")
 
   override def receiveRecover: Receive =
