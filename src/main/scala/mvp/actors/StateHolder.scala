@@ -4,8 +4,8 @@ import akka.actor.Actor
 import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, SendMyName, UserMessageFromCLI}
 import com.typesafe.scalalogging.StrictLogging
 import mvp.data.{Blockchain, Modifier, State, _}
-import io.circe.{Decoder, Encoder, HCursor}
 import io.circe.syntax._
+import io.circe.generic.auto._
 import mvp.MVP.settings
 import mvp.actors.Messages._
 import mvp.local.messageHolder.UserMessage
@@ -26,11 +26,11 @@ class StateHolder extends Actor with StrictLogging {
       logger.info(s"Get header: ${Header.jsonEncoder(header)}")
       blockChain = blockChain.addHeader(header)
     case payload: Payload =>
-      logger.info(s"Get payload: ${Payload.jsonEncoder(payload)}")
+      logger.info(s"Get payload: ${payload.asJson}")
       blockChain = blockChain.addPayload(payload)
       state = state.updateState(payload)
     case transaction: Transaction =>
-      logger.info(s"Get transaction: ${Transaction.jsonEncoder(transaction)}")
+      logger.info(s"Get transaction: ${transaction.asJson}")
       val payload: Payload = Payload(Seq(transaction))
       val headerUnsigned: Header = Header(
         System.currentTimeMillis(),
@@ -64,7 +64,7 @@ class StateHolder extends Actor with StrictLogging {
         !blockChain.blocks.map(block => Base16.encode(block.payload.id)).contains(Base16.encode(payload.id)) &&
           payload.transactions.forall(validate)
     case transaction: Transaction =>
-      logger.info(s"Going to validate tx: ${Transaction.jsonEncoder(transaction)}")
+      logger.info(s"Going to validate tx: ${transaction.asJson}")
       transaction
         .inputs
         .forall(input => state.state.get(Base16.encode(input.useOutputId))
@@ -99,19 +99,3 @@ class StateHolder extends Actor with StrictLogging {
 }
 
 case class LastInfo(blocks: Seq[Block], messages: Seq[UserMessage])
-
-object LastInfo {
-
-  implicit val jsonDecoder: Decoder[LastInfo] = (c: HCursor) => for {
-    blocks <- c.downField( "blocks" ).as[Seq[Block]]
-    messages <- c.downField( "messages" ).as[Seq[UserMessage]]
-  } yield LastInfo(
-    blocks,
-    messages
-  )
-
-  implicit val jsonEncoder: Encoder[LastInfo] = (b: LastInfo) => Map(
-    "blocks" -> b.blocks.map( _.asJson ).asJson,
-    "messages" -> b.messages.map( _.asJson ).asJson
-  ).asJson
-}
