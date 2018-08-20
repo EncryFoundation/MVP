@@ -51,23 +51,17 @@ class StateHolder extends Actor with StrictLogging {
   }
 
   def addMessage(message: UserMessage,
-                 previousMessageWithTxNum: Option[(MessageInfo, Int, Array[Byte])]): Unit =
+                 previousOutput: Option[OutputMessage]): Unit =
     if (!messagesHolder.contains(message)) {
       logger.info(s"Get message: ${UserMessage.jsonEncoder(message)}")
       messagesHolder = messagesHolder :+ message
-      var txNum: Int = previousMessageWithTxNum.map(_._2).getOrElse(4)
-      //TODO: remove tuple, make code more readable
-      val prevMessage: Option[(MessageInfo, Array[Byte])] = if (txNum == 1) {
-        txNum = 4
-        None
-      } else previousMessageWithTxNum.map(prevMsg => prevMsg._1 -> prevMsg._3)
       self ! Transactions(
         Seq(
           Generator.generateMessageTx(keys.keys.head,
-            prevMessage.map(_._1),
-            prevMessage.map(_._2),
+            previousOutput.map(_.toProofGenerator),
+            previousOutput.map(_.id),
             message,
-            txNum,
+            previousOutput.map(output => if (output.txNum == 1) 4 else output.txNum).getOrElse(4),
             currentSalt
           )
         )
@@ -97,24 +91,18 @@ class StateHolder extends Actor with StrictLogging {
     case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(apply)
     case InfoMessage(msg: UserMessage) =>
       if (!messagesHolder.contains(msg)) {
-        //TODO: Remove .asInstanceOf[OutputMessage]
-        val previousMessageInfoWithTxNumAndOutput: Option[(MessageInfo, Int, Array[Byte])] =
-          state.state.values.toSeq.find(output => {
-            val outputMes: OutputMessage = output.asInstanceOf[OutputMessage]
-            outputMes.messageHash ++ outputMes.metadata ++ outputMes.publicKey sameElements
-              Sha256RipeMD160(messagesHolder.last.message.getBytes) ++
-                messagesHolder.last.metadata ++
-                  messagesHolder.last.sender
-          }).map{output =>
-              val message = output.asInstanceOf[OutputMessage]
-              (message.toProofGenerator, message.txNum, output.id)
-            }
         if (messagesHolder.size % 3 == 0) {
           // Реинициализация
           currentSalt = Random.randomBytes()
           logger.info(s"Init new txChain with new salt: ${Base16.encode(currentSalt)}")
         }
-        addMessage(msg, previousMessageInfoWithTxNumAndOutput)
+        state.state.values.toSeq.foreach {
+          case output: OutputMessage if output.messageHash ++ output.metadata ++ output.publicKey sameElements
+            Sha256RipeMD160(messagesHolder.last.message.getBytes) ++
+              messagesHolder.last.metadata ++
+              messagesHolder.last.sender => addMessage(msg, Some(output))
+          case _ =>
+        }
       }
     case Payloads(payloads: Seq[Payload]) => payloads.filter(validate).foreach(apply)
     case Transactions(transactions: Seq[Transaction]) => transactions.filter(validate).foreach(apply)
