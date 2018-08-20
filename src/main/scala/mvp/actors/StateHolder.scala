@@ -10,7 +10,6 @@ import io.circe.syntax._
 import mvp.MVP.settings
 import mvp.actors.Messages._
 import mvp.local.messageHolder.UserMessage
-import mvp.local.messageTransaction.MessageInfo
 import mvp.local.{Generator, Keys}
 import mvp.utils.Crypto.Sha256RipeMD160
 import scorex.crypto.signatures.Curve25519
@@ -96,13 +95,16 @@ class StateHolder extends Actor with StrictLogging {
           currentSalt = Random.randomBytes()
           logger.info(s"Init new txChain with new salt: ${Base16.encode(currentSalt)}")
         }
-        state.state.values.toSeq.foreach {
-          case output: OutputMessage if output.messageHash ++ output.metadata ++ output.publicKey sameElements
-            Sha256RipeMD160(messagesHolder.last.message.getBytes) ++
-              messagesHolder.last.metadata ++
-              messagesHolder.last.sender => addMessage(msg, Some(output))
-          case _ =>
-        }
+        val previousOutput: Option[OutputMessage] =
+          state.state.values.toSeq.find {
+            case output: OutputMessage =>
+              output.messageHash ++ output.metadata ++ output.publicKey sameElements
+              Sha256RipeMD160(messagesHolder.last.message.getBytes) ++
+                messagesHolder.last.metadata ++
+                messagesHolder.last.sender
+            case _ => false
+          }.map(_.asInstanceOf[OutputMessage])
+        addMessage(msg, previousOutput)
       }
     case Payloads(payloads: Seq[Payload]) => payloads.filter(validate).foreach(apply)
     case Transactions(transactions: Seq[Transaction]) => transactions.filter(validate).foreach(apply)
