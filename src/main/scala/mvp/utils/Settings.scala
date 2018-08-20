@@ -21,7 +21,8 @@ case class InfluxDBSettings(url: String,
 
 case class mvpSettings(enableCLI: Boolean,
                        nodeName: String,
-                       sendStat: Boolean)
+                       sendStat: Boolean,
+                       messagesQtyInChain: Int)
 
 case class LevelDBSettings(enable: Boolean,
                            recoverMode: Boolean)
