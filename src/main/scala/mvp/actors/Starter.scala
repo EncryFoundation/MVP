@@ -14,7 +14,7 @@ import mvp.actors.Messages.{Headers, Heartbeat, Payloads, Start}
 import mvp.cli.ConsoleActor
 import mvp.cli.ConsoleActor._
 import mvp.http.HttpServer
-import mvp.local.messageHolder.UserMessage
+import mvp.local.messageHolder.UserMessage._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -43,7 +43,7 @@ class Starter extends Actor with StrictLogging {
         .flatMap(res => res.fold(Future.failed, Future.successful))
         .onComplete(_.map { lastInfo =>
           logger.info(s"Get blocks from remote: ${lastInfo.blocks.map(_.asJson).mkString("\n")}")
-          logger.info(s"Get messages from remote: ${lastInfo.messages.map(msg => UserMessage.jsonEncoder(msg)).mkString("\n")}")
+          logger.info(s"Get messages from remote: ${lastInfo.messages.map(_.asJson).mkString("\n")}")
           context.system.actorSelection("user/stateHolder") ! Headers(lastInfo.blocks.map(_.header))
           context.system.actorSelection("user/stateHolder") ! Payloads(lastInfo.blocks.map(_.payload))
         })

@@ -8,6 +8,7 @@ import io.circe.syntax._
 import io.circe.generic.auto._
 import mvp.MVP.settings
 import mvp.actors.Messages._
+import mvp.local.messageHolder.UserMessage._
 import mvp.local.messageHolder.UserMessage
 import mvp.local.messageTransaction.MessageInfo
 import mvp.local.{Generator, Keys}
@@ -23,7 +24,7 @@ class StateHolder extends Actor with StrictLogging {
 
   def apply(modifier: Modifier): Unit = modifier match {
     case header: Header =>
-      logger.info(s"Get header: ${Header.jsonEncoder(header)}")
+      logger.info(s"Get header: ${header.asJson}")
       blockChain = blockChain.addHeader(header)
     case payload: Payload =>
       logger.info(s"Get payload: ${payload.asJson}")
@@ -48,7 +49,7 @@ class StateHolder extends Actor with StrictLogging {
 
   def addMessage(message: UserMessage, previousMessage: Option[MessageInfo], outputId: Option[Array[Byte]]): Unit =
     if (!messagesHolder.contains(message)) {
-      logger.info(s"Get message: ${UserMessage.jsonEncoder(message)}")
+      logger.info(s"Get message: ${message.asJson}")
       messagesHolder = messagesHolder :+ message
       self ! Transactions(Seq(Generator.generateMessageTx(keys.keys.head, previousMessage, outputId, message.message)))
     }
