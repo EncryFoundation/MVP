@@ -42,7 +42,7 @@ object OutputMessage {
   val typeId: Byte = 2: Byte
 
   implicit val encodeOutputMessage: Encoder[OutputMessage] =
-    Encoder.forProduct7("bundle", "check", "messageHash", "metadata", "publicKey", "signature", "txNum", "canBeSpent") { o =>
+    Encoder.forProduct7("bundle", "check", "messageHash", "metadata", "publicKey", "signature", "txNum") { o =>
       (encode(o.bundle), encode(o.check), encode(o.messageHash), encode(o.metadata), encode(o.publicKey), encode(o.signature), o.txNum)
     }
 

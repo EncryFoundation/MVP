@@ -98,7 +98,7 @@ class StateHolder extends Actor with StrictLogging {
 
   def createMessageTx(message: UserMessage,
                       previousOutput: Option[OutputMessage]): Transaction = {
-    logger.info(s"Get message: ${UserMessage.jsonEncoder(message)}")
+    logger.info(s"Get message: ${message.asJson}")
     messagesHolder = messagesHolder :+ message
     Generator.generateMessageTx(keys.keys.head,
       previousOutput.map(_.toProofGenerator),
