@@ -14,7 +14,6 @@ import mvp.cli.ConsoleActor
 import mvp.cli.ConsoleActor._
 import mvp.http.HttpServer
 import mvp.local.messageHolder.UserMessage
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -36,7 +35,7 @@ class Starter extends Actor with StrictLogging {
       Http().singleRequest(HttpRequest(
         method = HttpMethods.GET,
         uri = "/blockchain/lastInfo"
-      ).withEffectiveUri(securedConnection = false, Host(settings.otherNodes.head.host,settings.otherNodes.head.port)))
+      ).withEffectiveUri(securedConnection = false, Host(settings.otherNodes.head.host, settings.otherNodes.head.port)))
         .flatMap(_.entity.dataBytes.runFold(ByteString.empty)(_ ++ _))
         .map(_.utf8String)
         .map(decode[LastInfo])
@@ -63,6 +62,9 @@ class Starter extends Actor with StrictLogging {
       context.actorOf(Props[ConsoleActor].withDispatcher("common-dispatcher"), "cliActor")
       consoleListener
     }
-    if (settings.mvpSettings.sendStat) context.actorOf(Props[InfluxActor].withDispatcher("common-dispatcher"), "influxActor")
+    if (settings.mvpSettings.sendStat)
+      context.actorOf(Props[InfluxActor].withDispatcher("common-dispatcher"), "influxActor")
+    if (settings.levelDB.enable)
+      context.actorOf(Props[ModifiersHolder].withDispatcher("common-dispatcher"), "modifiersHolder")
   }
 }
