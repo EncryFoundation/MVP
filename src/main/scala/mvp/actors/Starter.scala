@@ -15,7 +15,6 @@ import mvp.cli.ConsoleActor
 import mvp.cli.ConsoleActor._
 import mvp.http.HttpServer
 import mvp.local.messageHolder.UserMessage._
-import mvp.local.messageHolder.UserMessage
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -41,7 +40,7 @@ class Starter extends Actor with StrictLogging {
         .flatMap(_.entity.dataBytes.runFold(ByteString.empty)(_ ++ _))
         .map(_.utf8String)
         .map(decode[LastInfo])
-        .flatMap(res => res.fold(Future.failed, Future.successful))
+        .flatMap(_.fold(Future.failed, Future.successful))
         .onComplete(_.map { lastInfo =>
           logger.info(s"Get blocks from remote: ${lastInfo.blocks.map(_.asJson).mkString("\n")}")
           logger.info(s"Get messages from remote: ${lastInfo.messages.map(_.asJson).mkString("\n")}")

@@ -17,19 +17,19 @@ case class UserMessage(message: String, metadata: Array[Byte], sender: Array[Byt
 object UserMessage {
 
   implicit val decodeUserMessage: Decoder[UserMessage] =
-    Decoder.forProduct5[String, String, String, String, Int, UserMessage]("message", "metadata", "sender", "prevOutputId", "msgNub") {
-      case (message, metadata, sender, prevOutputId, msgNub) =>
+    Decoder.forProduct4[String, String, String, Int, UserMessage]("message", "metadata", "sender", "msgNub") {
+      case (message, metadata, sender, msgNub) =>
         UserMessage(
           message,
           decode(metadata).getOrElse(Array.emptyByteArray),
           decode(sender).getOrElse(Array.emptyByteArray),
-          decode(prevOutputId).toOption,
+          None,
           msgNub
         )
     }
 
   implicit val encodeUserMessage: Encoder[UserMessage] =
-    Encoder.forProduct5("message", "metadata", "sender", "prevOutputId", "msgNub") { um =>
-      (um.message, encode(um.metadata), encode(um.sender), um.prevOutputId.map(encode), um.msgNub)
+    Encoder.forProduct4("message", "metadata", "sender", "msgNub") { um =>
+      (um.message, encode(um.metadata), encode(um.sender), um.msgNub)
     }
 }

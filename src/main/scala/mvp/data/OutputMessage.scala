@@ -42,12 +42,12 @@ object OutputMessage {
   val typeId: Byte = 2: Byte
 
   implicit val encodeOutputMessage: Encoder[OutputMessage] =
-    Encoder.forProduct7("bundle", "check", "messageHash", "metadata", "publicKey", "signature", "txNum") { o =>
-      (encode(o.bundle), encode(o.check), encode(o.messageHash), encode(o.metadata), encode(o.publicKey), encode(o.signature), o.txNum)
+    Encoder.forProduct9("id", "type", "bundle", "check", "messageHash", "metadata", "publicKey", "signature", "txNum") { o =>
+      (encode(o.id), typeId, encode(o.bundle), encode(o.check), encode(o.messageHash), encode(o.metadata), encode(o.publicKey), encode(o.signature), o.txNum)
     }
 
   implicit val decodeOutputMessage: Decoder[OutputMessage] =
-    Decoder.forProduct7[String, String, String, String, String, String, Int, OutputMessage]("bundle", "check", "messageHash", "metadata", "publicKey", "signature", "canBeSpent") {
+    Decoder.forProduct7[String, String, String, String, String, String, Int, OutputMessage]("bundle", "check", "messageHash", "metadata", "publicKey", "signature", "txNum") {
       case (bundle, check, messageHash, metadata, publicKey, signature, txNum) =>
         OutputMessage(
           decode(bundle).getOrElse(Array.emptyByteArray),

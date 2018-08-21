@@ -24,17 +24,16 @@ object OutputAmount {
   val typeId: Byte = 0: Byte
 
   implicit val decodeOutputAmount: Decoder[OutputAmount] =
-    Decoder.forProduct4[String, Long, String, Boolean, OutputAmount]("publicKey", "amount", "signature", "signature"){
-    case (publicKey, amount, signature, canBeSpent) =>
+    Decoder.forProduct3[String, Long, String, OutputAmount]("publicKey", "amount", "signature"){
+    case (publicKey, amount, signature) =>
       OutputAmount(
         decode(publicKey).getOrElse(Array.emptyByteArray),
         amount,
-        decode(signature).getOrElse(Array.emptyByteArray),
-        canBeSpent
+        decode(signature).getOrElse(Array.emptyByteArray)
       )
   }
 
-  implicit val encodeOutputAmount: Encoder[OutputAmount] = Encoder.forProduct4("publicKey", "amount", "signature", "signature") { o =>
-    (encode(o.publicKey), o.amount, encode(o.signature), o.canBeSpent)
+  implicit val encodeOutputAmount: Encoder[OutputAmount] = Encoder.forProduct5("id", "type" ,"publicKey", "amount", "signature") { o =>
+    (encode(o.id), typeId, encode(o.publicKey), o.amount, encode(o.signature))
   }
 }

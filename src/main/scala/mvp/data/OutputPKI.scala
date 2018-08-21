@@ -30,22 +30,21 @@ object OutputPKI {
   val typeId: Byte = 1: Byte
 
   implicit val decodeOutputPKI: Decoder[OutputPKI] =
-    Decoder.forProduct7[String, String, String, String, String, String, Boolean, OutputPKI]("bundle", "check", "publicKeyHash", "userData", "publicKey", "signature", "canBeSpent") {
-      case (bundle, check, publicKeyHash, userData, publicKey, signature, canBeSpent) =>
+    Decoder.forProduct6[String, String, String, String, String, String, OutputPKI]("bundle", "check", "publicKeyHash", "userData", "publicKey", "signature") {
+      case (bundle, check, publicKeyHash, userData, publicKey, signature) =>
         OutputPKI(
           decode(bundle).getOrElse(Array.emptyByteArray),
           decode(check).getOrElse(Array.emptyByteArray),
           decode(publicKeyHash).getOrElse(Array.emptyByteArray),
           decode(userData).getOrElse(Array.emptyByteArray),
           decode(publicKey).getOrElse(Array.emptyByteArray),
-          decode(signature).getOrElse(Array.emptyByteArray),
-          canBeSpent
+          decode(signature).getOrElse(Array.emptyByteArray)
         )
     }
 
   implicit val encodeOutputPKI: Encoder[OutputPKI] =
-    Encoder.forProduct7("bundle", "check", "publicKeyHash", "userData", "publicKey", "signature", "canBeSpent") { o =>
-      (encode(o.bundle), encode(o.check), encode(o.publicKeyHash), encode(o.userData), encode(o.publicKeyHash), encode(o.signature), o.canBeSpent)
+    Encoder.forProduct8("id", "type" ,"bundle", "check", "publicKeyHash", "userData", "publicKey", "signature") { o =>
+      (encode(o.id), typeId, encode(o.bundle), encode(o.check), encode(o.publicKeyHash), encode(o.userData), encode(o.publicKeyHash), encode(o.signature))
     }
 
 }
