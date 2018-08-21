@@ -8,6 +8,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import io.circe.Json
 import io.circe.syntax._
+import io.circe.generic.auto._
 import mvp.actors.LastInfo
 import mvp.actors.Messages.GetLastInfo
 

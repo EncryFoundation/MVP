@@ -32,9 +32,9 @@ object Output {
     Decoder.instance { ins =>
       ins.downField("type").as[Byte] match {
         case Right(outputTypeId) => outputTypeId match {
-          case OutputAmount.typeId => OutputAmount.jsonDecoder(ins)
-          case OutputPKI.typeId => OutputPKI.jsonDecoder(ins)
-          case OutputMessage.typeId => OutputMessage.jsonDecoder(ins)
+          case OutputAmount.typeId => OutputAmount.decodeOutputAmount(ins)
+          case OutputPKI.typeId => OutputPKI.decodeOutputPKI(ins)
+          case OutputMessage.typeId => OutputMessage.decodeOutputMessage(ins)
         }
         case Left(_) => Left(DecodingFailure("None typeId", ins.history))
       }
@@ -43,8 +43,8 @@ object Output {
   }
 
   implicit val jsonEncoder: Encoder[Output] = {
-    case ab: OutputAmount => OutputAmount.jsonEncoder(ab)
-    case db: OutputPKI => OutputPKI.jsonEncoder(db)
-    case aib: OutputMessage => OutputMessage.jsonEncoder(aib)
+    case ab: OutputAmount => OutputAmount.encodeOutputAmount(ab)
+    case db: OutputPKI => OutputPKI.encodeOutputPKI(db)
+    case aib: OutputMessage => OutputMessage.encodeOutputMessage(aib)
   }
 }

@@ -1,10 +1,9 @@
 package mvp.data
 
 import com.google.common.primitives.Longs
-import io.circe.syntax._
-import io.circe.{Decoder, Encoder, HCursor}
+import io.circe.{Decoder, Encoder}
 import mvp.utils.Crypto.Sha256RipeMD160
-import scorex.crypto.encode.Base16
+import scorex.util.encode.Base16.{encode, decode}
 
 case class OutputAmount(publicKey: Array[Byte],
                         amount: Long,
@@ -24,21 +23,17 @@ object OutputAmount {
 
   val typeId: Byte = 0: Byte
 
-  implicit val jsonDecoder: Decoder[OutputAmount] = (c: HCursor) => for {
-    publicKey <- c.downField("publicKey").as[String]
-    amount <- c.downField("amount").as[Long]
-    signature <- c.downField("signature").as[String]
-  } yield OutputAmount(
-    Base16.decode(publicKey).getOrElse(Array.emptyByteArray),
-    amount,
-    Base16.decode(signature).getOrElse(Array.emptyByteArray)
-  )
+  implicit val decodeOutputAmount: Decoder[OutputAmount] =
+    Decoder.forProduct3[String, Long, String, OutputAmount]("publicKey", "amount", "signature"){
+    case (publicKey, amount, signature) =>
+      OutputAmount(
+        decode(publicKey).getOrElse(Array.emptyByteArray),
+        amount,
+        decode(signature).getOrElse(Array.emptyByteArray)
+      )
+  }
 
-  implicit val jsonEncoder: Encoder[OutputAmount] = (b: OutputAmount) => Map(
-    "id" -> Base16.encode(b.id).asJson,
-    "type" -> typeId.asJson,
-    "publicKey" -> Base16.encode(b.publicKey).asJson,
-    "amount" -> b.amount.asJson,
-    "signaturu" -> Base16.encode(b.signature).asJson,
-  ).asJson
+  implicit val encodeOutputAmount: Encoder[OutputAmount] = Encoder.forProduct5("id", "type" ,"publicKey", "amount", "signature") { o =>
+    (encode(o.id), typeId, encode(o.publicKey), o.amount, encode(o.signature))
+  }
 }

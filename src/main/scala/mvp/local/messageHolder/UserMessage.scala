@@ -1,12 +1,11 @@
 package mvp.local.messageHolder
 
-import io.circe.{Decoder, Encoder, HCursor}
-import scorex.util.encode.Base16
-import io.circe.syntax._
+import io.circe.{Decoder, Encoder}
+import scorex.util.encode.Base16.{encode, decode}
 import mvp.local.messageTransaction.MessageInfo
 import mvp.utils.Crypto.Sha256RipeMD160
 
-case class UserMessage(message: String, metadata: Array[Byte], sender: Array[Byte], prevOutputId: Option[Array[Byte]], msgNub: Int) {
+case class UserMessage(message: String, metadata: Array[Byte], sender: Array[Byte], prevOutputId: Option[Array[Byte]], msgNum: Int) {
 
   def toMsgInfo: MessageInfo = MessageInfo(
     Sha256RipeMD160(message.getBytes),
@@ -17,23 +16,20 @@ case class UserMessage(message: String, metadata: Array[Byte], sender: Array[Byt
 
 object UserMessage {
 
-  implicit val jsonDecoder: Decoder[UserMessage] = (c: HCursor) => for {
-    message <- c.downField("message").as[String]
-    metadata <- c.downField("metadata").as[String]
-    sender <- c.downField("sender").as[String]
-    msgNum <- c.downField("msgNum").as[Int]
-  } yield UserMessage(
-    message,
-    Base16.decode(metadata).getOrElse(Array.emptyByteArray),
-    Base16.decode(sender).getOrElse(Array.emptyByteArray),
-    None,
-    msgNum
-  )
+  implicit val decodeUserMessage: Decoder[UserMessage] =
+    Decoder.forProduct4[String, String, String, Int, UserMessage]("message", "metadata", "sender", "msgNum") {
+      case (message, metadata, sender, msgNub) =>
+        UserMessage(
+          message,
+          decode(metadata).getOrElse(Array.emptyByteArray),
+          decode(sender).getOrElse(Array.emptyByteArray),
+          None,
+          msgNub
+        )
+    }
 
-  implicit val jsonEncoder: Encoder[UserMessage] = (b: UserMessage) => Map(
-    "message" -> b.message.asJson,
-    "metadata" -> Base16.encode(b.metadata).asJson,
-    "sender" -> Base16.encode(b.sender).asJson,
-    "msgNum" -> b.msgNub.asJson
-  ).asJson
+  implicit val encodeUserMessage: Encoder[UserMessage] =
+    Encoder.forProduct4("message", "metadata", "sender", "msgNum") { um =>
+      (um.message, encode(um.metadata), encode(um.sender), um.msgNum)
+    }
 }
