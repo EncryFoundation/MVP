@@ -5,7 +5,7 @@ import scorex.util.encode.Base16.{encode, decode}
 import mvp.local.messageTransaction.MessageInfo
 import mvp.utils.Crypto.Sha256RipeMD160
 
-case class UserMessage(message: String, metadata: Array[Byte], sender: Array[Byte], prevOutputId: Option[Array[Byte]], msgNub: Int) {
+case class UserMessage(message: String, metadata: Array[Byte], sender: Array[Byte], prevOutputId: Option[Array[Byte]], msgNum: Int) {
 
   def toMsgInfo: MessageInfo = MessageInfo(
     Sha256RipeMD160(message.getBytes),
@@ -17,7 +17,7 @@ case class UserMessage(message: String, metadata: Array[Byte], sender: Array[Byt
 object UserMessage {
 
   implicit val decodeUserMessage: Decoder[UserMessage] =
-    Decoder.forProduct4[String, String, String, Int, UserMessage]("message", "metadata", "sender", "msgNub") {
+    Decoder.forProduct4[String, String, String, Int, UserMessage]("message", "metadata", "sender", "msgNum") {
       case (message, metadata, sender, msgNub) =>
         UserMessage(
           message,
@@ -29,7 +29,7 @@ object UserMessage {
     }
 
   implicit val encodeUserMessage: Encoder[UserMessage] =
-    Encoder.forProduct4("message", "metadata", "sender", "msgNub") { um =>
-      (um.message, encode(um.metadata), encode(um.sender), um.msgNub)
+    Encoder.forProduct4("message", "metadata", "sender", "msgNum") { um =>
+      (um.message, encode(um.metadata), encode(um.sender), um.msgNum)
     }
 }
