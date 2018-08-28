@@ -1,10 +1,9 @@
 package mvp.data
 
 import com.google.common.primitives.{Bytes, Ints, Longs}
-import io.circe.syntax._
-import io.circe.{Decoder, Encoder, HCursor}
+import io.circe.{Decoder, Encoder}
 import mvp.utils.Crypto.Sha256RipeMD160
-import scorex.crypto.encode.Base16
+import scorex.util.encode.Base16.{encode, decode}
 
 case class Header(timestamp: Long,
                   height: Int,
@@ -23,26 +22,21 @@ case class Header(timestamp: Long,
 
 object Header {
 
-  implicit val jsonDecoder: Decoder[Header] = (c: HCursor) => for {
-    timestamp <- c.downField("timestamp").as[Long]
-    height <- c.downField("height").as[Int]
-    previousBlockHash <- c.downField("previousBlockHash").as[String]
-    minerSignature <- c.downField("minerSignature").as[String]
-    merkleTreeRoot <- c.downField("merkleTreeRoot").as[String]
-  } yield Header(
-    timestamp,
-    height,
-    Base16.decode(previousBlockHash).getOrElse(Array.emptyByteArray),
-    Base16.decode(minerSignature).getOrElse(Array.emptyByteArray),
-    Base16.decode(merkleTreeRoot).getOrElse(Array.emptyByteArray)
-  )
+  implicit val decodeHeader: Decoder[Header] =
+    Decoder.forProduct5[Long, Int, String, String, String, Header]("timestamp", "height", "previousBlockHash", "minerSignature", "merkleTreeRoot") {
+      case (ts, height, previousBlockHash, minerSignature, merkleTreeRoot) =>
+        Header(
+          ts,
+          height,
+          decode(previousBlockHash).getOrElse(Array.emptyByteArray),
+          decode(minerSignature).getOrElse(Array.emptyByteArray),
+          decode(merkleTreeRoot).getOrElse(Array.emptyByteArray)
+        )
+    }
 
-  implicit val jsonEncoder: Encoder[Header] = (b: Header) => Map(
-    "id" -> Base16.encode(b.id).asJson,
-    "timestamp" -> b.timestamp.asJson,
-    "height" -> b.height.asJson,
-    "previousBlockHash" -> Base16.encode(b.previousBlockHash).asJson,
-    "minerSignature" -> Base16.encode(b.minerSignature).asJson,
-    "merkleTreeRoot" -> Base16.encode(b.merkleTreeRoot).asJson
-  ).asJson
+  implicit val encodeHeader: Encoder[Header] =
+    Encoder.forProduct5("timestamp", "height", "previousBlockHash", "minerSignature", "merkleTreeRoot") { h =>
+      (h.timestamp, h.height, encode(h.previousBlockHash), encode(h.minerSignature), encode(h.merkleTreeRoot))
+    }
+
 }

@@ -1,9 +1,8 @@
 package mvp.data
 
-import io.circe.syntax._
-import io.circe.{Decoder, Encoder, HCursor}
+import io.circe.{Decoder, Encoder}
 import mvp.utils.Crypto.Sha256RipeMD160
-import scorex.crypto.encode.Base16
+import scorex.util.encode.Base16.{encode, decode}
 
 case class Input(useOutputId: Array[Byte],
                  proofs: Seq[Array[Byte]]) extends Modifier {
@@ -13,16 +12,18 @@ case class Input(useOutputId: Array[Byte],
 
 object Input {
 
-  implicit val jsonDecoder: Decoder[Input] = (c: HCursor) => for {
-    useOutputId <- c.downField("useOutputId").as[String]
-    proofs <- c.downField("proofs").as[Seq[String]]
-  } yield Input(
-    Base16.decode(useOutputId).getOrElse(Array.emptyByteArray),
-    proofs.map(proof => Base16.decode(proof).getOrElse(Array.emptyByteArray))
-  )
+  implicit val decodeInput: Decoder[Input] =
+    Decoder.forProduct2[String, Seq[String], Input]("useOutputId", "proofs") {
+      case (useOutputId, proofs) =>
+        Input(
+          decode(useOutputId).getOrElse(Array.emptyByteArray),
+          proofs.map(decode(_).getOrElse(Array.emptyByteArray))
+        )
+    }
 
-  implicit val jsonEncoder: Encoder[Input] = (b: Input) => Map(
-    "useOutputId" -> Base16.encode(b.useOutputId).asJson,
-    "proofs" -> b.proofs.map(Base16.encode).asJson
-  ).asJson
+  implicit val encodeInput: Encoder[Input] =
+    Encoder.forProduct2("useOutputId", "proofs") { i =>
+      (encode(i.useOutputId), i.proofs.map(encode))
+    }
+
 }
