@@ -1,13 +1,14 @@
 package mvp.data
 
+import akka.util.ByteString
 import io.circe.{Decoder, Encoder}
 import mvp.utils.Crypto.Sha256RipeMD160
-import scorex.util.encode.Base16.{encode, decode}
+import mvp.utils.BlockchainUtils._
 
-case class Input(useOutputId: Array[Byte],
-                 proofs: Seq[Array[Byte]]) extends Modifier {
+case class Input(useOutputId: ByteString,
+                 proofs: Seq[ByteString]) extends Modifier {
 
-  override val id: Array[Byte] = Sha256RipeMD160(useOutputId ++ proofs.flatten)
+  override val id: ByteString = Sha256RipeMD160(useOutputId ++ proofs.flatten)
 }
 
 object Input {
@@ -16,14 +17,14 @@ object Input {
     Decoder.forProduct2[String, Seq[String], Input]("useOutputId", "proofs") {
       case (useOutputId, proofs) =>
         Input(
-          decode(useOutputId).getOrElse(Array.emptyByteArray),
-          proofs.map(decode(_).getOrElse(Array.emptyByteArray))
+          base16Decode(useOutputId).getOrElse(ByteString.empty),
+          proofs.map(base16Decode(_).getOrElse(ByteString.empty))
         )
     }
 
   implicit val encodeInput: Encoder[Input] =
     Encoder.forProduct2("useOutputId", "proofs") { i =>
-      (encode(i.useOutputId), i.proofs.map(encode))
+      (base16Encode(i.useOutputId), i.proofs.map(base16Encode))
     }
 
 }

@@ -1,14 +1,15 @@
 package utils
 
+import akka.util.ByteString
 import mvp.data.{OutputAmount, _}
-import scorex.utils.Random
+import mvp.utils.BlockchainUtils.randomByteString
 
 object TestGenerator {
 
   def generateHeaderChain(qty: Int): Seq[Header] = (0 until qty).foldLeft(Seq.empty[Header]) {
     case (headers, height) =>
-      val lastHeaderId: Array[Byte] = if (headers.nonEmpty) headers.last.id else Array.emptyByteArray
-      headers :+ Header(0L, height, lastHeaderId, Random.randomBytes(), Random.randomBytes())
+      val lastHeaderId: ByteString = if (headers.nonEmpty) headers.last.id else ByteString.empty
+      headers :+ Header(0L, height, lastHeaderId, randomByteString, randomByteString)
   }
 
   def generateBlockChainWithAmountPayloads(blocksQty: Int, initialInputs: Seq[Input]): Seq[Block] =
@@ -20,16 +21,16 @@ object TestGenerator {
         }
         else {
           val payload: Payload = Payload(
-            generatePaymentTxs(blocks.last.payload.transactions.flatMap(_.outputs.map(output => Input(output.id, Seq(Random.randomBytes())))))
+            generatePaymentTxs(blocks.last.payload.transactions.flatMap(_.outputs.map(output => Input(output.id, Seq(randomByteString)))))
           )
           blocks :+ Block(header.copy(merkleTreeRoot = payload.id), payload)
         }
     }
 
-  def generateDummyAmountOutputs(qty: Int): Seq[Output] = (0 until qty).map(i => OutputAmount(Random.randomBytes(), 100L, Random.randomBytes()))
+  def generateDummyAmountOutputs(qty: Int): Seq[Output] = (0 until qty).map(i => OutputAmount(randomByteString, 100L, randomByteString))
 
   def generatePaymentTxs(inputs: Seq[Input]): Seq[Transaction] = inputs.foldLeft(Seq.empty[Transaction]) {
     case (transatcions, input) =>
-      transatcions :+ Transaction(0L, Seq(input), Seq(OutputAmount(Random.randomBytes(), 100, Random.randomBytes())))
+      transatcions :+ Transaction(0L, Seq(input), Seq(OutputAmount(randomByteString, 100, randomByteString)))
   }
 }

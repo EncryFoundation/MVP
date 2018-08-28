@@ -1,6 +1,7 @@
 package mvp.data
 
-import mvp.MVP.{settings, system}
+import akka.util.ByteString
+import mvp.MVP.system
 import mvp.actors.ModifiersHolder.RequestModifiers
 
 //TODO: Blocks to levelDb
@@ -16,14 +17,14 @@ case class Blockchain(headers: Seq[Header] = Seq.empty, blocks: Seq[Block] = Seq
   def addPayload(payload: Payload): Blockchain =
     Blockchain(
       headers,
-      headers.find(_.merkleTreeRoot sameElements payload.id)
+      headers.find(_.merkleTreeRoot == payload.id)
         .map(header =>
           (blocks :+ Block(header, payload))
             .sortWith((blockOne, blockTwo) => blockOne.header.height < blockTwo.header.height))
         .getOrElse(blocks)
     )
 
-  def SendBlock: Unit = blocks.lastOption.map(block =>
+  def sendBlock: Unit = blocks.lastOption.foreach(block =>
     system.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(block))
 
 
@@ -38,7 +39,7 @@ object Blockchain {
 
   val genesisBlockchain: Blockchain = {
     val genesisBlock: Block =
-      Block(Header(1L, 0, Array.emptyByteArray, Array.emptyByteArray, Array.emptyByteArray), Payload(Seq.empty))
+      Block(Header(1L, 0, ByteString.empty, ByteString.empty, ByteString.empty), Payload(Seq.empty))
     Blockchain(Seq(genesisBlock.header), Seq(genesisBlock))
   }
 

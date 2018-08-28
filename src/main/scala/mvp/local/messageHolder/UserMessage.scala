@@ -1,14 +1,15 @@
 package mvp.local.messageHolder
 
+import akka.util.ByteString
 import io.circe.{Decoder, Encoder}
-import scorex.util.encode.Base16.{encode, decode}
 import mvp.local.messageTransaction.MessageInfo
+import mvp.utils.BlockchainUtils._
 import mvp.utils.Crypto.Sha256RipeMD160
 
-case class UserMessage(message: String, metadata: Array[Byte], sender: Array[Byte], prevOutputId: Option[Array[Byte]], msgNum: Int) {
+case class UserMessage(message: String, metadata: ByteString, sender: ByteString, prevOutputId: Option[ByteString], msgNum: Int) {
 
   def toMsgInfo: MessageInfo = MessageInfo(
-    Sha256RipeMD160(message.getBytes),
+    Sha256RipeMD160(ByteString(message)),
     metadata,
     sender
   )
@@ -21,8 +22,8 @@ object UserMessage {
       case (message, metadata, sender, msgNub) =>
         UserMessage(
           message,
-          decode(metadata).getOrElse(Array.emptyByteArray),
-          decode(sender).getOrElse(Array.emptyByteArray),
+          base16Decode(metadata).getOrElse(ByteString.empty),
+          base16Decode(sender).getOrElse(ByteString.empty),
           None,
           msgNub
         )
@@ -30,6 +31,6 @@ object UserMessage {
 
   implicit val encodeUserMessage: Encoder[UserMessage] =
     Encoder.forProduct4("message", "metadata", "sender", "msgNum") { um =>
-      (um.message, encode(um.metadata), encode(um.sender), um.msgNum)
+      (um.message, base16Encode(um.metadata), base16Encode(um.sender), um.msgNum)
     }
 }

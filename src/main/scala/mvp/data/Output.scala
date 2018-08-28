@@ -1,29 +1,30 @@
 package mvp.data
 
+import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
 import io.circe.{Decoder, DecodingFailure, Encoder}
 import scorex.crypto.signatures.{Curve25519, PublicKey, Signature}
-import scorex.util.encode.Base16
+import mvp.utils.BlockchainUtils._
 
 trait Output extends Modifier with StrictLogging {
 
-  val messageToSign: Array[Byte]
+  val messageToSign: ByteString
 
-  val publicKey: Array[Byte]
+  val publicKey: ByteString
 
-  val signature: Array[Byte]
+  val signature: ByteString
 
   val canBeSpent: Boolean
 
   def checkSignature: Boolean = {
-    val result: Boolean = Curve25519.verify(Signature @@ signature, messageToSign, PublicKey @@ publicKey)
-    logger.info(s"Going to check signature for output with id: ${Base16.encode(id)} and result is: $result")
+    val result: Boolean = Curve25519.verify(Signature @@ signature.toArray, messageToSign.toArray, PublicKey @@ publicKey.toArray)
+    logger.info(s"Going to check signature for output with id: ${base16Encode(id)} and result is: $result")
     result
   }
 
   def closeForSpent: Output
 
-  def unlock(proofs: Seq[Array[Byte]]): Boolean
+  def unlock(proofs: Seq[ByteString]): Boolean
 }
 
 object Output {

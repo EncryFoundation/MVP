@@ -1,22 +1,22 @@
 package mvp.data
 
-import com.google.common.primitives.{Bytes, Ints, Longs}
+import akka.util.ByteString
 import io.circe.{Decoder, Encoder}
 import mvp.utils.Crypto.Sha256RipeMD160
-import scorex.util.encode.Base16.{encode, decode}
+import mvp.utils.BlockchainUtils._
 
 case class Header(timestamp: Long,
                   height: Int,
-                  previousBlockHash: Array[Byte],
-                  minerSignature: Array[Byte],
-                  merkleTreeRoot: Array[Byte]) extends Modifier {
+                  previousBlockHash: ByteString,
+                  minerSignature: ByteString,
+                  merkleTreeRoot: ByteString) extends Modifier {
 
-  val messageToSign: Array[Byte] = Bytes.concat(
-    Longs.toByteArray(timestamp) ++ Ints.toByteArray(height) ++ previousBlockHash ++ merkleTreeRoot
-  )
+  val messageToSign: ByteString =
+    toByteArray(timestamp) ++ toByteArray(height) ++ previousBlockHash ++ merkleTreeRoot
 
-  override val id: Array[Byte] = Sha256RipeMD160(
-    Longs.toByteArray(timestamp) ++ Ints.toByteArray(height) ++ previousBlockHash ++ minerSignature ++ merkleTreeRoot
+
+  override val id: ByteString = Sha256RipeMD160(
+    toByteArray(timestamp) ++ toByteArray(height) ++ previousBlockHash ++ minerSignature ++ merkleTreeRoot
   )
 }
 
@@ -28,15 +28,15 @@ object Header {
         Header(
           ts,
           height,
-          decode(previousBlockHash).getOrElse(Array.emptyByteArray),
-          decode(minerSignature).getOrElse(Array.emptyByteArray),
-          decode(merkleTreeRoot).getOrElse(Array.emptyByteArray)
+          base16Decode(previousBlockHash).getOrElse(ByteString.empty),
+          base16Decode(minerSignature).getOrElse(ByteString.empty),
+          base16Decode(merkleTreeRoot).getOrElse(ByteString.empty)
         )
     }
 
   implicit val encodeHeader: Encoder[Header] =
     Encoder.forProduct5("timestamp", "height", "previousBlockHash", "minerSignature", "merkleTreeRoot") { h =>
-      (h.timestamp, h.height, encode(h.previousBlockHash), encode(h.minerSignature), encode(h.merkleTreeRoot))
+      (h.timestamp, h.height, base16Encode(h.previousBlockHash), base16Encode(h.minerSignature), base16Encode(h.merkleTreeRoot))
     }
 
 }

@@ -1,22 +1,22 @@
 package mvp.data
 
-import com.google.common.primitives.Longs
+import akka.util.ByteString
 import io.circe.{Decoder, Encoder}
 import mvp.utils.Crypto.Sha256RipeMD160
-import scorex.util.encode.Base16.{encode, decode}
+import mvp.utils.BlockchainUtils._
 
-case class OutputAmount(publicKey: Array[Byte],
+case class OutputAmount(publicKey: ByteString,
                         amount: Long,
-                        signature: Array[Byte],
+                        signature: ByteString,
                         override val canBeSpent: Boolean = true) extends Output {
 
   override def closeForSpent: Output = this.copy(canBeSpent = false)
 
-  override val messageToSign: Array[Byte] = Sha256RipeMD160(publicKey ++ Longs.toByteArray(amount))
+  override val messageToSign: ByteString = Sha256RipeMD160(publicKey ++ toByteArray(amount))
 
-  override def unlock(proofs: Seq[Array[Byte]]): Boolean = true
+  override def unlock(proofs: Seq[ByteString]): Boolean = true
 
-  override val id: Array[Byte] = Sha256RipeMD160(publicKey ++ Longs.toByteArray(amount))
+  override val id: ByteString = Sha256RipeMD160(publicKey ++ toByteArray(amount))
 }
 
 object OutputAmount {
@@ -27,13 +27,13 @@ object OutputAmount {
     Decoder.forProduct3[String, Long, String, OutputAmount]("publicKey", "amount", "signature"){
     case (publicKey, amount, signature) =>
       OutputAmount(
-        decode(publicKey).getOrElse(Array.emptyByteArray),
+        base16Decode(publicKey).getOrElse(ByteString.empty),
         amount,
-        decode(signature).getOrElse(Array.emptyByteArray)
+        base16Decode(signature).getOrElse(ByteString.empty)
       )
   }
 
   implicit val encodeOutputAmount: Encoder[OutputAmount] = Encoder.forProduct5("id", "type" ,"publicKey", "amount", "signature") { o =>
-    (encode(o.id), typeId, encode(o.publicKey), o.amount, encode(o.signature))
+    (base16Encode(o.id), typeId, base16Encode(o.publicKey), o.amount, base16Encode(o.signature))
   }
 }
