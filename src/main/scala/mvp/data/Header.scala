@@ -11,10 +11,10 @@ case class Header(timestamp: Long,
                   merkleTreeRoot: ByteString) extends Modifier {
 
   val messageToSign: ByteString =
-    toByteArray(timestamp) ++ toByteArray(height) ++ previousBlockHash ++ merkleTreeRoot
+    toByteString(timestamp) ++ toByteString(height) ++ previousBlockHash ++ merkleTreeRoot
 
 
   override val id: ByteString = Sha256RipeMD160(
-    toByteArray(timestamp) ++ toByteArray(height) ++ previousBlockHash ++ minerSignature ++ merkleTreeRoot
+    toByteString(timestamp) ++ toByteString(height) ++ previousBlockHash ++ minerSignature ++ merkleTreeRoot
   )
 }

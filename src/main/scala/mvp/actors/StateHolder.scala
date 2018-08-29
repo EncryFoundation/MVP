@@ -14,7 +14,7 @@ import mvp.actors.ModifiersHolder.RequestModifiers
 import mvp.local.messageHolder.UserMessage
 import mvp.local.{Generator, Keys}
 import mvp.utils.Crypto.Sha256RipeMD160
-import mvp.utils.BlockchainUtils.{randomByteString, toByteArray, base16Encode}
+import mvp.utils.BlockchainUtils.{randomByteString, toByteString, base16Encode}
 import mvp.utils.EncodingUtils._
 import scorex.crypto.signatures.Curve25519
 
@@ -37,7 +37,7 @@ class StateHolder extends Actor with StrictLogging {
     case UserMessageFromCLI(message, outputId) =>
       self ! InfoMessage(
         UserMessage(message.mkString,
-          toByteArray(System.currentTimeMillis()),
+          toByteString(System.currentTimeMillis()),
           ByteString(keys.keys.head.publicKeyBytes),
           outputId.map(ByteString(_)),
           messagesHolder.size + 1)

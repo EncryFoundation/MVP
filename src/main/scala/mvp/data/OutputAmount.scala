@@ -11,11 +11,11 @@ case class OutputAmount(publicKey: ByteString,
 
   override def closeForSpent: Output = this.copy(canBeSpent = false)
 
-  override val messageToSign: ByteString = Sha256RipeMD160(publicKey ++ toByteArray(amount))
+  override val messageToSign: ByteString = Sha256RipeMD160(publicKey ++ toByteString(amount))
 
   override def unlock(proofs: Seq[ByteString]): Boolean = true
 
-  override val id: ByteString = Sha256RipeMD160(publicKey ++ toByteArray(amount))
+  override val id: ByteString = Sha256RipeMD160(publicKey ++ toByteString(amount))
 }
 
 object OutputAmount {

@@ -24,7 +24,7 @@ object BlockchainUtils {
   def base16Encode(bytes: ByteString): String = Base16.encode(bytes.toArray)
   def base16Decode(str: String): Try[ByteString] = Base16.decode(str).map(ByteString(_))
 
-  def toByteArray(value: Long): ByteString = {
+  def toByteString(value: Long): ByteString = {
     val result = ArrayBuffer[Byte]()
     var localValue = value
     (7 to 0 by -1).foreach { _ =>
@@ -34,7 +34,7 @@ object BlockchainUtils {
     ByteString(result.toArray)
   }
 
-  def toByteArray(value: Int): ByteString = {
+  def toByteString(value: Int): ByteString = {
     ByteString(
       Array(value >> 24, value >> 16, value >> 8, value).map(_.toByte)
     )
