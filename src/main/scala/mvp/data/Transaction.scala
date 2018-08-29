@@ -1,17 +1,14 @@
 package mvp.data
 
-import com.google.common.primitives.Longs
-import io.circe.syntax._
-import io.circe.{Decoder, Encoder, HCursor}
+import akka.util.ByteString
 import mvp.utils.Crypto.Sha256RipeMD160
+import mvp.utils.BlockchainUtils.toByteString
 
 case class Transaction(timestamp: Long,
                        inputs: Seq[Input],
                        outputs: Seq[Output]) extends Modifier {
 
-  override val id: Array[Byte] = Sha256RipeMD160(
-    Longs.toByteArray(timestamp) ++
-      inputs.foldLeft(Array.emptyByteArray)(_ ++ _.id) ++
-      outputs.foldLeft(Array.emptyByteArray)(_ ++ _.id)
+  override val id: ByteString = Sha256RipeMD160(
+    toByteString(timestamp) ++ inputs.foldLeft(ByteString.empty)(_ ++ _.id) ++ outputs.foldLeft(ByteString.empty)(_ ++ _.id)
   )
 }
