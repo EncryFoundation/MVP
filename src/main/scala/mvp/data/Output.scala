@@ -2,9 +2,14 @@ package mvp.data
 
 import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
-import io.circe.{Decoder, DecodingFailure, Encoder}
+import io.circe.{Decoder, Encoder}
+import io.circe.syntax._
+import io.circe.generic.auto._
+import io.circe.parser.decode
+import cats.syntax.functor._
 import scorex.crypto.signatures.{Curve25519, PublicKey, Signature}
 import mvp.utils.BlockchainUtils._
+import mvp.utils.EncodingUtils._
 
 trait Output extends Modifier with StrictLogging {
 
@@ -29,23 +34,16 @@ trait Output extends Modifier with StrictLogging {
 
 object Output {
 
-  implicit val jsonDencoder: Decoder[Output] = {
-    Decoder.instance { ins =>
-      ins.downField("type").as[Byte] match {
-        case Right(outputTypeId) => outputTypeId match {
-          case OutputAmount.typeId => OutputAmount.decodeOutputAmount(ins)
-          case OutputPKI.typeId => OutputPKI.decodeOutputPKI(ins)
-          case OutputMessage.typeId => OutputMessage.decodeOutputMessage(ins)
-        }
-        case Left(_) => Left(DecodingFailure("None typeId", ins.history))
-      }
-
-    }
-  }
+  implicit val jsonDencoder: Decoder[Output] =
+    List[Decoder[Output]](
+      Decoder[OutputAmount].widen,
+      Decoder[OutputPKI].widen,
+      Decoder[OutputMessage].widen
+    ).reduceLeft(_ or _)
 
   implicit val jsonEncoder: Encoder[Output] = {
-    case ab: OutputAmount => OutputAmount.encodeOutputAmount(ab)
-    case db: OutputPKI => OutputPKI.encodeOutputPKI(db)
-    case aib: OutputMessage => OutputMessage.encodeOutputMessage(aib)
+    case ab: OutputAmount => ab.asJson
+    case db: OutputPKI => db.asJson
+    case aib: OutputMessage => aib.asJson
   }
 }

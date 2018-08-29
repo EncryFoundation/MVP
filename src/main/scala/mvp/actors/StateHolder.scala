@@ -15,6 +15,7 @@ import mvp.local.messageHolder.UserMessage
 import mvp.local.{Generator, Keys}
 import mvp.utils.Crypto.Sha256RipeMD160
 import mvp.utils.BlockchainUtils.{randomByteString, toByteArray, base16Encode}
+import mvp.utils.EncodingUtils._
 import scorex.crypto.signatures.Curve25519
 
 class StateHolder extends Actor with StrictLogging {
