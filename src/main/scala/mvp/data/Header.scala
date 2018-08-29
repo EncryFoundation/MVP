@@ -1,42 +1,20 @@
 package mvp.data
 
-import com.google.common.primitives.{Bytes, Ints, Longs}
-import io.circe.{Decoder, Encoder}
+import akka.util.ByteString
 import mvp.utils.Crypto.Sha256RipeMD160
-import scorex.util.encode.Base16.{encode, decode}
+import mvp.utils.BlockchainUtils._
 
 case class Header(timestamp: Long,
                   height: Int,
-                  previousBlockHash: Array[Byte],
-                  minerSignature: Array[Byte],
-                  merkleTreeRoot: Array[Byte]) extends Modifier {
+                  previousBlockHash: ByteString,
+                  minerSignature: ByteString,
+                  merkleTreeRoot: ByteString) extends Modifier {
 
-  val messageToSign: Array[Byte] = Bytes.concat(
-    Longs.toByteArray(timestamp) ++ Ints.toByteArray(height) ++ previousBlockHash ++ merkleTreeRoot
+  val messageToSign: ByteString =
+    toByteString(timestamp) ++ toByteString(height) ++ previousBlockHash ++ merkleTreeRoot
+
+
+  override val id: ByteString = Sha256RipeMD160(
+    toByteString(timestamp) ++ toByteString(height) ++ previousBlockHash ++ minerSignature ++ merkleTreeRoot
   )
-
-  override val id: Array[Byte] = Sha256RipeMD160(
-    Longs.toByteArray(timestamp) ++ Ints.toByteArray(height) ++ previousBlockHash ++ minerSignature ++ merkleTreeRoot
-  )
-}
-
-object Header {
-
-  implicit val decodeHeader: Decoder[Header] =
-    Decoder.forProduct5[Long, Int, String, String, String, Header]("timestamp", "height", "previousBlockHash", "minerSignature", "merkleTreeRoot") {
-      case (ts, height, previousBlockHash, minerSignature, merkleTreeRoot) =>
-        Header(
-          ts,
-          height,
-          decode(previousBlockHash).getOrElse(Array.emptyByteArray),
-          decode(minerSignature).getOrElse(Array.emptyByteArray),
-          decode(merkleTreeRoot).getOrElse(Array.emptyByteArray)
-        )
-    }
-
-  implicit val encodeHeader: Encoder[Header] =
-    Encoder.forProduct5("timestamp", "height", "previousBlockHash", "minerSignature", "merkleTreeRoot") { h =>
-      (h.timestamp, h.height, encode(h.previousBlockHash), encode(h.minerSignature), encode(h.merkleTreeRoot))
-    }
-
 }

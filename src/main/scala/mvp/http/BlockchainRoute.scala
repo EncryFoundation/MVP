@@ -11,6 +11,7 @@ import io.circe.syntax._
 import io.circe.generic.auto._
 import mvp.actors.LastInfo
 import mvp.actors.Messages.GetLastInfo
+import mvp.utils.EncodingUtils._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}

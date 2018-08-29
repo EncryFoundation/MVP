@@ -7,6 +7,7 @@ import mvp.actors.Messages.{Heartbeat, Start}
 import mvp.cli.ConsoleActor
 import mvp.cli.ConsoleActor._
 import mvp.http.HttpServer
+import mvp.utils.EncodingUtils._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.language.postfixOps

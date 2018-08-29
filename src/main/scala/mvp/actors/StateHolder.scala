@@ -1,7 +1,7 @@
 package mvp.actors
 
 import akka.actor.Actor
-import com.google.common.primitives.Longs
+import akka.util.ByteString
 import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, UserMessageFromCLI}
 import com.typesafe.scalalogging.StrictLogging
 import mvp.data.{Blockchain, Modifier, State, _}
@@ -14,16 +14,16 @@ import mvp.actors.ModifiersHolder.RequestModifiers
 import mvp.local.messageHolder.UserMessage
 import mvp.local.{Generator, Keys}
 import mvp.utils.Crypto.Sha256RipeMD160
+import mvp.utils.BlockchainUtils.{randomByteString, toByteString, base16Encode}
+import mvp.utils.EncodingUtils._
 import scorex.crypto.signatures.Curve25519
-import scorex.util.encode.Base16
-import scorex.utils.Random
 
 class StateHolder extends Actor with StrictLogging {
   var blockChain: Blockchain = Blockchain.recoverBlockchain
   var state: State = State.recoverState
   val keys: Keys = Keys.recoverKeys
   var messagesHolder: Seq[UserMessage] = Seq.empty
-  var currentSalt: Array[Byte] = Random.randomBytes()
+  var currentSalt: ByteString = randomByteString
 
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(add)
@@ -37,9 +37,9 @@ class StateHolder extends Actor with StrictLogging {
     case UserMessageFromCLI(message, outputId) =>
       self ! InfoMessage(
         UserMessage(message.mkString,
-          Longs.toByteArray(System.currentTimeMillis()),
-          keys.keys.head.publicKeyBytes,
-          outputId,
+          toByteString(System.currentTimeMillis()),
+          ByteString(keys.keys.head.publicKeyBytes),
+          outputId.map(ByteString(_)),
           messagesHolder.size + 1)
       )
   }
@@ -54,7 +54,7 @@ class StateHolder extends Actor with StrictLogging {
       logger.info(s"Get payload: ${payload.asJson}")
       blockChain = blockChain.addPayload(payload)
       if (settings.levelDB.enable)
-        blockChain.SendBlock
+        blockChain.sendBlock
       state = state.updateState(payload)
       if (settings.levelDB.enable)
         context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(payload)
@@ -64,13 +64,13 @@ class StateHolder extends Actor with StrictLogging {
       val headerUnsigned: Header = Header(
         System.currentTimeMillis(),
         blockChain.blockchainHeight + 1,
-        blockChain.lastBlock.map(_.id).getOrElse(Array.emptyByteArray),
-        Array.emptyByteArray,
+        blockChain.lastBlock.map(_.id).getOrElse(ByteString.empty),
+        ByteString.empty,
         payload.id
       )
       val signedHeader: Header =
         headerUnsigned
-          .copy(minerSignature = Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign))
+          .copy(minerSignature = ByteString(Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign.toArray)))
       add(signedHeader)
       add(payload)
       if (settings.levelDB.enable)
@@ -81,14 +81,14 @@ class StateHolder extends Actor with StrictLogging {
     if (!messagesHolder.contains(msg)) {
       if (messagesHolder.size % settings.mvpSettings.messagesQtyInChain == 0) {
       // Реинициализация
-      currentSalt = Random.randomBytes()
-      logger.info(s"Init new txChain with new salt: ${Base16.encode(currentSalt)}")
+      currentSalt = randomByteString
+      logger.info(s"Init new txChain with new salt: ${base16Encode(currentSalt)}")
       }
     val previousOutput: Option[OutputMessage] =
       state.state.values.toSeq.find {
         case output: OutputMessage =>
-          output.messageHash ++ output.metadata ++ output.publicKey sameElements
-            Sha256RipeMD160(messagesHolder.last.message.getBytes) ++
+          output.messageHash ++ output.metadata ++ output.publicKey ==
+            Sha256RipeMD160(ByteString(messagesHolder.last.message)) ++
               messagesHolder.last.metadata ++
               messagesHolder.last.sender
         case _ => false
@@ -114,18 +114,18 @@ class StateHolder extends Actor with StrictLogging {
   def validate(modifier: Modifier): Boolean = modifier match {
     //TODO: Add semantic validation check
     case header: Header =>
-      !blockChain.headers.map(header => Base16.encode(header.id)).contains(Base16.encode(header.id)) &&
+      !blockChain.headers.map(header => base16Encode(header.id)).contains(base16Encode(header.id)) &&
       (header.height == 0 ||
         (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
-        .exists(prevHeader => header.previousBlockHash sameElements prevHeader.id)))
+        .exists(prevHeader => header.previousBlockHash == prevHeader.id)))
     case payload: Payload =>
-        !blockChain.blocks.map(block => Base16.encode(block.payload.id)).contains(Base16.encode(payload.id)) &&
+        !blockChain.blocks.map(block => base16Encode(block.payload.id)).contains(base16Encode(payload.id)) &&
           payload.transactions.forall(validate)
     case transaction: Transaction =>
       logger.info(s"Going to validate tx: ${transaction.asJson}")
       transaction
         .inputs
-        .forall(input => state.state.get(Base16.encode(input.useOutputId))
+        .forall(input => state.state.get(base16Encode(input.useOutputId))
           .exists(outputToUnlock => outputToUnlock.unlock(input.proofs) &&
             outputToUnlock.canBeSpent && outputToUnlock.checkSignature))
   }
