@@ -1,22 +1,13 @@
 package mvp.actors
 
 import akka.actor.{Actor, ActorRef, Props}
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.headers.Host
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
-import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
-import io.circe.syntax._
-import io.circe.parser.decode
-import io.circe.generic.auto._
-import mvp.MVP.{materializer, settings, system}
-import mvp.actors.Messages.{Headers, Heartbeat, Payloads, Start}
+import mvp.MVP.{settings, system}
+import mvp.actors.Messages.{Heartbeat, Start}
 import mvp.cli.ConsoleActor
 import mvp.cli.ConsoleActor._
 import mvp.http.HttpServer
-import mvp.local.messageHolder.UserMessage._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -31,22 +22,7 @@ class Starter extends Actor with StrictLogging {
       logger.info("test mode on starter")
       bornKids()
     case Start if !settings.testMode => logger.info("real life baby on starter")
-    case Heartbeat =>
-      logger.info("heartbeat pong")
-      Http().singleRequest(HttpRequest(
-        method = HttpMethods.GET,
-        uri = "/blockchain/lastInfo"
-      ).withEffectiveUri(securedConnection = false, Host(settings.otherNodes.head.host, settings.otherNodes.head.port)))
-        .flatMap(_.entity.dataBytes.runFold(ByteString.empty)(_ ++ _))
-        .map(_.utf8String)
-        .map(decode[LastInfo])
-        .flatMap(_.fold(Future.failed, Future.successful))
-        .onComplete(_.map { lastInfo =>
-          logger.info(s"Get blocks from remote: ${lastInfo.blocks.map(_.asJson).mkString("\n")}")
-          logger.info(s"Get messages from remote: ${lastInfo.messages.map(_.asJson).mkString("\n")}")
-          context.system.actorSelection("user/stateHolder") ! Headers(lastInfo.blocks.map(_.header))
-          context.system.actorSelection("user/stateHolder") ! Payloads(lastInfo.blocks.map(_.payload))
-        })
+    case Heartbeat => context.actorSelection("/user/starter/networker") ! Heartbeat
     case _ =>
   }
 
