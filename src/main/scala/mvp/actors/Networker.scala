@@ -6,6 +6,7 @@ import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
 import mvp.MVP.settings
 import mvp.actors.Messages._
+import mvp.utils.EncodingUtils._
 import io.circe.syntax._
 import io.circe.generic.auto._
 import io.circe.parser.decode
