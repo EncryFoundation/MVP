@@ -11,13 +11,13 @@ import io.circe.syntax._
 import io.circe.generic.auto._
 import io.circe.parser.decode
 
-class Networker extends Actor with StrictLogging {
+class UdpNetworker extends Actor with StrictLogging {
 
   override def preStart(): Unit = super.preStart()
 
   override def receive: Receive = {
     case Start if settings.testMode =>
-      logger.info("test mode on networker")
+      logger.info("test mode on udp networker")
       bornKids()
     case data: ByteString if data == RequestLastInfo.bytes =>
       logger.info("Received last info request")
