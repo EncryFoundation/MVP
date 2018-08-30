@@ -2,7 +2,7 @@ package mvp.local.messageHolder
 
 import akka.util.ByteString
 import mvp.local.messageTransaction.MessageInfo
-import mvp.utils.Crypto.Sha256RipeMD160
+import mvp.crypto.Sha256.Sha256RipeMD160
 
 case class UserMessage(message: String, metadata: ByteString, sender: ByteString, prevOutputId: Option[ByteString], msgNum: Int) {
 

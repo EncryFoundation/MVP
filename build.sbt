@@ -28,7 +28,6 @@ libraryDependencies ++= Seq(
   "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8",
   "org.encry" %% "encry-common" % "0.1.2",
   "org.iq80.leveldb" % "leveldb" % "0.7",
-  "org.scorexfoundation" %% "scrypto" % "2.1.1",
   "com.iheart" %% "ficus" % "1.4.3",
   "org.influxdb" % "influxdb-java" % "2.10",
   "org.iq80.leveldb" % "leveldb" % "0.7"

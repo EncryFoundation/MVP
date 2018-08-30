@@ -2,7 +2,8 @@ package mvp.actors
 
 import mvp.data._
 import org.scalatest.{Matchers, PropSpec}
-import mvp.utils.BlockchainUtils.{randomByteString, base16Encode}
+import mvp.utils.BlockchainUtils.randomByteString
+import mvp.utils.Base16.encode
 import utils.TestGenerator._
 
 class StateHolderTest extends PropSpec with Matchers {
@@ -17,7 +18,7 @@ class StateHolderTest extends PropSpec with Matchers {
     val dummyBlockchain: Seq[Block] = generateBlockChainWithAmountPayloads(blockchainHeight + 1, inputs)
 
     val blockchain: Blockchain = Blockchain.recoverBlockchain
-    val state: State = State(initialOutput.map(output => base16Encode(output.id) -> output).toMap)
+    val state: State = State(initialOutput.map(output => encode(output.id) -> output).toMap)
 
     val newState: State = dummyBlockchain.foldLeft(state) {
       case (stateDuringApply, block) => stateDuringApply.updateState(block.payload)

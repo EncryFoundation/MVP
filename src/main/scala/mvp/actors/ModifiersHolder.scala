@@ -10,8 +10,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.immutable.SortedMap
 import mvp.MVP.settings
 import mvp.actors.Messages.{Headers, Payloads}
-import mvp.utils.Crypto.Sha256RipeMD160
-import mvp.utils.BlockchainUtils._
+import mvp.crypto.Sha256.Sha256RipeMD160
+import mvp.utils.Base16._
 import scala.concurrent.duration._
 
 class ModifiersHolder extends PersistentActor with StrictLogging {
@@ -35,19 +35,19 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   def receiveRecoveryEnable: Receive = {
     case header: Header =>
       updateHeaders(header)
-      logger.debug(s"Header ${header.height} with id ${base16Encode(header.id)} is recovered from leveldb.")
+      logger.debug(s"Header ${header.height} with id ${encode(header.id)} is recovered from leveldb.")
     case payload: Payload =>
       updatePayloads(payload)
       logger.debug(s"Payload is recovered from leveldb.")
     case message: UserMessage =>
       updateMessages(message)
-      logger.debug(s"Message from ${base16Encode(message.sender)} is recovered from leveldb")
+      logger.debug(s"Message from ${encode(message.sender)} is recovered from leveldb")
     case transaction: Transaction =>
       updateTransactions(transaction)
-      logger.debug(s"Transaction with id ${base16Encode(transaction.id)} is recovered from leveldb")
+      logger.debug(s"Transaction with id ${encode(transaction.id)} is recovered from leveldb")
     case block: Block =>
       updateBlock(block)
-      logger.debug(s"Block with id ${base16Encode(block.id)} is recovered from leveldb")
+      logger.debug(s"Block with id ${encode(block.id)} is recovered from leveldb")
     case RecoveryCompleted =>
       headers.values.toSeq
         .sortWith((headerOne, headerTwo) => headerOne.height < headerTwo.height).foreach(header =>
@@ -77,28 +77,28 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
 
   def saveModifiers(modifiers: Modifier): Unit = modifiers match {
     case header: Header =>
-      if (!headers.contains(base16Encode(header.id)))
+      if (!headers.contains(encode(header.id)))
         persist(header) { header =>
-          logger.debug(s"Header at height: ${header.height} with id: ${base16Encode(header.id)} " +
+          logger.debug(s"Header at height: ${header.height} with id: ${encode(header.id)} " +
             s"is persisted successfully.")
         }
       updateHeaders(header)
     case payload: Payload =>
-      if (!payloads.contains(base16Encode(payload.id)))
+      if (!payloads.contains(encode(payload.id)))
         persist(payload) { payload =>
-          logger.debug(s"Payload with id: ${base16Encode(payload.id)} is persisted successfully.")
+          logger.debug(s"Payload with id: ${encode(payload.id)} is persisted successfully.")
         }
       updatePayloads(payload)
     case transaction: Transaction =>
-      if (!transactions.contains(base16Encode(transaction.id)))
+      if (!transactions.contains(encode(transaction.id)))
         persist(transaction) { tx =>
-          logger.debug(s"Transaction with id: ${base16Encode(tx.id)} is persisted successfully.")
+          logger.debug(s"Transaction with id: ${encode(tx.id)} is persisted successfully.")
         }
       updateTransactions(transaction)
     case block: Block =>
       if (!blocks.values.toSeq.contains(block))
         persist(block) { block =>
-          logger.debug(s"Block with id: ${base16Encode(block.id)} is persisted successfully.")
+          logger.debug(s"Block with id: ${encode(block.id)} is persisted successfully.")
         }
       updateBlock(block)
     case x: Any => logger.error(s"Strange input $x")
@@ -112,11 +112,11 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
     updateMessages(message)
   }
 
-  def updateHeaders(header: Header): Unit = headers += base16Encode(header.id) -> header
+  def updateHeaders(header: Header): Unit = headers += encode(header.id) -> header
 
-  def updatePayloads(payload: Payload): Unit = payloads += base16Encode(payload.id) -> payload
+  def updatePayloads(payload: Payload): Unit = payloads += encode(payload.id) -> payload
 
-  def updateTransactions(transaction: Transaction): Unit = transactions += base16Encode(transaction.id) -> transaction
+  def updateTransactions(transaction: Transaction): Unit = transactions += encode(transaction.id) -> transaction
 
   def updateMessages(message: UserMessage): Unit =
     messages +=
