@@ -4,6 +4,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.typesafe.scalalogging.StrictLogging
 import mvp.MVP.{settings, system}
 import mvp.actors.Messages.{Heartbeat, Start}
+import mvp.actors.networkactors.{HttpActor, InfluxActor, Networker}
 import mvp.cli.ConsoleActor
 import mvp.cli.ConsoleActor._
 import mvp.http.HttpServer
@@ -30,12 +31,9 @@ class Starter extends Actor with StrictLogging {
   override def postStop(): Unit = super.postStop()
 
   def bornKids(): Unit = {
-    val networker: ActorRef =
-      if (settings.mvpSettings.useUDP) context.actorOf(Props[UdpNetworker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
-      else context.actorOf(Props[HttpNetworker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
+    context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
     system.actorOf(Props[StateHolder], "stateHolder")
     HttpServer.start
-    networker ! Start
     context.actorOf(Props[Zombie].withDispatcher("common-dispatcher"), "zombie")
     if (settings.mvpSettings.enableCLI) {
       context.actorOf(Props[ConsoleActor].withDispatcher("common-dispatcher"), "cliActor")

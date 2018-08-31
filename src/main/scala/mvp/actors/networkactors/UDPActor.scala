@@ -1,4 +1,4 @@
-package mvp.actors
+package mvp.actors.networkactors
 
 import java.net.InetSocketAddress
 import akka.actor.{Actor, ActorRef}
@@ -6,7 +6,6 @@ import akka.io.{IO, Udp}
 import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
 import mvp.MVP.settings
-import mvp.actors.Messages.Start
 
 class UDPActor extends Actor with StrictLogging {
 
@@ -14,31 +13,31 @@ class UDPActor extends Actor with StrictLogging {
 
   val remote: InetSocketAddress = new InetSocketAddress("localhost", settings.otherNodes.head.port)
 
+  override def preStart(): Unit = {
+    IO(Udp) ! Udp.Bind(self, new InetSocketAddress("localhost", settings.thisNode.port))
+
+  }
+
   override def receive: Receive = {
     case Udp.Bound(local) =>
       logger.info(s"Binded to $local")
-      context.become(ready(sender()))
-    case Start if settings.testMode =>
-      logger.info("test mode on receiver")
-      IO(Udp) ! Udp.Bind(self, new InetSocketAddress("localhost", settings.thisNode.port))
-    case _ =>
+      context.become(ready(sender))
+    case msg => logger.warn(s"Received message $msg from $sender before binding")
   }
 
   def ready(socket: ActorRef): Receive = {
-    case msg: ByteString =>
-      logger.info(s"Sending ${msg.toString()} to $remote (this is ${settings.thisNode.port})")
-      socket ! Udp.Send(msg, remote)
+    case MessageToSend(data) =>
+      logger.info(s"Sending $data to $remote (this is ${settings.thisNode.port})")
+      socket ! Udp.Send(data, remote)
     case Udp.Received(data: ByteString, remote: InetSocketAddress) =>
       logger.info(s"Received ${data.toString} from $remote")
-      context.parent ! data
-      context.parent ! remote
+      context.actorSelection("/user/starter/networker/receiver") ! ReceivedMessage(data)
     case Udp.Unbind =>
       logger.info("Unbind")
       socket ! Udp.Unbind
     case Udp.Unbound =>
       logger.info("Unbound")
       context.stop(self)
-    case any: Any => logger.info(any.toString)
   }
 }
 
