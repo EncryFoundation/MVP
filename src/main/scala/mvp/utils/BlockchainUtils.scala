@@ -1,11 +1,8 @@
 package mvp.utils
 
 import akka.util.ByteString
-import mvp.utils.Crypto.Sha256RipeMD160
-import scorex.util.encode.Base16
-import scorex.utils.Random
+import mvp.crypto.Sha256.Sha256RipeMD160
 import scala.collection.mutable.ArrayBuffer
-import scala.util.Try
 
 object BlockchainUtils {
 
@@ -20,9 +17,6 @@ object BlockchainUtils {
   }
 
   def randomByteString: ByteString = ByteString(Random.randomBytes())
-
-  def base16Encode(bytes: ByteString): String = Base16.encode(bytes.toArray)
-  def base16Decode(str: String): Try[ByteString] = Base16.decode(str).map(ByteString(_))
 
   def toByteString(value: Long): ByteString = {
     val result = ArrayBuffer[Byte]()

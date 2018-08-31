@@ -4,9 +4,9 @@ import akka.util.ByteString
 import mvp.data.{Input, OutputMessage, Transaction}
 import mvp.local.messageHolder.UserMessage
 import mvp.local.messageTransaction.MessageInfo
-import mvp.utils.Crypto.Sha256RipeMD160
-import org.encryfoundation.common.crypto.{PrivateKey25519, Signature25519}
-import scorex.crypto.signatures.Curve25519
+import mvp.crypto.Sha256.Sha256RipeMD160
+import org.encryfoundation.common.crypto.PrivateKey25519
+import mvp.crypto.Curve25519
 
 object Generator {
 
@@ -36,12 +36,12 @@ object Generator {
       txNum - 1
     )
 
-    val signature: Signature25519 = Signature25519(Curve25519.sign(privateKey.privKeyBytes, messageOutput.messageToSign.toArray))
+    val signature: ByteString = Curve25519.sign(ByteString(privateKey.privKeyBytes), messageOutput.messageToSign).getOrElse(ByteString.empty)
 
     Transaction(
       System.currentTimeMillis(),
       outputId.map(output => Seq(Input(output, Seq(proof)))).getOrElse(Seq.empty),
-      Seq(messageOutput.copy(signature = ByteString(signature.signature)))
+      Seq(messageOutput.copy(signature = signature))
     )
   }
 

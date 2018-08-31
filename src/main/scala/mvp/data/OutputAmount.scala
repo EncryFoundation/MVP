@@ -1,7 +1,7 @@
 package mvp.data
 
 import akka.util.ByteString
-import mvp.utils.Crypto.Sha256RipeMD160
+import mvp.crypto.Sha256.Sha256RipeMD160
 import mvp.utils.BlockchainUtils._
 
 case class OutputAmount(publicKey: ByteString,

@@ -3,11 +3,12 @@ package mvp.cli
 import scala.io.StdIn
 import scala.concurrent.Future
 import akka.actor.Actor
+import akka.util.ByteString
 import mvp.MVP.{context, system}
 import mvp.actors.Messages.{BlockchainAnswer, HeadersAnswer}
 import mvp.cli.Commands._
 import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, SendMyName, UserMessageFromCLI}
-import scorex.util.encode.Base16
+import mvp.utils.Base16
 
 class ConsoleActor extends Actor {
 
@@ -25,9 +26,9 @@ class ConsoleActor extends Actor {
       if (words.head == "sendTx") {
         val (outputID, wordsToSend: Array[String]) =
           if (words.length < 3) (None, words.tail)
-          else (Some(Base16.decode(words.last).getOrElse(Array.emptyByteArray)), words.tail.dropRight(1))
+          else (Some(Base16.decode(words.last).getOrElse(ByteString.empty)), words.tail.dropRight(1))
         system.actorSelection("/user/stateHolder") !
-          UserMessageFromCLI(wordsToSend, outputID)
+          UserMessageFromCLI(wordsToSend, outputID.map(_.toArray))
       }
   }
 }
