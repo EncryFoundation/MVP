@@ -1,10 +1,10 @@
 package mvp.local.messageTransaction
 
-import com.google.common.primitives.Bytes
+import akka.util.ByteString
 
-case class MessageInfo(message: Array[Byte],
-                       metaData: Array[Byte],
-                       publicKey: Array[Byte]) {
+case class MessageInfo(message: ByteString,
+                       metaData: ByteString,
+                       publicKey: ByteString) {
 
-  val messageToSign: Array[Byte] = Bytes.concat(message ++ metaData ++ publicKey)
+  val messageToSign: ByteString = message ++ metaData ++ publicKey
 }

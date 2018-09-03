@@ -14,7 +14,7 @@ import mvp.actors.Messages.{Headers, Heartbeat, Payloads, Start}
 import mvp.cli.ConsoleActor
 import mvp.cli.ConsoleActor._
 import mvp.http.HttpServer
-import mvp.local.messageHolder.UserMessage._
+import mvp.utils.EncodingUtils._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._

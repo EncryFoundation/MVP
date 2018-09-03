@@ -1,6 +1,7 @@
 package mvp.data
 
-trait Modifier {
+import akka.util.ByteString
 
-  val id: Array[Byte]
+trait Modifier {
+  val id: ByteString
 }

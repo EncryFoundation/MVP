@@ -1,13 +1,13 @@
 package mvp.utils
 
 import org.scalatest.{Matchers, PropSpec}
-import scorex.utils.Random
+import mvp.utils.BlockchainUtils.randomByteString
 
 class BlockchainUtilsTest extends PropSpec with Matchers{
 
   property("merkleTree property") {
 
-    BlockchainUtils.merkleTree((0 to 9).map(i => Random.randomBytes()).toList)
+    BlockchainUtils.merkleTree((0 to 9).map(_ => randomByteString).toList)
   }
 
 }
