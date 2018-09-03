@@ -13,10 +13,18 @@ class BlockchainSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike wi
   val stateHolder: TestActorRef[StateHolder] = TestActorRef(new StateHolder)
   val actor: StateHolder = stateHolder.underlyingActor
 
-  val headerSecond: Header = Header(
+  val correctHeader: Header = Header(
     System.currentTimeMillis(),
     1,
     Base16.decode("c6cb5981ea33d2394acd83ebe33b5e3080a09019").get,
+    ByteString.empty,
+    ByteString.empty
+  )
+
+  val incorrectHeader: Header = Header(
+    0L,
+    1,
+    ByteString.fromString("c6cb5981ea33d2394acd83ebe33b5e3080a09019"),
     ByteString.empty,
     ByteString.empty
   )
@@ -31,7 +39,8 @@ class BlockchainSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike wi
     Seq(transaction)
   )
 
-  assert(actor.validate(headerSecond), "Validate second header")
+  assert(actor.validate(correctHeader), "Validate correct header should be true")
+  assert(!actor.validate(incorrectHeader), "Validate incorrect header should be false")
   assert(actor.validate(payload), "Validate payload should be true")
   assert(actor.validate(transaction), "Validate transaction should be true")
 
