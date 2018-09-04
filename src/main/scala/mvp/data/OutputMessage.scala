@@ -2,8 +2,8 @@ package mvp.data
 
 import akka.util.ByteString
 import mvp.local.messageTransaction.MessageInfo
-import mvp.utils.Crypto.Sha256RipeMD160
-import mvp.utils.BlockchainUtils._
+import mvp.crypto.Sha256.Sha256RipeMD160
+import mvp.utils.Base16.encode
 import mvp.utils.EncodingUtils._
 import io.circe.syntax._
 import io.circe.generic.auto._
@@ -31,8 +31,8 @@ case class OutputMessage(bundle: ByteString,
   override def unlock(proofs: Seq[ByteString]): Boolean = {
     val result: Boolean = check == Sha256RipeMD160(proofs.last ++ messageHash ++ metadata ++ publicKey)
     logger.info(s"Going to validate output: ${this.asJson}." +
-      s"\nCheck is ${base16Encode(check)}." +
-      s"\nBundle from next tx is ${base16Encode(proofs.last)}" +
+      s"\nCheck is ${encode(check)}." +
+      s"\nBundle from next tx is ${encode(proofs.last)}" +
       s"\nUnlock condition \'check = Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)\' is $result")
     result && txNum > 0
   }

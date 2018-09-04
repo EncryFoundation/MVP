@@ -5,11 +5,11 @@ import com.typesafe.scalalogging.StrictLogging
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax._
 import io.circe.generic.auto._
-import io.circe.parser.decode
 import cats.syntax.functor._
-import scorex.crypto.signatures.{Curve25519, PublicKey, Signature}
 import mvp.utils.BlockchainUtils._
+import mvp.utils.Base16._
 import mvp.utils.EncodingUtils._
+import mvp.crypto.Curve25519
 
 trait Output extends Modifier with StrictLogging {
 
@@ -22,8 +22,8 @@ trait Output extends Modifier with StrictLogging {
   val canBeSpent: Boolean
 
   def checkSignature: Boolean = {
-    val result: Boolean = Curve25519.verify(Signature @@ signature.toArray, messageToSign.toArray, PublicKey @@ publicKey.toArray)
-    logger.info(s"Going to check signature for output with id: ${base16Encode(id)} and result is: $result")
+    val result: Boolean = Curve25519.verify(signature, messageToSign, publicKey)
+    logger.info(s"Going to check signature for output with id: ${encode(id)} and result is: $result")
     result
   }
 

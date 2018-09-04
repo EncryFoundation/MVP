@@ -9,14 +9,14 @@ import io.circe.syntax._
 import io.circe.generic.auto._
 import mvp.MVP.settings
 import mvp.actors.Messages._
-import mvp.local.messageHolder.UserMessage._
 import mvp.actors.ModifiersHolder.RequestModifiers
 import mvp.local.messageHolder.UserMessage
 import mvp.local.{Generator, Keys}
-import mvp.utils.Crypto.Sha256RipeMD160
-import mvp.utils.BlockchainUtils.{randomByteString, toByteString, base16Encode}
+import mvp.crypto.Sha256.Sha256RipeMD160
+import mvp.utils.BlockchainUtils.{randomByteString, toByteString}
 import mvp.utils.EncodingUtils._
-import scorex.crypto.signatures.Curve25519
+import mvp.utils.Base16._
+import mvp.crypto.Curve25519
 
 class StateHolder extends Actor with StrictLogging {
   var blockChain: Blockchain = Blockchain.recoverBlockchain
@@ -70,7 +70,7 @@ class StateHolder extends Actor with StrictLogging {
       )
       val signedHeader: Header =
         headerUnsigned
-          .copy(minerSignature = ByteString(Curve25519.sign(keys.keys.head.privKeyBytes, headerUnsigned.messageToSign.toArray)))
+          .copy(minerSignature = Curve25519.sign(ByteString(keys.keys.head.privKeyBytes), headerUnsigned.messageToSign).getOrElse(ByteString.empty))
       add(signedHeader)
       add(payload)
       if (settings.levelDB.enable)
@@ -82,7 +82,7 @@ class StateHolder extends Actor with StrictLogging {
       if (messagesHolder.size % settings.mvpSettings.messagesQtyInChain == 0) {
       // Реинициализация
       currentSalt = randomByteString
-      logger.info(s"Init new txChain with new salt: ${base16Encode(currentSalt)}")
+      logger.info(s"Init new txChain with new salt: ${encode(currentSalt)}")
       }
     val previousOutput: Option[OutputMessage] =
       state.state.values.toSeq.find {
@@ -114,18 +114,18 @@ class StateHolder extends Actor with StrictLogging {
   def validate(modifier: Modifier): Boolean = modifier match {
     //TODO: Add semantic validation check
     case header: Header =>
-      !blockChain.headers.map(header => base16Encode(header.id)).contains(base16Encode(header.id)) &&
+      !blockChain.headers.map(header => encode(header.id)).contains(encode(header.id)) &&
       (header.height == 0 ||
         (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
         .exists(prevHeader => header.previousBlockHash == prevHeader.id)))
     case payload: Payload =>
-        !blockChain.blocks.map(block => base16Encode(block.payload.id)).contains(base16Encode(payload.id)) &&
+        !blockChain.blocks.map(block => encode(block.payload.id)).contains(encode(payload.id)) &&
           payload.transactions.forall(validate)
     case transaction: Transaction =>
       logger.info(s"Going to validate tx: ${transaction.asJson}")
       transaction
         .inputs
-        .forall(input => state.state.get(base16Encode(input.useOutputId))
+        .forall(input => state.state.get(encode(input.useOutputId))
           .exists(outputToUnlock => outputToUnlock.unlock(input.proofs) &&
             outputToUnlock.canBeSpent && outputToUnlock.checkSignature))
   }
