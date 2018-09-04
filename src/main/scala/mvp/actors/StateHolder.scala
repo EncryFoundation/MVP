@@ -86,7 +86,7 @@ class StateHolder extends Actor with StrictLogging {
       }
     val previousOutput: Option[OutputMessage] =
       state.state.values.toSeq.find {
-        case output: OutputMessage =>
+        case output: OutputMessage if messagesHolder.nonEmpty =>
           output.messageHash ++ output.metadata ++ output.publicKey ==
             Sha256RipeMD160(ByteString(messagesHolder.last.message)) ++
               messagesHolder.last.metadata ++
