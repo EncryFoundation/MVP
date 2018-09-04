@@ -17,8 +17,9 @@ import mvp.utils.BlockchainUtils.{randomByteString, toByteString}
 import mvp.utils.EncodingUtils._
 import mvp.utils.Base16._
 import mvp.crypto.Curve25519
+import mvp.utils.Settings
 
-class StateHolder extends Actor with StrictLogging {
+class StateHolder(settings: Settings) extends Actor with StrictLogging {
   var blockChain: Blockchain = Blockchain.recoverBlockchain
   var state: State = State.recoverState
   val keys: Keys = Keys.recoverKeys
@@ -53,8 +54,7 @@ class StateHolder extends Actor with StrictLogging {
     case payload: Payload =>
       logger.info(s"Get payload: ${payload.asJson}")
       blockChain = blockChain.addPayload(payload)
-      if (settings.levelDB.enable)
-        blockChain.sendBlock
+      if (settings.levelDB.enable) blockChain.sendBlock
       state = state.updateState(payload)
       if (settings.levelDB.enable)
         context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(payload)
@@ -70,7 +70,8 @@ class StateHolder extends Actor with StrictLogging {
       )
       val signedHeader: Header =
         headerUnsigned
-          .copy(minerSignature = Curve25519.sign(ByteString(keys.keys.head.privKeyBytes), headerUnsigned.messageToSign).getOrElse(ByteString.empty))
+          .copy(minerSignature = Curve25519.sign(ByteString(keys.keys.head.privKeyBytes), headerUnsigned.messageToSign)
+            .getOrElse(ByteString.empty))
       add(signedHeader)
       add(payload)
       if (settings.levelDB.enable)

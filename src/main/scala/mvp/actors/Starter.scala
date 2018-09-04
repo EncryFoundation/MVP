@@ -32,7 +32,7 @@ class Starter extends Actor with StrictLogging {
 
   def bornKids(): Unit = {
     context.actorOf(Props[Networker].withDispatcher("net-dispatcher").withMailbox("net-mailbox"), "networker")
-    system.actorOf(Props[StateHolder], "stateHolder")
+    system.actorOf(Props(new StateHolder(settings)), "stateHolder")
     HttpServer.start
     context.actorOf(Props[Zombie].withDispatcher("common-dispatcher"), "zombie")
     if (settings.mvpSettings.enableCLI) {

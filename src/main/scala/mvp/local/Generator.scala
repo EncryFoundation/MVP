@@ -36,7 +36,8 @@ object Generator {
       txNum - 1
     )
 
-    val signature: ByteString = Curve25519.sign(ByteString(privateKey.privKeyBytes), messageOutput.messageToSign).getOrElse(ByteString.empty)
+    val signature: ByteString = Curve25519.sign(ByteString(privateKey.privKeyBytes), messageOutput.messageToSign)
+      .getOrElse(ByteString.empty)
 
     Transaction(
       System.currentTimeMillis(),
