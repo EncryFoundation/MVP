@@ -1,4 +1,4 @@
-package mvp.actors
+package mvp.actors.networkactors
 
 import akka.actor.Actor
 import com.typesafe.scalalogging.StrictLogging
