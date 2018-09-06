@@ -1,7 +1,6 @@
 package utils
 
 import java.security.Security
-
 import akka.util.ByteString
 import mvp.crypto.ECDSA
 import mvp.data.{OutputAmount, _}

@@ -1,7 +1,6 @@
 package mvp.local.messageHolder
 
 import java.security.PublicKey
-
 import akka.util.ByteString
 import mvp.local.messageTransaction.MessageInfo
 import mvp.crypto.Sha256.Sha256RipeMD160

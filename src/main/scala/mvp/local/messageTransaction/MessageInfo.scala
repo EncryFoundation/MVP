@@ -1,7 +1,6 @@
 package mvp.local.messageTransaction
 
 import java.security.PublicKey
-
 import akka.util.ByteString
 
 case class MessageInfo(message: ByteString,

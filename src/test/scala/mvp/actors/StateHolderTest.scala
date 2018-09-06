@@ -10,7 +10,7 @@ class StateHolderTest extends PropSpec with Matchers {
 
   property("Dummy blockchain impl") {
 
-    val initialOutputsQty: Int = 10
+    val initialOutputsQty: Int = 9
     val blockchainHeight: Int = 9
 
     val initialOutput: Seq[Output] =
