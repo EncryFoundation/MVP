@@ -41,7 +41,7 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
       logger.debug(s"Payload is recovered from leveldb.")
     case message: UserMessage =>
       updateMessages(message)
-      logger.debug(s"Message from ${encode(message.sender)} is recovered from leveldb")
+      logger.debug(s"Message from ${encode(ByteString(message.sender.getEncoded))} is recovered from leveldb")
     case transaction: Transaction =>
       updateTransactions(transaction)
       logger.debug(s"Transaction with id ${encode(transaction.id)} is recovered from leveldb")
@@ -120,8 +120,9 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
 
   def updateMessages(message: UserMessage): Unit =
     messages +=
-      Sha256RipeMD160(ByteString(message.message.getBytes) ++ message.sender ++ message.prevOutputId.getOrElse(ByteString.empty))
-        .mkString -> message
+      Sha256RipeMD160(ByteString(message.message.getBytes) ++
+        ByteString(message.sender.getEncoded) ++
+        message.prevOutputId.getOrElse(ByteString.empty)).mkString -> message
 
   def updateBlock(block: Block): Unit = blocks += block.header.height -> block
 

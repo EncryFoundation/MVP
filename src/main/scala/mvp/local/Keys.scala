@@ -5,7 +5,7 @@ import mvp.crypto.ECDSA
 
 object Keys {
 
-  def recoverKeys: Seq[KeyPair] =
-    //Add recover from db
-    Keys(Seq(ECDSA.createKeyPair))
+  //Add recover from db
+  def recoverKeys: Seq[KeyPair] = Seq(ECDSA.createKeyPair)
+
 }
