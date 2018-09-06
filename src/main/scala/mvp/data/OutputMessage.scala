@@ -4,7 +4,6 @@ import akka.util.ByteString
 import mvp.local.messageTransaction.MessageInfo
 import mvp.crypto.Sha256.Sha256RipeMD160
 import mvp.utils.Base16.encode
-import mvp.utils.EncodingUtils._
 import io.circe.syntax._
 import io.circe.generic.auto._
 

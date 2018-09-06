@@ -1,28 +1,27 @@
 package mvp.data
 
+import java.security.PublicKey
 import akka.util.ByteString
-import com.typesafe.scalalogging.StrictLogging
-import io.circe.{Decoder, Encoder}
-import io.circe.syntax._
-import io.circe.generic.auto._
 import cats.syntax.functor._
-import mvp.utils.BlockchainUtils._
+import com.typesafe.scalalogging.StrictLogging
+import io.circe.generic.auto._
+import io.circe.syntax._
+import io.circe.{Decoder, Encoder}
+import mvp.crypto.ECDSA
 import mvp.utils.Base16._
-import mvp.utils.EncodingUtils._
-import mvp.crypto.Curve25519
 
 trait Output extends Modifier with StrictLogging {
 
   val messageToSign: ByteString
 
-  val publicKey: ByteString
+  val publicKey: PublicKey
 
   val signature: ByteString
 
   val canBeSpent: Boolean
 
   def checkSignature: Boolean = {
-    val result: Boolean = Curve25519.verify(signature, messageToSign, publicKey)
+    val result: Boolean = ECDSA.verify(signature, messageToSign, publicKey)
     logger.info(s"Going to check signature for output with id: ${encode(id)} and result is: $result")
     result
   }

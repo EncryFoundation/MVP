@@ -1,5 +1,6 @@
 package mvp.actors
 
+import java.security.KeyPair
 import akka.actor.Actor
 import akka.util.ByteString
 import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, UserMessageFromCLI}
@@ -10,18 +11,17 @@ import io.circe.generic.auto._
 import mvp.MVP.settings
 import mvp.actors.Messages._
 import mvp.actors.ModifiersHolder.RequestModifiers
+import mvp.crypto.ECDSA
 import mvp.local.messageHolder.UserMessage
 import mvp.local.{Generator, Keys}
 import mvp.crypto.Sha256.Sha256RipeMD160
 import mvp.utils.BlockchainUtils.{randomByteString, toByteString}
-import mvp.utils.EncodingUtils._
 import mvp.utils.Base16._
-import mvp.crypto.Curve25519
 
 class StateHolder extends Actor with StrictLogging {
   var blockChain: Blockchain = Blockchain.recoverBlockchain
   var state: State = State.recoverState
-  val keys: Keys = Keys.recoverKeys
+  val keys: Seq[KeyPair] = Keys.recoverKeys
   var messagesHolder: Seq[UserMessage] = Seq.empty
   var currentSalt: ByteString = randomByteString
 
@@ -38,7 +38,7 @@ class StateHolder extends Actor with StrictLogging {
       self ! InfoMessage(
         UserMessage(message.mkString,
           toByteString(System.currentTimeMillis()),
-          ByteString(keys.keys.head.publicKeyBytes),
+          ByteString(keys.head.getPublic.getEncoded),
           outputId.map(ByteString(_)),
           messagesHolder.size + 1)
       )
@@ -70,7 +70,7 @@ class StateHolder extends Actor with StrictLogging {
       )
       val signedHeader: Header =
         headerUnsigned
-          .copy(minerSignature = Curve25519.sign(ByteString(keys.keys.head.privKeyBytes), headerUnsigned.messageToSign).getOrElse(ByteString.empty))
+          .copy(minerSignature = ECDSA.sign(keys.head.getPrivate, headerUnsigned.messageToSign))
       add(signedHeader)
       add(payload)
       if (settings.levelDB.enable)
@@ -100,7 +100,7 @@ class StateHolder extends Actor with StrictLogging {
                       previousOutput: Option[OutputMessage]): Transaction = {
     logger.info(s"Get message: ${message.asJson}")
     messagesHolder = messagesHolder :+ message
-    Generator.generateMessageTx(keys.keys.head,
+    Generator.generateMessageTx(keys.head.getPrivate,
       previousOutput.map(_.toProofGenerator),
       previousOutput.map(_.id),
       message,
