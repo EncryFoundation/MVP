@@ -1,6 +1,5 @@
 package mvp.data
 
-import java.lang.reflect.Constructor
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import utils.TestGenerator._
 import akka.actor.ActorSystem
@@ -24,7 +23,7 @@ class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
   with Matchers {
 
   val settings: Settings = Settings.load
-  val stateHolder: StateHolder = TestActorRef(new StateHolder(settings)).underlyingActor
+  val stateHolder: StateHolder = TestActorRef(new StateHolder).underlyingActor
   var messagesHolder: Seq[UserMessage] = Seq.empty
   val currentSalt: ByteString = ByteString.fromString("00000000000000000000000000000000")
   val timestamp: Long = System.currentTimeMillis()

@@ -7,7 +7,6 @@ import com.typesafe.scalalogging.StrictLogging
 import mvp.data.{Blockchain, Modifier, State, _}
 import io.circe.syntax._
 import io.circe.generic.auto._
-import mvp.MVP.settings
 import mvp.actors.Messages._
 import mvp.actors.ModifiersHolder.RequestModifiers
 import mvp.local.messageHolder.UserMessage
@@ -19,12 +18,13 @@ import mvp.utils.Base16._
 import mvp.crypto.Curve25519
 import mvp.utils.Settings
 
-class StateHolder(settings: Settings) extends Actor with StrictLogging {
+class StateHolder extends Actor with StrictLogging {
   var blockChain: Blockchain = Blockchain.recoverBlockchain
   var state: State = State.recoverState
   val keys: Keys = Keys.recoverKeys
   var messagesHolder: Seq[UserMessage] = Seq.empty
   var currentSalt: ByteString = randomByteString
+  val settings: Settings = Settings.load
 
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(add)
