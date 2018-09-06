@@ -2,7 +2,8 @@ package mvp.actors
 
 import akka.actor.{Actor, ActorRef, Props}
 import com.typesafe.scalalogging.StrictLogging
-import mvp.MVP.{settings, system}
+import mvp.MVP.system
+import mvp.utils.Settings.settings
 import mvp.actors.Messages.{Heartbeat, Start}
 import mvp.actors.networkactors.{HttpActor, InfluxActor, Networker}
 import mvp.cli.ConsoleActor

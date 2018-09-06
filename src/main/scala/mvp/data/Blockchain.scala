@@ -27,7 +27,6 @@ case class Blockchain(headers: Seq[Header] = Seq.empty, blocks: Seq[Block] = Seq
   def sendBlock: Unit = blocks.lastOption.foreach(block =>
     system.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(block))
 
-
   def addHeader(headerToAdd: Header): Blockchain = Blockchain(headers :+ headerToAdd, blocks)
 
   def getHeaderAtHeight(height: Int): Option[Header] = headers.find(_.height == height)

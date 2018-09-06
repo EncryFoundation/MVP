@@ -2,7 +2,7 @@ package mvp.actors.networkactors
 
 import akka.actor.Actor
 import com.typesafe.scalalogging.StrictLogging
-import mvp.MVP.settings
+import mvp.utils.Settings.settings
 import mvp.actors.Messages.CurrentBlockHeight
 import org.influxdb.{InfluxDB, InfluxDBFactory}
 
