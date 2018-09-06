@@ -8,7 +8,7 @@ import mvp.data._
 import mvp.local.messageHolder.UserMessage
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.immutable.SortedMap
-import mvp.MVP.settings
+import mvp.utils.Settings.settings
 import mvp.actors.Messages.{Headers, Payloads}
 import mvp.crypto.Sha256.Sha256RipeMD160
 import mvp.utils.Base16._

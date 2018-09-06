@@ -3,7 +3,8 @@ package mvp.http
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
-import mvp.MVP.{settings, system}
+import mvp.MVP.system
+import mvp.utils.Settings.settings
 import scala.concurrent.ExecutionContextExecutor
 
 object HttpServer {

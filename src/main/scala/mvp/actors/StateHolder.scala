@@ -8,7 +8,6 @@ import com.typesafe.scalalogging.StrictLogging
 import mvp.data.{Blockchain, Modifier, State, _}
 import io.circe.syntax._
 import io.circe.generic.auto._
-import mvp.MVP.settings
 import mvp.actors.Messages._
 import mvp.actors.ModifiersHolder.RequestModifiers
 import mvp.crypto.ECDSA
@@ -18,6 +17,7 @@ import mvp.crypto.Sha256.Sha256RipeMD160
 import mvp.utils.BlockchainUtils.{randomByteString, toByteString}
 import mvp.utils.Base16._
 import mvp.utils.EncodingUtils._
+import mvp.utils.Settings.settings
 
 class StateHolder extends Actor with StrictLogging {
   var blockChain: Blockchain = Blockchain.recoverBlockchain
@@ -54,8 +54,7 @@ class StateHolder extends Actor with StrictLogging {
     case payload: Payload =>
       logger.info(s"Get payload: ${payload.asJson}")
       blockChain = blockChain.addPayload(payload)
-      if (settings.levelDB.enable)
-        blockChain.sendBlock
+      if (settings.levelDB.enable) blockChain.sendBlock
       state = state.updateState(payload)
       if (settings.levelDB.enable)
         context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(payload)

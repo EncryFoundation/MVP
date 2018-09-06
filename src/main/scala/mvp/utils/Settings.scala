@@ -28,8 +28,9 @@ case class mvpSettings(enableCLI: Boolean,
 case class LevelDBSettings(enable: Boolean,
                            recoverMode: Boolean)
 object Settings {
-  def load: Settings = ConfigFactory.load("local.conf")
-    .withFallback(ConfigFactory.load).as[Settings]
+  def load: Settings = ConfigFactory.load("local.conf").withFallback(ConfigFactory.load).as[Settings]
+
+  val settings: Settings = load
 }
 
 
