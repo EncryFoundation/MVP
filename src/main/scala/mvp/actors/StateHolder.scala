@@ -82,7 +82,7 @@ class StateHolder extends Actor with StrictLogging {
     if (!messagesHolder.contains(msg)) {
       if (messagesHolder.size % settings.mvpSettings.messagesQtyInChain == 0) {
       // Реинициализация
-      currentSalt = randomByteString
+      currentSalt = Sha256RipeMD160(currentSalt)
       logger.info(s"Init new txChain with new salt: ${encode(currentSalt)}")
       }
     val previousOutput: Option[OutputMessage] =
