@@ -16,7 +16,7 @@ import mvp.utils.BlockchainUtils.{randomByteString, toByteString}
 import mvp.utils.EncodingUtils._
 import mvp.utils.Base16._
 import mvp.crypto.Curve25519
-import mvp.utils.Settings
+import mvp.utils.Settings.settings
 
 class StateHolder extends Actor with StrictLogging {
   var blockChain: Blockchain = Blockchain.recoverBlockchain
@@ -24,7 +24,6 @@ class StateHolder extends Actor with StrictLogging {
   val keys: Keys = Keys.recoverKeys
   var messagesHolder: Seq[UserMessage] = Seq.empty
   var currentSalt: ByteString = randomByteString
-  val settings: Settings = Settings.load
 
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(add)

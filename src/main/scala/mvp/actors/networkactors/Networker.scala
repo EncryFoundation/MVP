@@ -5,7 +5,7 @@ import com.typesafe.scalalogging.StrictLogging
 import io.circe.generic.auto._
 import io.circe.syntax._
 import mvp.utils.EncodingUtils._
-import mvp.MVP.settings
+import mvp.utils.Settings.settings
 import mvp.actors.Messages._
 import mvp.actors.networkactors.NetworkMessages.RequestLastInfo
 import mvp.actors.LastInfo

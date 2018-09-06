@@ -8,21 +8,19 @@ import akka.util.ByteString
 import mvp.actors.StateHolder
 import mvp.local.messageHolder.UserMessage
 import mvp.utils.{Base16, Settings}
-import io.circe.syntax._
-import io.circe.generic.auto._
 import mvp.crypto.Curve25519
 import mvp.crypto.Sha256.Sha256RipeMD160
 import mvp.local.{Generator, Keys}
 import mvp.utils.EncodingUtils._
 import org.encryfoundation.common.crypto.PrivateKey25519
 import scorex.crypto.signatures.{PrivateKey, PublicKey}
+import mvp.utils.Settings.settings
 
 class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
   with ImplicitSender
   with BeforeAndAfterAll
   with Matchers {
 
-  val settings: Settings = Settings.load
   val stateHolder: StateHolder = TestActorRef(new StateHolder).underlyingActor
   var messagesHolder: Seq[UserMessage] = Seq.empty
   val currentSalt: ByteString = ByteString.fromString("00000000000000000000000000000000")

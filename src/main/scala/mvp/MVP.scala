@@ -13,8 +13,6 @@ object MVP extends App {
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val context: ExecutionContextExecutor = system.dispatcher
 
-  val settings: Settings = Settings.load
-
   system.actorOf(Props[Starter], "starter")
   system.actorSelection("/user/starter") ! Start
 }
