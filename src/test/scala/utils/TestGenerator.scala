@@ -1,14 +1,16 @@
 package utils
 
-import java.security.KeyFactory
-import java.security.spec.X509EncodedKeySpec
+import java.security.Security
+
 import akka.util.ByteString
+import mvp.crypto.ECDSA
 import mvp.data.{OutputAmount, _}
 import mvp.utils.BlockchainUtils.randomByteString
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 object TestGenerator {
 
-  private val kf = KeyFactory.getInstance("ECDSA", "BC")
+  Security.addProvider(new BouncyCastleProvider)
 
   def generateHeaderChain(qty: Int): Seq[Header] = (0 until qty).foldLeft(Seq.empty[Header]) {
     case (headers, height) =>
@@ -35,17 +37,18 @@ object TestGenerator {
         }
     }
 
-  def generateDummyAmountOutputs(qty: Int): Seq[Output] =
+  def generateDummyAmountOutputs(qty: Int): Seq[Output] = {
     (0 until qty).map(i =>
       OutputAmount(
-        kf.generatePublic(new X509EncodedKeySpec(randomByteString.toArray)),
+        ECDSA.createKeyPair.getPublic,
         100L,
         randomByteString)
     )
+  }
 
   def generatePaymentTxs(inputs: Seq[Input]): Seq[Transaction] = inputs.foldLeft(Seq.empty[Transaction]) {
     case (transatcions, input) =>
       transatcions :+ Transaction(0L, Seq(input),
-        Seq(OutputAmount(kf.generatePublic(new X509EncodedKeySpec(randomByteString.toArray)), 100L, randomByteString)))
+        Seq(OutputAmount(ECDSA.createKeyPair.getPublic, 100L, randomByteString)))
   }
 }
