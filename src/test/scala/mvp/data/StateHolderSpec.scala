@@ -1,20 +1,17 @@
 package mvp.data
 
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
-import utils.TestGenerator._
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import akka.util.ByteString
 import mvp.actors.StateHolder
-import mvp.local.messageHolder.UserMessage
-import mvp.utils.{Base16, Settings}
-import mvp.crypto.Curve25519
+import mvp.crypto.ECDSA
 import mvp.crypto.Sha256.Sha256RipeMD160
-import mvp.local.{Generator, Keys}
-import mvp.utils.EncodingUtils._
-import org.encryfoundation.common.crypto.PrivateKey25519
-import scorex.crypto.signatures.{PrivateKey, PublicKey}
+import mvp.local.Generator
+import mvp.local.messageHolder.UserMessage
+import mvp.utils.Base16
 import mvp.utils.Settings.settings
+import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import utils.TestGenerator._
 
 class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
   with ImplicitSender
@@ -67,26 +64,22 @@ class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
   val userMessage = UserMessage(
     "",
     ByteString.fromString("4afa0ea465010000"),
-    Base16.decode("1477a0c999ad4dbc9d01ff650c8c4a497b0d4e8f829166a149c2939f623b4725").get,
+    ECDSA.createKeyPair.getPublic,
     Option(ByteString.empty),
     1
   )
 
   def createMessageTx(message: UserMessage,
                       previousOutput: Option[OutputMessage]): Transaction = {
-    val (privKeyBytes: ByteString, publicKeyBytes: ByteString) =
-      Curve25519.createKeyPair(ByteString.fromString("00000000000000000000000000000000"))
-    val keys: Keys = Keys(Seq(PrivateKey25519(PrivateKey @@ privKeyBytes.toArray, PublicKey @@ publicKeyBytes.toArray)))
     messagesHolder = messagesHolder :+ message
-    Generator.generateMessageTx(
-      keys.keys.head,
+    Generator.generateMessageTx(ECDSA.createKeyPair.getPrivate,
       previousOutput.map(_.toProofGenerator),
       previousOutput.map(_.id),
       message,
       previousOutput.map(output =>
         if (output.txNum == 1) settings.mvpSettings.messagesQtyInChain + 1 else output.txNum)
         .getOrElse(settings.mvpSettings.messagesQtyInChain + 1),
-      ByteString.fromString("00000000000000000000000000000000")
+      currentSalt
     )
   }
 
@@ -94,11 +87,11 @@ class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
     if (!messagesHolder.contains(msg)) {
       val previousOutput: Option[OutputMessage] =
         state.state.values.toSeq.find {
-          case output: OutputMessage =>
-            output.messageHash ++ output.metadata ++ output.publicKey ==
+          case output: OutputMessage if messagesHolder.nonEmpty =>
+            output.messageHash ++ output.metadata ++ ByteString(output.publicKey.getEncoded) ==
               Sha256RipeMD160(ByteString(messagesHolder.last.message)) ++
                 messagesHolder.last.metadata ++
-                messagesHolder.last.sender
+                ByteString(messagesHolder.last.sender.getEncoded)
           case _ => false
         }.map(_.asInstanceOf[OutputMessage])
       Some(createMessageTx(msg, previousOutput))
