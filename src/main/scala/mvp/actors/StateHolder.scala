@@ -1,5 +1,6 @@
 package mvp.actors
 
+import java.security.KeyPair
 import akka.actor.Actor
 import akka.util.ByteString
 import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, UserMessageFromCLI}
@@ -9,19 +10,19 @@ import io.circe.syntax._
 import io.circe.generic.auto._
 import mvp.actors.Messages._
 import mvp.actors.ModifiersHolder.RequestModifiers
+import mvp.crypto.ECDSA
 import mvp.local.messageHolder.UserMessage
 import mvp.local.{Generator, Keys}
 import mvp.crypto.Sha256.Sha256RipeMD160
 import mvp.utils.BlockchainUtils.{randomByteString, toByteString}
-import mvp.utils.EncodingUtils._
 import mvp.utils.Base16._
-import mvp.crypto.Curve25519
+import mvp.utils.EncodingUtils._
 import mvp.utils.Settings.settings
 
 class StateHolder extends Actor with StrictLogging {
   var blockChain: Blockchain = Blockchain.recoverBlockchain
   var state: State = State.recoverState
-  val keys: Keys = Keys.recoverKeys
+  val keys: Seq[KeyPair] = Keys.recoverKeys
   var messagesHolder: Seq[UserMessage] = Seq.empty
   var currentSalt: ByteString = randomByteString
 
@@ -38,7 +39,7 @@ class StateHolder extends Actor with StrictLogging {
       self ! InfoMessage(
         UserMessage(message.mkString,
           toByteString(System.currentTimeMillis()),
-          ByteString(keys.keys.head.publicKeyBytes),
+          keys.head.getPublic,
           outputId.map(ByteString(_)),
           messagesHolder.size + 1)
       )
@@ -69,8 +70,7 @@ class StateHolder extends Actor with StrictLogging {
       )
       val signedHeader: Header =
         headerUnsigned
-          .copy(minerSignature = Curve25519.sign(ByteString(keys.keys.head.privKeyBytes), headerUnsigned.messageToSign)
-            .getOrElse(ByteString.empty))
+          .copy(minerSignature = ECDSA.sign(keys.head.getPrivate, headerUnsigned.messageToSign))
       add(signedHeader)
       add(payload)
       if (settings.levelDB.enable)
@@ -81,16 +81,16 @@ class StateHolder extends Actor with StrictLogging {
     if (!messagesHolder.contains(msg)) {
       if (messagesHolder.size % settings.mvpSettings.messagesQtyInChain == 0) {
       // Реинициализация
-      currentSalt = randomByteString
+      currentSalt = Sha256RipeMD160(currentSalt)
       logger.info(s"Init new txChain with new salt: ${encode(currentSalt)}")
       }
     val previousOutput: Option[OutputMessage] =
       state.state.values.toSeq.find {
         case output: OutputMessage if messagesHolder.nonEmpty =>
-          output.messageHash ++ output.metadata ++ output.publicKey ==
+          output.messageHash ++ output.metadata ++ ByteString(output.publicKey.getEncoded) ==
             Sha256RipeMD160(ByteString(messagesHolder.last.message)) ++
               messagesHolder.last.metadata ++
-              messagesHolder.last.sender
+              ByteString(messagesHolder.last.sender.getEncoded)
         case _ => false
       }.map(_.asInstanceOf[OutputMessage])
     Some(createMessageTx(msg, previousOutput))
@@ -100,7 +100,7 @@ class StateHolder extends Actor with StrictLogging {
                       previousOutput: Option[OutputMessage]): Transaction = {
     logger.info(s"Get message: ${message.asJson}")
     messagesHolder = messagesHolder :+ message
-    Generator.generateMessageTx(keys.keys.head,
+    Generator.generateMessageTx(keys.head.getPrivate,
       previousOutput.map(_.toProofGenerator),
       previousOutput.map(_.id),
       message,

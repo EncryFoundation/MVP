@@ -1,17 +1,17 @@
 package mvp.local
 
+import java.security.PrivateKey
 import akka.util.ByteString
+import mvp.crypto.ECDSA
+import mvp.crypto.Sha256.Sha256RipeMD160
 import mvp.data.{Input, OutputMessage, Transaction}
 import mvp.local.messageHolder.UserMessage
 import mvp.local.messageTransaction.MessageInfo
-import mvp.crypto.Sha256.Sha256RipeMD160
-import org.encryfoundation.common.crypto.PrivateKey25519
-import mvp.crypto.Curve25519
 
 object Generator {
 
   //Генерация транзакции, которая содержит сообщение
-  def generateMessageTx(privateKey: PrivateKey25519,
+  def generateMessageTx(privateKey: PrivateKey,
                         previousMessage: Option[MessageInfo],
                         outputId: Option[ByteString],
                         message: UserMessage,
@@ -36,8 +36,7 @@ object Generator {
       txNum - 1
     )
 
-    val signature: ByteString = Curve25519.sign(ByteString(privateKey.privKeyBytes), messageOutput.messageToSign)
-      .getOrElse(ByteString.empty)
+    val signature: ByteString = ECDSA.sign(privateKey, messageOutput.messageToSign)
 
     Transaction(
       System.currentTimeMillis(),
