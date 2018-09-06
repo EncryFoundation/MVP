@@ -109,7 +109,7 @@ class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
     assert(stateHolder.validate(transaction.get), "should be valid")
   }
 
-  "create messageTx should create valid tramsaction" in {
+  "create messageTx should create valid transaction" in {
     val state: Int = messagesHolder.size
     assert(stateHolder.validate(createMessageTx(userMessage, None)), "should be true")
     assert(messagesHolder.size > state, "should be true")
