@@ -143,11 +143,14 @@ class StateHolder extends Actor with StrictLogging {
       s" Recipient: ${Base16.encode(ByteString(recipientPublicKey.getEncoded))}." +
       s" Amount: $amount." +
       s" Fee: $fee")
-    val boxesToSpentInTx: Seq[OutputAmount] = wallet.unspentAmountOutputs.foldLeft(Seq[OutputAmount]()) {
-      case (boxesToSpent, unspentBox) =>
-        if (boxesToSpent.map(_.amount).sum < amount + fee) boxesToSpent :+ unspentBox
-        else boxesToSpent
-    }
+    val boxesToSpentInTx: Seq[OutputAmount] = wallet
+      .unspentOutputs
+      .filter(_.isInstanceOf[OutputAmount])
+      .map(_.asInstanceOf[OutputAmount]).foldLeft(Seq[OutputAmount]()) {
+        case (boxesToSpent, unspentBox) =>
+          if (boxesToSpent.map(_.amount).sum < amount + fee) boxesToSpent :+ unspentBox
+          else boxesToSpent
+      }
     val charge: Long = boxesToSpentInTx.map(_.amount).sum - (amount + fee)
     val inputs: Seq[Input] = boxesToSpentInTx.map(box => Input(box.id, Seq(ECDSA.sign(keys.head.getPrivate, box.id))))
     val outputs: Seq[OutputAmount] = {
