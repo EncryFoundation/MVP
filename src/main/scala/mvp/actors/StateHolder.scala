@@ -1,10 +1,9 @@
 package mvp.actors
 
 import java.security.{KeyPair, PublicKey}
-
 import akka.actor.Actor
 import akka.util.ByteString
-import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, UserMessageFromCLI}
+import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, UserMessageFromCLI, UserTransfer}
 import com.typesafe.scalalogging.StrictLogging
 import mvp.data.{Blockchain, Modifier, State, _}
 import io.circe.syntax._
@@ -20,6 +19,7 @@ import mvp.utils.BlockchainUtils.{randomByteString, toByteString}
 import mvp.utils.Base16._
 import mvp.utils.EncodingUtils._
 import mvp.utils.Settings.settings
+import scala.util.Random
 
 class StateHolder extends Actor with StrictLogging {
   var blockChain: Blockchain = Blockchain.recoverBlockchain
@@ -27,7 +27,7 @@ class StateHolder extends Actor with StrictLogging {
   val keys: Seq[KeyPair] = Keys.recoverKeys
   var messagesHolder: Seq[UserMessage] = Seq.empty
   var currentSalt: ByteString = randomByteString
-  val wallet: Wallet = Wallet.recoverWallet
+  var wallet: Wallet = Wallet.recoverWallet(keys)
 
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) => headers.filter(validateModifier).foreach(addModifier)
@@ -46,6 +46,8 @@ class StateHolder extends Actor with StrictLogging {
           outputId.map(ByteString(_)),
           messagesHolder.size + 1)
       )
+    case UserTransfer(recipient, amount, fee) =>
+      self ! Transactions(Seq(createPaymentTx(recipient, amount, fee)))
   }
 
   def addModifier(modifier: Modifier): Unit = modifier match {
@@ -59,6 +61,7 @@ class StateHolder extends Actor with StrictLogging {
       blockChain = blockChain.addPayload(payload)
       if (settings.levelDB.enable) blockChain.sendBlock
       state = state.updateState(payload)
+      wallet = wallet.updateWallet(payload)
       if (settings.levelDB.enable)
         context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(payload)
     case transaction: Transaction =>
@@ -145,11 +148,12 @@ class StateHolder extends Actor with StrictLogging {
         if (boxesToSpent.map(_.amount).sum < amount + fee) boxesToSpent :+ unspentBox
         else boxesToSpent
     }
-    val charge: Long = amount + fee - boxesToSpentInTx.map(_.amount).sum
+    val charge: Long = boxesToSpentInTx.map(_.amount).sum - (amount + fee)
     val inputs: Seq[Input] = boxesToSpentInTx.map(box => Input(box.id, Seq(ECDSA.sign(keys.head.getPrivate, box.id))))
     val outputs: Seq[OutputAmount] = {
-      val boxToRecipient: OutputAmount = OutputAmount(recipientPublicKey, amount)
-      if (charge > 0) Seq(boxToRecipient, OutputAmount(keys.head.getPublic, charge))
+      //Nonce should't be random, only generation from tx id
+      val boxToRecipient: OutputAmount = OutputAmount(recipientPublicKey, amount, Random.nextLong())
+      if (charge > 0) Seq(boxToRecipient, OutputAmount(keys.head.getPublic, charge, Random.nextLong()))
       else Seq(boxToRecipient)
     }
     Transaction(System.currentTimeMillis(), inputs, outputs)

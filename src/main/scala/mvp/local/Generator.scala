@@ -7,6 +7,7 @@ import mvp.crypto.Sha256.Sha256RipeMD160
 import mvp.data.{Input, OutputMessage, Transaction}
 import mvp.local.messageHolder.UserMessage
 import mvp.local.messageTransaction.MessageInfo
+import scala.util.Random
 
 object Generator {
 
@@ -33,7 +34,9 @@ object Generator {
       messageInfo.metaData,
       messageInfo.publicKey,
       ByteString.empty,
-      txNum - 1
+      txNum - 1,
+      //Nonce shouldn't be random, should generate from tx id
+      Random.nextLong()
     )
 
     val signature: ByteString = ECDSA.sign(privateKey, messageOutput.messageToSign)

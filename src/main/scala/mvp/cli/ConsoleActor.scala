@@ -10,7 +10,7 @@ import mvp.MVP.{context, system}
 import mvp.actors.Messages.{BlockchainAnswer, HeadersAnswer}
 import mvp.cli.Commands._
 import mvp.cli.ConsoleActor._
-import mvp.utils.Base16
+import mvp.utils.{Base16, ECDSAUtils}
 
 class ConsoleActor extends Actor {
 
@@ -36,7 +36,7 @@ class ConsoleActor extends Actor {
           if (words.length < 4) println("Looks like you miss some parameters, please try again.")
           else
             system.actorSelection("/user/stateHolder") !
-              UserTransfer()
+              UserTransfer(ECDSAUtils.str2PublicKey(words(1)), words(2).toLong, words(3).toLong)
       }
   }
 }

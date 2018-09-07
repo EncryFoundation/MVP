@@ -7,15 +7,20 @@ import mvp.utils.BlockchainUtils._
 
 case class OutputAmount(publicKey: PublicKey,
                         amount: Long,
+                        nonce: Long,
                         override val canBeSpent: Boolean = true) extends Output {
 
   override def closeForSpent: Output = this.copy(canBeSpent = false)
 
-  override val messageToSign: ByteString = Sha256RipeMD160(ByteString(publicKey.getEncoded) ++ toByteString(amount))
+  override val messageToSign: ByteString = Sha256RipeMD160(
+    ByteString(publicKey.getEncoded) ++ toByteString(amount) ++ ByteString(nonce)
+  )
 
   override def unlock(proofs: Seq[ByteString]): Boolean = true
 
-  override val id: ByteString = Sha256RipeMD160(ByteString(publicKey.getEncoded) ++ toByteString(amount))
+  override val id: ByteString = Sha256RipeMD160(
+    ByteString(publicKey.getEncoded) ++ toByteString(amount) ++ ByteString(nonce)
+  )
 }
 
 object OutputAmount {

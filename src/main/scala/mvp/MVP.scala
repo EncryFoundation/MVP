@@ -4,7 +4,6 @@ import akka.actor.{ActorSystem, Props}
 import akka.stream.ActorMaterializer
 import mvp.actors.Messages.Start
 import mvp.actors.Starter
-import mvp.utils.Settings
 import scala.concurrent.ExecutionContextExecutor
 
 object MVP extends App {

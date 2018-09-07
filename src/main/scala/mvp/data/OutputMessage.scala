@@ -1,7 +1,6 @@
 package mvp.data
 
 import java.security.PublicKey
-
 import akka.util.ByteString
 import mvp.local.messageTransaction.MessageInfo
 import mvp.crypto.Sha256.Sha256RipeMD160
@@ -18,16 +17,28 @@ case class OutputMessage(bundle: ByteString,
                          publicKey: PublicKey,
                          signature: ByteString,
                          txNum: Int,
+                         nonce: Long,
                          override val canBeSpent: Boolean = true) extends Output {
 
   def toProofGenerator: MessageInfo = MessageInfo(messageHash, metadata, publicKey)
 
   override val id: ByteString = Sha256RipeMD160(
-    bundle ++ check ++ messageHash ++ metadata ++ ByteString(publicKey.getEncoded) ++ signature
+    bundle
+      ++ check
+      ++ messageHash
+      ++ metadata
+      ++ ByteString(publicKey.getEncoded)
+      ++ signature
+      ++ ByteString(nonce)
   )
 
   override val messageToSign: ByteString = Sha256RipeMD160(
-    bundle ++ check ++ messageHash ++ metadata ++ ByteString(publicKey.getEncoded)
+    bundle
+      ++ check
+      ++ messageHash
+      ++ metadata
+      ++ ByteString(publicKey.getEncoded)
+      ++ ByteString(nonce)
   )
 
   def checkSignature: Boolean = {

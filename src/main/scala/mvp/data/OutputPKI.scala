@@ -3,6 +3,7 @@ package mvp.data
 import java.security.PublicKey
 import akka.util.ByteString
 import mvp.crypto.Sha256.Sha256RipeMD160
+import mvp.utils.BlockchainUtils._
 
 case class OutputPKI(bundle: ByteString,
                      check: ByteString,
@@ -10,14 +11,26 @@ case class OutputPKI(bundle: ByteString,
                      userData: ByteString,
                      publicKey: PublicKey,
                      signature: ByteString,
+                     nonce: Long,
                      override val canBeSpent: Boolean = true) extends Output {
 
   override val id: ByteString = Sha256RipeMD160(
-    bundle ++ check ++ publicKeyHash ++ userData ++ ByteString(publicKey.getEncoded) ++ signature
+    bundle
+      ++ check
+      ++ publicKeyHash
+      ++ userData
+      ++ ByteString(publicKey.getEncoded)
+      ++ signature
+      ++ ByteString(nonce)
   )
 
   override val messageToSign: ByteString = Sha256RipeMD160(
-    bundle ++ check ++ publicKeyHash ++ userData ++ ByteString(publicKey.getEncoded)
+    bundle
+      ++ check
+      ++ publicKeyHash
+      ++ userData
+      ++ ByteString(publicKey.getEncoded)
+      ++ ByteString(nonce)
   )
 
   override def unlock(proofs: Seq[ByteString]): Boolean = ???

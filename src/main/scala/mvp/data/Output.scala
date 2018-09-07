@@ -7,11 +7,11 @@ import com.typesafe.scalalogging.StrictLogging
 import io.circe.generic.auto._
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder}
-import mvp.crypto.ECDSA
-import mvp.utils.Base16._
 import mvp.utils.EncodingUtils._
 
 trait Output extends Modifier with StrictLogging {
+
+  val nonce: Long
 
   val messageToSign: ByteString
 
