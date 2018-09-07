@@ -7,7 +7,6 @@ import mvp.utils.BlockchainUtils._
 
 case class OutputAmount(publicKey: PublicKey,
                         amount: Long,
-                        signature: ByteString,
                         override val canBeSpent: Boolean = true) extends Output {
 
   override def closeForSpent: Output = this.copy(canBeSpent = false)

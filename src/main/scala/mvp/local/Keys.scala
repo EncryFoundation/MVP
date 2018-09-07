@@ -7,5 +7,4 @@ object Keys {
 
   //Add recover from db
   def recoverKeys: Seq[KeyPair] = Seq(ECDSA.createKeyPair)
-
 }

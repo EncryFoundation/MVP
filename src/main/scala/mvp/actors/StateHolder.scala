@@ -1,6 +1,7 @@
 package mvp.actors
 
-import java.security.KeyPair
+import java.security.{KeyPair, PublicKey}
+
 import akka.actor.Actor
 import akka.util.ByteString
 import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, UserMessageFromCLI}
@@ -14,6 +15,7 @@ import mvp.crypto.ECDSA
 import mvp.local.messageHolder.UserMessage
 import mvp.local.{Generator, Keys}
 import mvp.crypto.Sha256.Sha256RipeMD160
+import mvp.utils.Base16
 import mvp.utils.BlockchainUtils.{randomByteString, toByteString}
 import mvp.utils.Base16._
 import mvp.utils.EncodingUtils._
@@ -25,12 +27,13 @@ class StateHolder extends Actor with StrictLogging {
   val keys: Seq[KeyPair] = Keys.recoverKeys
   var messagesHolder: Seq[UserMessage] = Seq.empty
   var currentSalt: ByteString = randomByteString
+  val wallet: Wallet = Wallet.recoverWallet
 
   override def receive: Receive = {
-    case Headers(headers: Seq[Header]) => headers.filter(validate).foreach(add)
+    case Headers(headers: Seq[Header]) => headers.filter(validateModifier).foreach(addModifier)
     case InfoMessage(msg: UserMessage) => addMessageAndCreateTx(msg).foreach(tx => self ! Transactions(Seq(tx)))
-    case Payloads(payloads: Seq[Payload]) => payloads.filter(validate).foreach(add)
-    case Transactions(transactions: Seq[Transaction]) => transactions.filter(validate).foreach(add)
+    case Payloads(payloads: Seq[Payload]) => payloads.filter(validateModifier).foreach(addModifier)
+    case Transactions(transactions: Seq[Transaction]) => transactions.filter(validateModifier).foreach(addModifier)
     case GetLastBlock => sender() ! blockChain.blocks.last
     case GetLastInfo => sender() ! LastInfo(blockChain.blocks, messagesHolder)
     case BlockchainRequest => sender() ! BlockchainAnswer(blockChain)
@@ -45,7 +48,7 @@ class StateHolder extends Actor with StrictLogging {
       )
   }
 
-  def add(modifier: Modifier): Unit = modifier match {
+  def addModifier(modifier: Modifier): Unit = modifier match {
     case header: Header =>
       logger.info(s"Get header: ${header.asJson}")
       blockChain = blockChain.addHeader(header)
@@ -71,10 +74,29 @@ class StateHolder extends Actor with StrictLogging {
       val signedHeader: Header =
         headerUnsigned
           .copy(minerSignature = ECDSA.sign(keys.head.getPrivate, headerUnsigned.messageToSign))
-      add(signedHeader)
-      add(payload)
+      addModifier(signedHeader)
+      addModifier(payload)
       if (settings.levelDB.enable)
         context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(transaction)
+  }
+
+  def validateModifier(modifier: Modifier): Boolean = modifier match {
+    //TODO: Add semantic validation check
+    case header: Header =>
+      !blockChain.headers.map(header => encode(header.id)).contains(encode(header.id)) &&
+        (header.height == 0 ||
+          (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
+            .exists(prevHeader => header.previousBlockHash == prevHeader.id)))
+    case payload: Payload =>
+      !blockChain.blocks.map(block => encode(block.payload.id)).contains(encode(payload.id)) &&
+        payload.transactions.forall(validateModifier)
+    case transaction: Transaction =>
+      logger.info(s"Going to validate tx: ${transaction.asJson}")
+      transaction
+        .inputs
+        .forall(input => state.state.get(encode(input.useOutputId))
+          .exists(outputToUnlock => outputToUnlock.unlock(input.proofs) &&
+            outputToUnlock.canBeSpent))
   }
 
   def addMessageAndCreateTx(msg: UserMessage): Option[Transaction] =
@@ -111,23 +133,26 @@ class StateHolder extends Actor with StrictLogging {
     )
   }
 
-  def validate(modifier: Modifier): Boolean = modifier match {
-    //TODO: Add semantic validation check
-    case header: Header =>
-      !blockChain.headers.map(header => encode(header.id)).contains(encode(header.id)) &&
-      (header.height == 0 ||
-        (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
-        .exists(prevHeader => header.previousBlockHash == prevHeader.id)))
-    case payload: Payload =>
-        !blockChain.blocks.map(block => encode(block.payload.id)).contains(encode(payload.id)) &&
-          payload.transactions.forall(validate)
-    case transaction: Transaction =>
-      logger.info(s"Going to validate tx: ${transaction.asJson}")
-      transaction
-        .inputs
-        .forall(input => state.state.get(encode(input.useOutputId))
-          .exists(outputToUnlock => outputToUnlock.unlock(input.proofs) &&
-            outputToUnlock.canBeSpent && outputToUnlock.checkSignature))
+  def createPaymentTx(recipientPublicKey: PublicKey,
+                      amount: Long,
+                      fee: Long): Transaction = {
+    logger.info(s"Generating payment tx." +
+      s" Recipient: ${Base16.encode(ByteString(recipientPublicKey.getEncoded))}." +
+      s" Amount: $amount." +
+      s" Fee: $fee")
+    val boxesToSpentInTx: Seq[OutputAmount] = wallet.unspentAmountOutputs.foldLeft(Seq[OutputAmount]()) {
+      case (boxesToSpent, unspentBox) =>
+        if (boxesToSpent.map(_.amount).sum < amount + fee) boxesToSpent :+ unspentBox
+        else boxesToSpent
+    }
+    val charge: Long = amount + fee - boxesToSpentInTx.map(_.amount).sum
+    val inputs: Seq[Input] = boxesToSpentInTx.map(box => Input(box.id, Seq(ECDSA.sign(keys.head.getPrivate, box.id))))
+    val outputs: Seq[OutputAmount] = {
+      val boxToRecipient: OutputAmount = OutputAmount(recipientPublicKey, amount)
+      if (charge > 0) Seq(boxToRecipient, OutputAmount(keys.head.getPublic, charge))
+      else Seq(boxToRecipient)
+    }
+    Transaction(System.currentTimeMillis(), inputs, outputs)
   }
 }
 

@@ -55,10 +55,10 @@ class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
   )
 
   "validate correct header, payload, transaction , incorrect will be rejected " in {
-    assert(stateHolder.validate(correctHeader), "Validate correct header should be true")
-    assert(!stateHolder.validate(incorrectHeader), "Validate incorrect header should be false")
-    assert(stateHolder.validate(payload), "Validate payload should be true")
-    assert(stateHolder.validate(transaction), "Validate transaction should be true")
+    assert(stateHolder.validateModifier(correctHeader), "Validate correct header should be true")
+    assert(!stateHolder.validateModifier(incorrectHeader), "Validate incorrect header should be false")
+    assert(stateHolder.validateModifier(payload), "Validate payload should be true")
+    assert(stateHolder.validateModifier(transaction), "Validate transaction should be true")
   }
 
   val userMessage = UserMessage(
@@ -99,12 +99,12 @@ class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
 
   "addMessageAndCreateTx should add and create" in {
     val transaction: Option[Transaction] = addMessageAndCreateTx(userMessage)
-    assert(stateHolder.validate(transaction.get), "should be valid")
+    assert(stateHolder.validateModifier(transaction.get), "should be valid")
   }
 
   "create messageTx should create valid transaction" in {
     val state: Int = messagesHolder.size
-    assert(stateHolder.validate(createMessageTx(userMessage, None)), "should be true")
+    assert(stateHolder.validateModifier(createMessageTx(userMessage, None)), "should be true")
     assert(messagesHolder.size > state, "should be true")
   }
 }

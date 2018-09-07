@@ -1,5 +1,7 @@
 package mvp.cli
 
+import java.security.PublicKey
+
 import scala.io.StdIn
 import scala.concurrent.Future
 import akka.actor.Actor
@@ -7,7 +9,7 @@ import akka.util.ByteString
 import mvp.MVP.{context, system}
 import mvp.actors.Messages.{BlockchainAnswer, HeadersAnswer}
 import mvp.cli.Commands._
-import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, SendMyName, UserMessageFromCLI}
+import mvp.cli.ConsoleActor._
 import mvp.utils.Base16
 
 class ConsoleActor extends Actor {
@@ -23,12 +25,18 @@ class ConsoleActor extends Actor {
     case Response("send message") => println("Введите текст и outputID")
     case Response(string: String) =>
       val words: Array[String] = string.split(' ')
-      if (words.head == "sendTx") {
-        val (outputID, wordsToSend: Array[String]) =
-          if (words.length < 3) (None, words.tail)
-          else (Some(Base16.decode(words.last).getOrElse(ByteString.empty)), words.tail.dropRight(1))
-        system.actorSelection("/user/stateHolder") !
-          UserMessageFromCLI(wordsToSend, outputID.map(_.toArray))
+      words.head match {
+        case "sendTx" =>
+          val (outputID, wordsToSend: Array[String]) =
+            if (words.length < 3) (None, words.tail)
+            else (Some(Base16.decode(words.last).getOrElse(ByteString.empty)), words.tail.dropRight(1))
+          system.actorSelection("/user/stateHolder") !
+            UserMessageFromCLI(wordsToSend, outputID.map(_.toArray))
+        case "sendMoney" =>
+          if (words.length < 4) println("Looks like you miss some parameters, please try again.")
+          else
+            system.actorSelection("/user/stateHolder") !
+              UserTransfer()
       }
   }
 }
@@ -47,4 +55,6 @@ object ConsoleActor {
   case object HeadersRequest
 
   case class UserMessageFromCLI(array: Array[String], array1: Option[Array[Byte]])
+
+  case class UserTransfer(recipient: PublicKey, amount: Long, fee: Long)
 }

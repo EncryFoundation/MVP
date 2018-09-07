@@ -10,8 +10,6 @@ import io.circe.syntax._
 
 object EncodingUtils {
 
-  private val kf: KeyFactory = KeyFactory.getInstance("ECDSA", "BC")
-
   implicit val byteStringEncoder: Encoder[ByteString] = bytes => encode(bytes).asJson
   implicit val byteStringDecoder: Decoder[ByteString] =
     Decoder.decodeString.map(Base16.decode).map(_.getOrElse(ByteString.empty))

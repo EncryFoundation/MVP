@@ -17,15 +17,7 @@ trait Output extends Modifier with StrictLogging {
 
   val publicKey: PublicKey
 
-  val signature: ByteString
-
   val canBeSpent: Boolean
-
-  def checkSignature: Boolean = {
-    val result: Boolean = ECDSA.verify(signature, messageToSign, publicKey)
-    logger.info(s"Going to check signature for output with id: ${encode(id)} and result is: $result")
-    result
-  }
 
   def closeForSpent: Output
 
