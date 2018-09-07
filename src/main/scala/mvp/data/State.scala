@@ -25,7 +25,7 @@ case class State(state: Map[String, Output] = Map.empty[String, Output]) {
             .find(outputInState => outputInState._1 == Base16.encode(input.id))
             .filter(outputInfo => !outputInfo._2.isInstanceOf[OutputAmount])
             .map(_._2)
-          ).map(_.closeForSpent)
+          )
         (toAdd ++ closedForSpent ++ payload.transactions.flatMap(_.outputs),
           toRemove ++ toRemoveFromStateFromTx.map(input => Base16.encode(input.useOutputId)))
     }

@@ -18,7 +18,10 @@ case class OutputMessage(bundle: ByteString,
                          signature: ByteString,
                          txNum: Int,
                          nonce: Long,
-                         override val canBeSpent: Boolean = true) extends Output {
+                         override val canBeSpent: Boolean = true)
+  extends Output
+    with PublicKeyContainable
+    with CloseableOutput {
 
   def toProofGenerator: MessageInfo = MessageInfo(messageHash, metadata, publicKey)
 

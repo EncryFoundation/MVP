@@ -11,7 +11,8 @@ case class Wallet(unspentOutputs: Seq[Output],
     val allOutputsToSpent: Seq[ByteString] = payload.transactions.flatMap(_.inputs).map(_.useOutputId)
     val allOutputsToAdd: Seq[Output] =
       payload.transactions.flatMap(_.outputs)
-        .filter(output => keys.map(_.getPublic).contains(output.publicKey))
+        .filter(_.isInstanceOf[PublicKeyContainable])
+        .filter(output => keys.map(_.getPublic).contains(output.asInstanceOf[PublicKeyContainable].publicKey))
     val unspentOutputsAfter: Seq[Output] = unspentOutputs
       .filter(output => !allOutputsToSpent.contains(output.id)) ++ allOutputsToAdd
     this.copy(unspentOutputsAfter)

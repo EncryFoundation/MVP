@@ -15,11 +15,7 @@ trait Output extends Modifier with StrictLogging {
 
   val messageToSign: ByteString
 
-  val publicKey: PublicKey
-
   val canBeSpent: Boolean
-
-  def closeForSpent: Output
 
   def unlock(proofs: Seq[ByteString]): Boolean
 }

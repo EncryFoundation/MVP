@@ -12,7 +12,10 @@ case class OutputPKI(bundle: ByteString,
                      publicKey: PublicKey,
                      signature: ByteString,
                      nonce: Long,
-                     override val canBeSpent: Boolean = true) extends Output {
+                     override val canBeSpent: Boolean = true)
+  extends Output
+    with PublicKeyContainable
+    with CloseableOutput {
 
   override val id: ByteString = Sha256RipeMD160(
     bundle

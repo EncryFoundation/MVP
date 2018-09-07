@@ -8,9 +8,8 @@ import mvp.utils.BlockchainUtils._
 case class OutputAmount(publicKey: PublicKey,
                         amount: Long,
                         nonce: Long,
-                        override val canBeSpent: Boolean = true) extends Output {
-
-  override def closeForSpent: Output = this.copy(canBeSpent = false)
+                        override val canBeSpent: Boolean = true)
+  extends MonetaryOutput with PublicKeyContainable {
 
   override val messageToSign: ByteString = Sha256RipeMD160(
     ByteString(publicKey.getEncoded) ++ toByteString(amount) ++ ByteString(nonce)

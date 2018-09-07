@@ -86,6 +86,7 @@ class StateHolder extends Actor with StrictLogging {
   def validateModifier(modifier: Modifier): Boolean = modifier match {
     //TODO: Add semantic validation check
     case header: Header =>
+      println(s"Valid header(this is: ${settings.thisNode.port})")
       !blockChain.headers.map(header => encode(header.id)).contains(encode(header.id)) &&
         (header.height == 0 ||
           (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
@@ -94,12 +95,16 @@ class StateHolder extends Actor with StrictLogging {
       !blockChain.blocks.map(block => encode(block.payload.id)).contains(encode(payload.id)) &&
         payload.transactions.forall(validateModifier)
     case transaction: Transaction =>
-      logger.info(s"Going to validate tx: ${transaction.asJson}")
+      println(s"Going to validate tx: ${transaction.asJson}")
       transaction
         .inputs
         .forall(input => state.state.get(encode(input.useOutputId))
-          .exists(outputToUnlock => outputToUnlock.unlock(input.proofs) &&
-            outputToUnlock.canBeSpent))
+          .exists(outputToUnlock => {
+            println(s"Result: ${outputToUnlock.unlock(input.proofs) &&
+              outputToUnlock.canBeSpent}")
+            outputToUnlock.unlock(input.proofs) &&
+              outputToUnlock.canBeSpent
+          }))
   }
 
   def addMessageAndCreateTx(msg: UserMessage): Option[Transaction] =
@@ -143,10 +148,10 @@ class StateHolder extends Actor with StrictLogging {
       s" Recipient: ${Base16.encode(ByteString(recipientPublicKey.getEncoded))}." +
       s" Amount: $amount." +
       s" Fee: $fee")
-    val boxesToSpentInTx: Seq[OutputAmount] = wallet
+    val boxesToSpentInTx: Seq[MonetaryOutput] = wallet
       .unspentOutputs
-      .filter(_.isInstanceOf[OutputAmount])
-      .map(_.asInstanceOf[OutputAmount]).foldLeft(Seq[OutputAmount]()) {
+      .filter(_.isInstanceOf[MonetaryOutput])
+      .map(_.asInstanceOf[MonetaryOutput]).foldLeft(Seq[MonetaryOutput]()) {
         case (boxesToSpent, unspentBox) =>
           if (boxesToSpent.map(_.amount).sum < amount + fee) boxesToSpent :+ unspentBox
           else boxesToSpent
