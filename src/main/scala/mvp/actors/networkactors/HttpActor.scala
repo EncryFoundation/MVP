@@ -27,9 +27,9 @@ class HttpActor extends Actor with StrictLogging {
         uri = "/blockchain/lastInfo"
       ).withEffectiveUri(securedConnection = false, Host(settings.otherNodes.head.host, settings.otherNodes.head.port)))
         .flatMap(_.entity.dataBytes.runFold(ByteString.empty)(_ ++ _))
-        .map(str => str.utf8String)
+        .map(_.utf8String)
         .map(decode[LastInfo])
-        .flatMap(res => res.fold(Future.failed, Future.successful))
+        .flatMap(_.fold(Future.failed, Future.successful))
         .onComplete(_.map(context.parent ! LastInfoFromRemote(_)))
   }
 
