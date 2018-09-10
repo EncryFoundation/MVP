@@ -166,11 +166,13 @@ class StateHolder extends Actor with StrictLogging {
       s" Fee: $fee")
     val boxesToSpentInTx: Seq[MonetaryOutput] = wallet
       .unspentOutputs
-      .filter(_.isInstanceOf[MonetaryOutput])
-      .map(_.asInstanceOf[MonetaryOutput]).foldLeft(Seq[MonetaryOutput]()) {
-        case (boxesToSpent, unspentBox) =>
-          if (boxesToSpent.map(_.amount).sum < amount + fee) boxesToSpent :+ unspentBox
-          else boxesToSpent
+      .foldLeft(Seq[MonetaryOutput]()) {
+        case (boxesToSpent, unspentBox) => unspentBox match {
+          case monetaryOutput: MonetaryOutput =>
+            if (boxesToSpent.map (_.amount).sum < amount + fee) boxesToSpent :+ monetaryOutput
+            else boxesToSpent
+          case _ => boxesToSpent
+        }
       }
     val charge: Long = boxesToSpentInTx.map(_.amount).sum - (amount + fee)
     val inputs: Seq[Input] = boxesToSpentInTx.map(box => Input(box.id, Seq.empty))
