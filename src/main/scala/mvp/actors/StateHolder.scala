@@ -19,6 +19,7 @@ import mvp.utils.BlockchainUtils.{randomByteString, toByteString}
 import mvp.utils.ECDSAUtils._
 import mvp.utils.Settings.settings
 import scala.util.Random
+import mvp.utils.EncodingUtils._
 
 class StateHolder extends Actor with StrictLogging {
   var blockChain: Blockchain = Blockchain.recoverBlockchain
