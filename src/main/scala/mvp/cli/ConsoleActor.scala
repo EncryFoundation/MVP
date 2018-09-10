@@ -37,6 +37,7 @@ class ConsoleActor extends Actor {
           else
             system.actorSelection("/user/stateHolder") !
               UserTransfer(Base16.decode(words(1)).getOrElse(ByteString.empty), words(2).toLong, words(3).toLong)
+        case _ => println("Looks like you miss some parameters, please try again.")
       }
   }
 }
