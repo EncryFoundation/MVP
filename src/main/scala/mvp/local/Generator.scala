@@ -1,15 +1,12 @@
 package mvp.local
 
 import java.security.{PrivateKey, PublicKey}
-
 import akka.util.ByteString
 import mvp.crypto.ECDSA
 import mvp.crypto.Sha256.Sha256RipeMD160
 import mvp.data._
 import mvp.local.messageHolder.UserMessage
 import mvp.local.messageTransaction.MessageInfo
-import mvp.utils.Base16
-
 import scala.util.Random
 import mvp.utils.ECDSAUtils._
 

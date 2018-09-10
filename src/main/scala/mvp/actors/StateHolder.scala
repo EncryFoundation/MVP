@@ -1,27 +1,23 @@
 package mvp.actors
 
-import java.security.{KeyPair, PublicKey}
-
+import java.security.KeyPair
 import akka.actor.Actor
 import akka.util.ByteString
-import mvp.cli.ConsoleActor._
 import com.typesafe.scalalogging.StrictLogging
-import mvp.data.{Blockchain, Modifier, State, _}
-import io.circe.syntax._
 import io.circe.generic.auto._
+import io.circe.syntax._
 import mvp.actors.Messages._
 import mvp.actors.ModifiersHolder.RequestModifiers
+import mvp.cli.ConsoleActor._
 import mvp.crypto.ECDSA
+import mvp.crypto.Sha256.Sha256RipeMD160
+import mvp.data.{Blockchain, Modifier, State, _}
 import mvp.local.messageHolder.UserMessage
 import mvp.local.{Generator, Keys}
-import mvp.crypto.Sha256.Sha256RipeMD160
-import mvp.utils.Base16
-import mvp.utils.BlockchainUtils.{randomByteString, toByteString}
 import mvp.utils.Base16._
+import mvp.utils.BlockchainUtils.{randomByteString, toByteString}
 import mvp.utils.ECDSAUtils._
-import mvp.utils.EncodingUtils._
 import mvp.utils.Settings.settings
-
 import scala.util.Random
 
 class StateHolder extends Actor with StrictLogging {

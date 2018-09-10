@@ -1,7 +1,6 @@
 package mvp.data
 
-import java.security.{KeyPair, PrivateKey}
-
+import java.security.KeyPair
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import akka.util.ByteString
@@ -14,7 +13,6 @@ import mvp.utils.Base16
 import mvp.utils.Settings.settings
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import utils.TestGenerator._
-
 import scala.util.Random
 
 class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike

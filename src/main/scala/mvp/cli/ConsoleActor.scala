@@ -1,16 +1,14 @@
 package mvp.cli
 
-import java.security.PublicKey
-
-import scala.io.StdIn
-import scala.concurrent.Future
 import akka.actor.Actor
 import akka.util.ByteString
 import mvp.MVP.{context, system}
 import mvp.actors.Messages.{BlockchainAnswer, HeadersAnswer}
 import mvp.cli.Commands._
 import mvp.cli.ConsoleActor._
-import mvp.utils.{Base16, ECDSAUtils}
+import mvp.utils.Base16
+import scala.concurrent.Future
+import scala.io.StdIn
 
 class ConsoleActor extends Actor {
 
