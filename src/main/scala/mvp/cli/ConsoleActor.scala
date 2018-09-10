@@ -29,11 +29,13 @@ class ConsoleActor extends Actor {
       val words: Array[String] = string.split(' ')
       words.head match {
         case "sendTx" =>
-            if (words.length < 3) println("Looks like you miss some parameters, please try again.")
+            if (words.length < 3 || words.last.toLong < 1)
+              println("Looks like you miss some parameters, please try again.")
             else system.actorSelection("/user/stateHolder") !
               UserMessageFromCLI(words.tail)
         case "sendMoney" =>
-          if (words.length < 4) println("Looks like you miss some parameters, please try again.")
+          if (words.length < 4 || (words(2).toLong < 1 && words.last.toLong < 1))
+            println("Looks like you miss some parameters, please try again.")
           else
             system.actorSelection("/user/stateHolder") !
               UserTransfer(Base16.decode(words(1)).getOrElse(ByteString.empty), words(2).toLong, words(3).toLong)
