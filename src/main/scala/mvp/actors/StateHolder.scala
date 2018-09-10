@@ -126,12 +126,13 @@ class StateHolder extends Actor with StrictLogging {
         case _ => false
       }.map(_.asInstanceOf[OutputMessage])
     val boxesToFee: Seq[MonetaryOutput] = wallet
-      .unspentOutputs
-      .filter(_.isInstanceOf[MonetaryOutput])
-      .map(_.asInstanceOf[MonetaryOutput]).foldLeft(Seq[MonetaryOutput]()) {
-      case (boxesToSpent, unspentBox) =>
-        if (boxesToSpent.map(_.amount).sum < msg.fee) boxesToSpent :+ unspentBox
-        else boxesToSpent
+      .unspentOutputs.foldLeft(Seq[MonetaryOutput]()) {
+      case (boxesToSpent, unspentBox) => unspentBox match {
+        case monetaryOutput: MonetaryOutput =>
+          if (boxesToSpent.map(_.amount).sum < msg.fee) boxesToSpent :+ monetaryOutput
+          else boxesToSpent
+        case _ => boxesToSpent
+      }
     }
     Some(createMessageTx(msg, previousOutput, msg.fee, boxesToFee))
   } else None
