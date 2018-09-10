@@ -7,6 +7,7 @@ import mvp.data.{OutputAmount, _}
 import mvp.utils.BlockchainUtils.randomByteString
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import scala.util.Random
+import mvp.utils.ECDSAUtils._
 
 object TestGenerator {
 
@@ -38,12 +39,12 @@ object TestGenerator {
     }
 
   def generateDummyAmountOutputs(qty: Int): Seq[Output] =
-    (0 until qty).map(i => OutputAmount(ECDSA.createKeyPair.getPublic, 100L, Random.nextLong()))
+    (0 until qty).map(i => OutputAmount(publicKey2Addr(ECDSA.createKeyPair.getPublic), 100L, Random.nextLong()))
 
 
   def generatePaymentTxs(inputs: Seq[Input]): Seq[Transaction] = inputs.foldLeft(Seq.empty[Transaction]) {
     case (transatcions, input) =>
-      transatcions :+ Transaction(0L, Seq(input),
-        Seq(OutputAmount(ECDSA.createKeyPair.getPublic, 100L, Random.nextLong())))
+      transatcions :+ Transaction(0L, 3L, Seq(input),
+        Seq(OutputAmount(publicKey2Addr(ECDSA.createKeyPair.getPublic), 100L, Random.nextLong())))
   }
 }

@@ -1,5 +1,7 @@
 package mvp.data
 
+import java.security.{KeyPair, PrivateKey}
+
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import akka.util.ByteString
@@ -12,6 +14,8 @@ import mvp.utils.Base16
 import mvp.utils.Settings.settings
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import utils.TestGenerator._
+
+import scala.util.Random
 
 class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
   with ImplicitSender
@@ -46,6 +50,7 @@ class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
 
   val transaction: Transaction = Transaction(
     timestamp,
+    Random.nextLong(),
     Seq.empty[Input],
     generateDummyAmountOutputs(1)
   )
@@ -65,21 +70,27 @@ class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
     "",
     ByteString.fromString("4afa0ea465010000"),
     ECDSA.createKeyPair.getPublic,
-    Option(ByteString.empty),
+    2L,
     1
   )
 
   def createMessageTx(message: UserMessage,
-                      previousOutput: Option[OutputMessage]): Transaction = {
+                      previousOutput: Option[OutputMessage],
+                      fee: Long,
+                      boxesToFee: Seq[MonetaryOutput]): Transaction = {
     messagesHolder = messagesHolder :+ message
-    Generator.generateMessageTx(ECDSA.createKeyPair.getPrivate,
+    val keyPair: KeyPair = ECDSA.createKeyPair
+    Generator.generateMessageTx(keyPair.getPrivate,
       previousOutput.map(_.toProofGenerator),
       previousOutput.map(_.id),
       message,
       previousOutput.map(output =>
         if (output.txNum == 1) settings.mvpSettings.messagesQtyInChain + 1 else output.txNum)
         .getOrElse(settings.mvpSettings.messagesQtyInChain + 1),
-      currentSalt
+      currentSalt,
+      fee,
+      boxesToFee,
+      keyPair.getPublic
     )
   }
 
@@ -94,7 +105,7 @@ class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
                 ByteString(messagesHolder.last.sender.getEncoded)
           case _ => false
         }.map(_.asInstanceOf[OutputMessage])
-      Some(createMessageTx(msg, previousOutput))
+      Some(createMessageTx(msg, previousOutput, 2L, Seq.empty))
     } else None
 
   "addMessageAndCreateTx should add and create" in {
@@ -104,7 +115,7 @@ class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
 
   "create messageTx should create valid transaction" in {
     val state: Int = messagesHolder.size
-    assert(stateHolder.validateModifier(createMessageTx(userMessage, None)), "should be true")
+    assert(stateHolder.validateModifier(createMessageTx(userMessage, None, 2L, Seq.empty)), "should be true")
     assert(messagesHolder.size > state, "should be true")
   }
 }

@@ -14,15 +14,15 @@ case class Blockchain(headers: Seq[Header] = Seq.empty, blocks: Seq[Block] = Seq
 
   val lastBlock: Option[Block] = blocks.lastOption
 
-  def addPayload(payload: Payload): Blockchain =
-    Blockchain(
-      headers,
-      headers.find(_.merkleTreeRoot == payload.id)
-        .map(header =>
-          (blocks :+ Block(header, payload))
-            .sortWith((blockOne, blockTwo) => blockOne.header.height < blockTwo.header.height))
-        .getOrElse(blocks)
-    )
+  def addPayload(payload: Payload): Blockchain = Blockchain(
+    headers,
+    headers.find(_.merkleTreeRoot == payload.id)
+      .map(header => {
+        (blocks :+ Block(header, payload))
+          .sortWith((blockOne, blockTwo) => blockOne.header.height < blockTwo.header.height)
+      })
+      .getOrElse(blocks)
+  )
 
   def sendBlock: Unit = blocks.lastOption.foreach(block =>
     system.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(block))

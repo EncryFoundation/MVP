@@ -53,10 +53,10 @@ case class OutputMessage(bundle: ByteString,
   //Проверка, "связки" и "проверки"
   override def unlock(proofs: Seq[ByteString]): Boolean = {
     val result: Boolean =
-      check == Sha256RipeMD160(proofs.last ++ messageHash ++ metadata ++ ByteString(publicKey.getEncoded))
+      check == Sha256RipeMD160(proofs.head ++ messageHash ++ metadata ++ ByteString(publicKey.getEncoded))
     logger.info(s"Going to validate output: ${this.asJson}." +
       s"\nCheck is ${encode(check)}." +
-      s"\nBundle from next tx is ${encode(proofs.last)}" +
+      s"\nBundle from next tx is ${encode(proofs.head)}" +
       s"\nUnlock condition \'check = Sha256RipeMD160(proof ++ messageHash ++ metadata ++ publicKey)\' is $result")
     result && txNum > 0 && checkSignature
   }

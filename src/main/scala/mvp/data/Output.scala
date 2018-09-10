@@ -1,6 +1,5 @@
 package mvp.data
 
-import java.security.PublicKey
 import akka.util.ByteString
 import cats.syntax.functor._
 import com.typesafe.scalalogging.StrictLogging

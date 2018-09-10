@@ -1,9 +1,10 @@
 package mvp.actors
 
 import java.security.{KeyPair, PublicKey}
+
 import akka.actor.Actor
 import akka.util.ByteString
-import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, UserMessageFromCLI, UserTransfer}
+import mvp.cli.ConsoleActor._
 import com.typesafe.scalalogging.StrictLogging
 import mvp.data.{Blockchain, Modifier, State, _}
 import io.circe.syntax._
@@ -17,8 +18,10 @@ import mvp.crypto.Sha256.Sha256RipeMD160
 import mvp.utils.Base16
 import mvp.utils.BlockchainUtils.{randomByteString, toByteString}
 import mvp.utils.Base16._
+import mvp.utils.ECDSAUtils._
 import mvp.utils.EncodingUtils._
 import mvp.utils.Settings.settings
+
 import scala.util.Random
 
 class StateHolder extends Actor with StrictLogging {
@@ -38,16 +41,18 @@ class StateHolder extends Actor with StrictLogging {
     case GetLastInfo => sender() ! LastInfo(blockChain.blocks, messagesHolder)
     case BlockchainRequest => sender() ! BlockchainAnswer(blockChain)
     case HeadersRequest => sender() ! HeadersAnswer(blockChain)
-    case UserMessageFromCLI(message, outputId) =>
+    case UserMessageFromCLI(message) =>
       self ! InfoMessage(
-        UserMessage(message.mkString,
+        UserMessage(message.dropRight(1).mkString,
           toByteString(System.currentTimeMillis()),
           keys.head.getPublic,
-          outputId.map(ByteString(_)),
+          message.last.toLong,
           messagesHolder.size + 1)
       )
     case UserTransfer(recipient, amount, fee) =>
       self ! Transactions(Seq(createPaymentTx(recipient, amount, fee)))
+    case MyAddress => sender() ! publicKey2Addr(keys.head.getPublic)
+    case MyBalance => sender() ! wallet.balance
   }
 
   def addModifier(modifier: Modifier): Unit = modifier match {
@@ -66,7 +71,7 @@ class StateHolder extends Actor with StrictLogging {
         context.actorSelection("/user/starter/modifiersHolder") ! RequestModifiers(payload)
     case transaction: Transaction =>
       logger.info(s"Get transaction: ${transaction.asJson}")
-      val payload: Payload = Payload(Seq(transaction))
+      val payload: Payload = Payload(Seq(transaction) :+ createFeeTx(transaction.fee))
       val headerUnsigned: Header = Header(
         System.currentTimeMillis(),
         blockChain.blockchainHeight + 1,
@@ -84,25 +89,25 @@ class StateHolder extends Actor with StrictLogging {
   }
 
   def validateModifier(modifier: Modifier): Boolean = modifier match {
-    //TODO: Add semantic validation check
+    //TODO: Add semantic validation check + Fee-tx validation
     case header: Header =>
-      println(s"Valid header(this is: ${settings.thisNode.port})")
       !blockChain.headers.map(header => encode(header.id)).contains(encode(header.id)) &&
         (header.height == 0 ||
           (header.height > blockChain.headers.last.height && blockChain.getHeaderAtHeight(header.height - 1)
             .exists(prevHeader => header.previousBlockHash == prevHeader.id)))
     case payload: Payload =>
+      //TODO: Fee tx valid
       !blockChain.blocks.map(block => encode(block.payload.id)).contains(encode(payload.id)) &&
-        payload.transactions.forall(validateModifier)
+        payload.transactions.dropRight(1).forall(validateModifier)
     case transaction: Transaction =>
-      println(s"Going to validate tx: ${transaction.asJson}")
+      logger.info(s"Going to validate tx: ${transaction.asJson}")
       transaction
         .inputs
         .forall(input => state.state.get(encode(input.useOutputId))
           .exists(outputToUnlock => {
-            println(s"Result: ${outputToUnlock.unlock(input.proofs) &&
+            logger.info(s"Result: ${outputToUnlock.unlock(input.proofs :+ transaction.messageToSign) &&
               outputToUnlock.canBeSpent}")
-            outputToUnlock.unlock(input.proofs) &&
+            outputToUnlock.unlock(input.proofs :+ transaction.messageToSign) &&
               outputToUnlock.canBeSpent
           }))
   }
@@ -123,11 +128,21 @@ class StateHolder extends Actor with StrictLogging {
               ByteString(messagesHolder.last.sender.getEncoded)
         case _ => false
       }.map(_.asInstanceOf[OutputMessage])
-    Some(createMessageTx(msg, previousOutput))
+    val boxesToFee: Seq[MonetaryOutput] = wallet
+      .unspentOutputs
+      .filter(_.isInstanceOf[MonetaryOutput])
+      .map(_.asInstanceOf[MonetaryOutput]).foldLeft(Seq[MonetaryOutput]()) {
+      case (boxesToSpent, unspentBox) =>
+        if (boxesToSpent.map(_.amount).sum < msg.fee) boxesToSpent :+ unspentBox
+        else boxesToSpent
+    }
+    Some(createMessageTx(msg, previousOutput, msg.fee, boxesToFee))
   } else None
 
   def createMessageTx(message: UserMessage,
-                      previousOutput: Option[OutputMessage]): Transaction = {
+                      previousOutput: Option[OutputMessage],
+                      fee: Long,
+                      boxesToFee: Seq[MonetaryOutput]): Transaction = {
     logger.info(s"Get message: ${message.asJson}")
     messagesHolder = messagesHolder :+ message
     Generator.generateMessageTx(keys.head.getPrivate,
@@ -137,15 +152,18 @@ class StateHolder extends Actor with StrictLogging {
       previousOutput.map(output =>
         if (output.txNum == 1) settings.mvpSettings.messagesQtyInChain + 1 else output.txNum)
         .getOrElse(settings.mvpSettings.messagesQtyInChain + 1),
-      currentSalt
+      currentSalt,
+      fee,
+      boxesToFee,
+      keys.head.getPublic
     )
   }
 
-  def createPaymentTx(recipientPublicKey: PublicKey,
+  def createPaymentTx(recipientAddr: ByteString,
                       amount: Long,
                       fee: Long): Transaction = {
     logger.info(s"Generating payment tx." +
-      s" Recipient: ${Base16.encode(ByteString(recipientPublicKey.getEncoded))}." +
+      s" Recipient: $recipientAddr." +
       s" Amount: $amount." +
       s" Fee: $fee")
     val boxesToSpentInTx: Seq[MonetaryOutput] = wallet
@@ -157,14 +175,29 @@ class StateHolder extends Actor with StrictLogging {
           else boxesToSpent
       }
     val charge: Long = boxesToSpentInTx.map(_.amount).sum - (amount + fee)
-    val inputs: Seq[Input] = boxesToSpentInTx.map(box => Input(box.id, Seq(ECDSA.sign(keys.head.getPrivate, box.id))))
+    val inputs: Seq[Input] = boxesToSpentInTx.map(box => Input(box.id, Seq.empty))
     val outputs: Seq[OutputAmount] = {
       //Nonce should't be random, only generation from tx id
-      val boxToRecipient: OutputAmount = OutputAmount(recipientPublicKey, amount, Random.nextLong())
-      if (charge > 0) Seq(boxToRecipient, OutputAmount(keys.head.getPublic, charge, Random.nextLong()))
+      val boxToRecipient: OutputAmount = OutputAmount(recipientAddr, amount, Random.nextLong())
+      if (charge > 0) Seq(boxToRecipient, OutputAmount(publicKey2Addr(keys.head.getPublic), charge, Random.nextLong()))
       else Seq(boxToRecipient)
     }
-    Transaction(System.currentTimeMillis(), inputs, outputs)
+    val unsignedTx = Transaction(System.currentTimeMillis(), fee, inputs, outputs)
+    val sing: ByteString = ECDSA.sign(keys.head.getPrivate, unsignedTx.messageToSign)
+    val signedPaymentInputs: Seq[Input] =
+      boxesToSpentInTx.map(box => Input(box.id, Seq(sing, ByteString(keys.head.getPublic.getEncoded))))
+    unsignedTx.copy(inputs = signedPaymentInputs)
+  }
+
+  def createFeeTx(fee: Long): Transaction = {
+    Transaction(
+      System.currentTimeMillis(),
+      0L,
+      Seq.empty,
+      Seq(
+        OutputAmount(publicKey2Addr(keys.head.getPublic), fee, Random.nextLong())
+      )
+    )
   }
 }
 
