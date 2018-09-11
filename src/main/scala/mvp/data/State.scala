@@ -2,6 +2,7 @@ package mvp.data
 
 import akka.util.ByteString
 import mvp.crypto.Sha256.Sha256RipeMD160
+import mvp.utils.Base16
 import mvp.utils.Base16._
 
 case class State(state: Map[String, Output] = Map.empty[String, Output]) {
@@ -14,12 +15,19 @@ case class State(state: Map[String, Output] = Map.empty[String, Output]) {
   def updateState(payload: Payload): State = {
     val (toAddToState, toRemoveFromState) = payload.transactions.foldLeft(Seq.empty[Output] -> Seq.empty[String]) {
       case ((toAdd, toRemove), tx) =>
-        if (tx.outputs.forall(_.isInstanceOf[OutputAmount]))
-          (toAdd ++ tx.outputs, toRemove ++ tx.inputs.map(input => encode(input.useOutputId)))
-        else (toAdd ++
-          tx.outputs ++
-          tx.inputs.flatMap(input => state.get(encode(input.useOutputId)).map(_.closeForSpent)),
-          toRemove ++ tx.inputs.map(input => encode(input.useOutputId)))
+        val toRemoveFromStateFromTx = tx.inputs
+          .filter(input =>
+            state.find(outputInState =>
+              outputInState._2.id == input.useOutputId).exists(_._2.isInstanceOf[OutputAmount])
+          )
+        val closedForSpent: Seq[Output] = tx.inputs
+          .flatMap(input => state
+            .find(outputInState => outputInState._1 == Base16.encode(input.id))
+            .filter(outputInfo => !outputInfo._2.isInstanceOf[OutputAmount])
+            .map(_._2)
+          )
+        (toAdd ++ closedForSpent ++ payload.transactions.flatMap(_.outputs),
+          toRemove ++ toRemoveFromStateFromTx.map(input => Base16.encode(input.useOutputId)))
     }
     State(state = (state -- toRemoveFromState) ++ toAddToState.map(output => encode(output.id) -> output))
   }
@@ -27,7 +35,9 @@ case class State(state: Map[String, Output] = Map.empty[String, Output]) {
 
 object State {
 
-  val genesisState: State = State()
+  val genesisOutput: OutputOpen = new OutputOpen
+
+  val genesisState: State = State(Map(Base16.encode(genesisOutput.id) -> genesisOutput))
 
   //TODO: Add support of levelDb, now always start from empty state
   def recoverState: State = genesisState

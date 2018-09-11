@@ -107,7 +107,7 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   def saveUserMessage(message: UserMessage): Unit = {
     if (!messages.contains(message.message))
       persist(message) { message =>
-        logger.debug(s"Message ${message.message} with prevId ${message.prevOutputId} is persisted successfully.")
+        logger.debug(s"Message ${message.message} with is persisted successfully.")
       }
     updateMessages(message)
   }
@@ -121,8 +121,7 @@ class ModifiersHolder extends PersistentActor with StrictLogging {
   def updateMessages(message: UserMessage): Unit =
     messages +=
       Sha256RipeMD160(ByteString(message.message.getBytes) ++
-        ByteString(message.sender.getEncoded) ++
-        message.prevOutputId.getOrElse(ByteString.empty)).mkString -> message
+        ByteString(message.sender.getEncoded)).mkString -> message
 
   def updateBlock(block: Block): Unit = blocks += block.header.height -> block
 

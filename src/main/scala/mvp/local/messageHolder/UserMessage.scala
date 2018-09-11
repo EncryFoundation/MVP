@@ -8,7 +8,7 @@ import mvp.crypto.Sha256.Sha256RipeMD160
 case class UserMessage(message: String,
                        metadata: ByteString,
                        sender: PublicKey,
-                       prevOutputId: Option[ByteString],
+                       fee: Long,
                        msgNum: Int) {
 
   def toMsgInfo: MessageInfo = MessageInfo(

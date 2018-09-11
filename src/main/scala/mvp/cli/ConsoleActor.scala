@@ -1,14 +1,14 @@
 package mvp.cli
 
-import scala.io.StdIn
-import scala.concurrent.Future
 import akka.actor.Actor
 import akka.util.ByteString
 import mvp.MVP.{context, system}
 import mvp.actors.Messages.{BlockchainAnswer, HeadersAnswer}
 import mvp.cli.Commands._
-import mvp.cli.ConsoleActor.{BlockchainRequest, HeadersRequest, SendMyName, UserMessageFromCLI}
+import mvp.cli.ConsoleActor._
 import mvp.utils.Base16
+import scala.concurrent.Future
+import scala.io.StdIn
 
 class ConsoleActor extends Actor {
 
@@ -18,17 +18,28 @@ class ConsoleActor extends Actor {
     case Response("blockchain height") => context.system.actorSelection("/user/stateHolder") ! BlockchainRequest
     case Response("headers height") => context.system.actorSelection("/user/stateHolder") ! HeadersRequest
     case Response("send my name") => context.system.actorSelection("/user/stateHolder") ! SendMyName
+    case Response("MyAddr") => context.system.actorSelection("/user/stateHolder") ! MyAddress
+    case Response("MyBalance") => context.system.actorSelection("/user/stateHolder") ! MyBalance
     case BlockchainAnswer(blockchain) => showCurrentBlockchainHight(blockchain)
     case HeadersAnswer(blockchain) => showCurrentHeadersHight(blockchain)
+    case balance: Long => println(s"Balance: $balance")
+    case address: ByteString => println(s"Address: ${Base16.encode(address)}")
     case Response("send message") => println("Введите текст и outputID")
     case Response(string: String) =>
       val words: Array[String] = string.split(' ')
-      if (words.head == "sendTx") {
-        val (outputID, wordsToSend: Array[String]) =
-          if (words.length < 3) (None, words.tail)
-          else (Some(Base16.decode(words.last).getOrElse(ByteString.empty)), words.tail.dropRight(1))
-        system.actorSelection("/user/stateHolder") !
-          UserMessageFromCLI(wordsToSend, outputID.map(_.toArray))
+      words.head match {
+        case "sendTx" =>
+            if (words.length < 3 || words.last.toLong < 1)
+              println("Looks like you miss some parameters, please try again.")
+            else system.actorSelection("/user/stateHolder") !
+              UserMessageFromCLI(words.tail)
+        case "sendMoney" =>
+          if (words.length < 4 || (words(2).toLong < 1 && words.last.toLong < 1))
+            println("Looks like you miss some parameters, please try again.")
+          else
+            system.actorSelection("/user/stateHolder") !
+              UserTransfer(Base16.decode(words(1)).getOrElse(ByteString.empty), words(2).toLong, words(3).toLong)
+        case _ => println("Looks like you miss some parameters, please try again.")
       }
   }
 }
@@ -40,11 +51,17 @@ object ConsoleActor {
       system.actorSelection("/user/starter/cliActor") ! Response(input))
   }
 
+  case object MyAddress
+
+  case object MyBalance
+
   case object SendMyName
 
   case object BlockchainRequest
 
   case object HeadersRequest
 
-  case class UserMessageFromCLI(array: Array[String], array1: Option[Array[Byte]])
+  case class UserMessageFromCLI(messageWithFee: Array[String])
+
+  case class UserTransfer(addr: ByteString, amount: Long, fee: Long)
 }

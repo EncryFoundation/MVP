@@ -1,22 +1,29 @@
 package mvp.data
 
-import java.security.PublicKey
 import akka.util.ByteString
+import mvp.crypto.ECDSA
 import mvp.crypto.Sha256.Sha256RipeMD160
 import mvp.utils.BlockchainUtils._
+import mvp.utils.ECDSAUtils._
 
-case class OutputAmount(publicKey: PublicKey,
+case class OutputAmount(address: ByteString,
                         amount: Long,
-                        signature: ByteString,
-                        override val canBeSpent: Boolean = true) extends Output {
+                        nonce: Long,
+                        override val canBeSpent: Boolean = true)
+  extends MonetaryOutput with AddressContainable {
 
-  override def closeForSpent: Output = this.copy(canBeSpent = false)
+  override val messageToSign: ByteString = Sha256RipeMD160(
+    address ++ toByteString(amount) ++ toByteString(nonce)
+  )
 
-  override val messageToSign: ByteString = Sha256RipeMD160(ByteString(publicKey.getEncoded) ++ toByteString(amount))
+  //First proof - signature, second - publicKey, third - tx.bytes
+  override def unlock(proofs: Seq[ByteString]): Boolean =
+    ECDSA.verify(proofs.head, proofs.last, str2PublicKey(proofs(1))) &&
+      address == Sha256RipeMD160(proofs(1))
 
-  override def unlock(proofs: Seq[ByteString]): Boolean = true
-
-  override val id: ByteString = Sha256RipeMD160(ByteString(publicKey.getEncoded) ++ toByteString(amount))
+  override val id: ByteString = Sha256RipeMD160(
+    address ++ toByteString(amount) ++ toByteString(nonce)
+  )
 }
 
 object OutputAmount {
