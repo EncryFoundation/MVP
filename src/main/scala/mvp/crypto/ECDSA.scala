@@ -15,9 +15,7 @@ object ECDSA {
     val keyPairGenerator = KeyPairGenerator.getInstance("ECDSA", "BC")
     val params = new ECGenParameterSpec("secp256k1")
     keyPairGenerator.initialize(params)
-    val key = keyPairGenerator.generateKeyPair
-    println(compressPublicKey(key.getPublic).length)
-    key
+    keyPairGenerator.generateKeyPair
   }
 
   def sign(privateKey: PrivateKey, messageToSign: ByteString): ByteString = {
