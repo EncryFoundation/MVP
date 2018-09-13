@@ -184,7 +184,7 @@ class StateHolder extends Actor with StrictLogging {
     val unsignedTx = Transaction(System.currentTimeMillis(), fee, inputs, outputs)
     val sing: ByteString = ECDSA.sign(keys.head.getPrivate, unsignedTx.messageToSign)
     val signedPaymentInputs: Seq[Input] =
-      boxesToSpentInTx.map(box => Input(box.id, Seq(sing, ByteString(keys.head.getPublic.getEncoded))))
+      boxesToSpentInTx.map(box => Input(box.id, Seq(sing, ECDSA.compressPublicKey(keys.head.getPublic))))
     unsignedTx.copy(inputs = signedPaymentInputs)
   }
 
