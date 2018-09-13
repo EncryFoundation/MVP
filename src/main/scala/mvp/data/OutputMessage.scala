@@ -1,6 +1,5 @@
 package mvp.data
 
-import java.security.PublicKey
 import akka.util.ByteString
 import mvp.local.messageTransaction.MessageInfo
 import mvp.crypto.Sha256.Sha256RipeMD160
@@ -14,7 +13,7 @@ case class OutputMessage(bundle: ByteString,
                          check: ByteString,
                          messageHash: ByteString,
                          metadata: ByteString,
-                         publicKey: PublicKey,
+                         publicKey: ByteString,
                          signature: ByteString,
                          txNum: Int,
                          nonce: Long,
@@ -30,7 +29,7 @@ case class OutputMessage(bundle: ByteString,
       ++ check
       ++ messageHash
       ++ metadata
-      ++ ByteString(publicKey.getEncoded)
+      ++ publicKey
       ++ signature
       ++ ByteString(nonce)
   )
@@ -40,7 +39,7 @@ case class OutputMessage(bundle: ByteString,
       ++ check
       ++ messageHash
       ++ metadata
-      ++ ByteString(publicKey.getEncoded)
+      ++ publicKey
       ++ ByteString(nonce)
   )
 
@@ -53,7 +52,7 @@ case class OutputMessage(bundle: ByteString,
   //Проверка, "связки" и "проверки"
   override def unlock(proofs: Seq[ByteString]): Boolean = {
     val result: Boolean =
-      check == Sha256RipeMD160(proofs.head ++ messageHash ++ metadata ++ ByteString(publicKey.getEncoded))
+      check == Sha256RipeMD160(proofs.head ++ messageHash ++ metadata ++ publicKey)
     logger.info(s"Going to validate output: ${this.asJson}." +
       s"\nCheck is ${encode(check)}." +
       s"\nBundle from next tx is ${encode(proofs.head)}" +

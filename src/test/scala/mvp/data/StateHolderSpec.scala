@@ -67,7 +67,7 @@ class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
   val userMessage = UserMessage(
     "",
     ByteString.fromString("4afa0ea465010000"),
-    ECDSA.createKeyPair.getPublic,
+    ECDSA.compressPublicKey(ECDSA.createKeyPair.getPublic),
     2L,
     1
   )
@@ -97,10 +97,9 @@ class StateHolderSpec extends TestKit(ActorSystem("MySpec")) with WordSpecLike
       val previousOutput: Option[OutputMessage] =
         state.state.values.toSeq.find {
           case output: OutputMessage if messagesHolder.nonEmpty =>
-            output.messageHash ++ output.metadata ++ ByteString(output.publicKey.getEncoded) ==
+            output.messageHash ++ output.metadata ++ output.publicKey ==
               Sha256RipeMD160(ByteString(messagesHolder.last.message)) ++
-                messagesHolder.last.metadata ++
-                ByteString(messagesHolder.last.sender.getEncoded)
+                messagesHolder.last.metadata ++ messagesHolder.last.sender
           case _ => false
         }.map(_.asInstanceOf[OutputMessage])
       Some(createMessageTx(msg, previousOutput, 2L, Seq.empty))

@@ -1,17 +1,23 @@
 package mvp.crypto
 
 import java.security._
-import org.bouncycastle.jce.ECNamedCurveTable
+import java.security.interfaces.{ECPublicKey => JSPublicKey}
+import java.security.spec.{ECGenParameterSpec, ECPublicKeySpec}
 import akka.util.ByteString
-import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec
+import org.bouncycastle.jce.interfaces.ECPublicKey
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.jce.spec.{ECNamedCurveParameterSpec, ECNamedCurveSpec}
+import org.bouncycastle.jce.{ECNamedCurveTable, ECPointUtil}
 
 object ECDSA {
 
   def createKeyPair: KeyPair = {
-    val ecSpec: ECNamedCurveParameterSpec = ECNamedCurveTable.getParameterSpec("prime192v1")
-    val keyPairGenerator: KeyPairGenerator = KeyPairGenerator.getInstance("ECDSA", "BC")
-    keyPairGenerator.initialize(ecSpec, new SecureRandom())
-    keyPairGenerator.generateKeyPair
+    val keyPairGenerator = KeyPairGenerator.getInstance("ECDSA", "BC")
+    val params = new ECGenParameterSpec("secp256k1")
+    keyPairGenerator.initialize(params)
+    val key = keyPairGenerator.generateKeyPair
+    println(compressPublicKey(key.getPublic).length)
+    key
   }
 
   def sign(privateKey: PrivateKey, messageToSign: ByteString): ByteString = {
@@ -21,9 +27,22 @@ object ECDSA {
     ByteString(ecdsaSign.sign)
   }
 
-  def verify(signature: ByteString, message: ByteString, publicKey: PublicKey): Boolean = {
+  def compressPublicKey(publicKey: PublicKey): ByteString =
+    ByteString(publicKey.asInstanceOf[ECPublicKey].getQ.getEncoded(true))
+
+  def uncompressPublicKey(compressedPublicKey: ByteString): PublicKey = {
+    val spec: ECNamedCurveParameterSpec = ECNamedCurveTable.getParameterSpec("secp256k1")
+    val kf: KeyFactory = KeyFactory.getInstance("ECDSA", new BouncyCastleProvider)
+    val params: ECNamedCurveSpec =
+      new ECNamedCurveSpec("secp256k1", spec.getCurve, spec.getG, spec.getN)
+    val pubKeySpec: ECPublicKeySpec =
+      new ECPublicKeySpec(ECPointUtil.decodePoint(params.getCurve, compressedPublicKey.toArray), params)
+    kf.generatePublic(pubKeySpec).asInstanceOf[JSPublicKey]
+  }
+
+  def verify(signature: ByteString, message: ByteString, publicKey: ByteString): Boolean = {
     val ecdsaVerify: Signature = Signature.getInstance("SHA256withECDSA", "BC")
-    ecdsaVerify.initVerify(publicKey)
+    ecdsaVerify.initVerify(uncompressPublicKey(publicKey))
     ecdsaVerify.update(message.toArray)
     ecdsaVerify.verify(signature.toArray)
   }

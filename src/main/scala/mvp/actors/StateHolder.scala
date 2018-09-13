@@ -42,7 +42,7 @@ class StateHolder extends Actor with StrictLogging {
       self ! InfoMessage(
         UserMessage(message.dropRight(1).mkString,
           toByteString(System.currentTimeMillis()),
-          keys.head.getPublic,
+          ECDSA.compressPublicKey(keys.head.getPublic),
           message.last.toLong,
           messagesHolder.size + 1)
       )
@@ -119,10 +119,9 @@ class StateHolder extends Actor with StrictLogging {
     val previousOutput: Option[OutputMessage] =
       state.state.values.toSeq.find {
         case output: OutputMessage if messagesHolder.nonEmpty =>
-          output.messageHash ++ output.metadata ++ ByteString(output.publicKey.getEncoded) ==
+          output.messageHash ++ output.metadata ++ output.publicKey ==
             Sha256RipeMD160(ByteString(messagesHolder.last.message)) ++
-              messagesHolder.last.metadata ++
-              ByteString(messagesHolder.last.sender.getEncoded)
+              messagesHolder.last.metadata ++ messagesHolder.last.sender
         case _ => false
       }.map(_.asInstanceOf[OutputMessage])
     val boxesToFee: Seq[MonetaryOutput] = wallet

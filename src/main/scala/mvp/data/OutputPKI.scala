@@ -9,7 +9,7 @@ case class OutputPKI(bundle: ByteString,
                      check: ByteString,
                      publicKeyHash: ByteString,
                      userData: ByteString,
-                     publicKey: PublicKey,
+                     publicKey: ByteString,
                      signature: ByteString,
                      nonce: Long,
                      override val canBeSpent: Boolean = true)
@@ -22,7 +22,7 @@ case class OutputPKI(bundle: ByteString,
       ++ check
       ++ publicKeyHash
       ++ userData
-      ++ ByteString(publicKey.getEncoded)
+      ++ publicKey
       ++ signature
       ++ ByteString(nonce)
   )
@@ -32,7 +32,7 @@ case class OutputPKI(bundle: ByteString,
       ++ check
       ++ publicKeyHash
       ++ userData
-      ++ ByteString(publicKey.getEncoded)
+      ++ publicKey
       ++ ByteString(nonce)
   )
 

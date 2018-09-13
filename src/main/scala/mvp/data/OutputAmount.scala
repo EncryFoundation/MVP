@@ -18,7 +18,7 @@ case class OutputAmount(address: ByteString,
 
   //First proof - signature, second - publicKey, third - tx.bytes
   override def unlock(proofs: Seq[ByteString]): Boolean =
-    ECDSA.verify(proofs.head, proofs.last, str2PublicKey(proofs(1))) &&
+    ECDSA.verify(proofs.head, proofs.last, proofs(1)) &&
       address == Sha256RipeMD160(proofs(1))
 
   override val id: ByteString = Sha256RipeMD160(
