@@ -6,19 +6,20 @@ import java.security._
 import java.security.interfaces.{ECPublicKey => JSPublicKey}
 import java.security.spec.{ECGenParameterSpec, ECPublicKeySpec}
 import java.util
+
 import akka.util.ByteString
 import org.bouncycastle.asn1.{ASN1EncodableVector, ASN1Integer, DEROutputStream, DERSequence}
 import org.bouncycastle.jce.interfaces.ECPublicKey
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.{ECNamedCurveParameterSpec, ECNamedCurveSpec}
 import org.bouncycastle.jce.{ECNamedCurveTable, ECPointUtil}
-import sun.security.util.DerInputStream
+import sun.security.util.{DerInputStream, DerValue}
 
 object ECDSA {
 
   def createKeyPair: KeyPair = {
     val keyPairGenerator = KeyPairGenerator.getInstance("ECDSA", "BC")
-    val params = new ECGenParameterSpec("secp256k1")
+    val params: ECGenParameterSpec = new ECGenParameterSpec("secp256k1")
     keyPairGenerator.initialize(params)
     keyPairGenerator.generateKeyPair
   }
@@ -31,11 +32,11 @@ object ECDSA {
   }
 
   def compressSignature(signatureToCompress: ByteString): ByteString = {
-    val derInputStream = new DerInputStream(signatureToCompress.toArray)
-    val values = derInputStream.getSequence(2)
-    val random = values(0).getPositiveBigInteger.toByteArray
-    val signature = values(1).getPositiveBigInteger.toByteArray
-    val tokenSignature = new Array[Byte](64)
+    val derInputStream: DerInputStream = new DerInputStream(signatureToCompress.toArray)
+    val values: Array[DerValue] = derInputStream.getSequence(2)
+    val random: Array[Byte] = values(0).getPositiveBigInteger.toByteArray
+    val signature: Array[Byte] = values(1).getPositiveBigInteger.toByteArray
+    val tokenSignature: Array[Byte] = new Array[Byte](64)
     System.arraycopy(random,
       if (random.length > 32) 1 else 0,
       tokenSignature,
