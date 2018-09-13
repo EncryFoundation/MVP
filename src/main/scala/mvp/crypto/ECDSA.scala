@@ -6,7 +6,6 @@ import java.security._
 import java.security.interfaces.{ECPublicKey => JSPublicKey}
 import java.security.spec.{ECGenParameterSpec, ECPublicKeySpec}
 import java.util
-
 import akka.util.ByteString
 import org.bouncycastle.asn1.{ASN1EncodableVector, ASN1Integer, DEROutputStream, DERSequence}
 import org.bouncycastle.jce.interfaces.ECPublicKey
