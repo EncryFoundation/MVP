@@ -4,7 +4,6 @@ import akka.util.ByteString
 import mvp.crypto.ECDSA
 import mvp.crypto.Sha256.Sha256RipeMD160
 import mvp.utils.BlockchainUtils._
-import mvp.utils.ECDSAUtils._
 
 case class OutputAmount(address: ByteString,
                         amount: Long,

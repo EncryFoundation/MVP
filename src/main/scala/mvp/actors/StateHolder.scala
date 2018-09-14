@@ -14,6 +14,7 @@ import mvp.crypto.Sha256.Sha256RipeMD160
 import mvp.data.{Blockchain, Modifier, State, _}
 import mvp.local.messageHolder.UserMessage
 import mvp.local.{Generator, Keys}
+import mvp.utils.Base16
 import mvp.utils.Base16._
 import mvp.utils.BlockchainUtils.{randomByteString, toByteString}
 import mvp.utils.ECDSAUtils._
@@ -28,17 +29,28 @@ class StateHolder extends Actor with StrictLogging {
   var messagesHolder: Seq[UserMessage] = Seq.empty
   var currentSalt: ByteString = randomByteString
   var wallet: Wallet = Wallet.recoverWallet(keys)
-
+  val baseMessageMessageInfo: InfoMessage = {
+    val str = ECDSA.compressPublicKey(keys.head.getPublic).toArray.mkString
+    InfoMessage(
+      UserMessage(Base16.encode(ECDSA.compressPublicKey(keys.head.getPublic)),
+        toByteString(System.currentTimeMillis()),
+        ECDSA.compressPublicKey(keys.head.getPublic),
+        10L,
+        messagesHolder.size + 1)
+    )
+  }
   override def receive: Receive = {
     case Headers(headers: Seq[Header]) => headers.filter(validateModifier).foreach(addModifier)
     case InfoMessage(msg: UserMessage) => addMessageAndCreateTx(msg).foreach(tx => self ! Transactions(Seq(tx)))
     case Payloads(payloads: Seq[Payload]) => payloads.filter(validateModifier).foreach(addModifier)
     case Transactions(transactions: Seq[Transaction]) => transactions.filter(validateModifier).foreach(addModifier)
     case GetLastBlock => sender() ! blockChain.blocks.last
-    case GetLastInfo => sender() ! LastInfo(blockChain.blocks, messagesHolder)
+    case GetLastInfo => sender() ! LastInfo(blockChain.blocks, messagesHolder.tail)
     case BlockchainRequest => sender() ! BlockchainAnswer(blockChain)
     case HeadersRequest => sender() ! HeadersAnswer(blockChain)
+    case InitMessageTx => self ! baseMessageMessageInfo
     case UserMessageFromCLI(message) =>
+      if (messagesHolder.nonEmpty)
       self ! InfoMessage(
         UserMessage(message.dropRight(1).mkString,
           toByteString(System.currentTimeMillis()),

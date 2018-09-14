@@ -20,6 +20,7 @@ class ConsoleActor extends Actor {
     case Response("send my name") => context.system.actorSelection("/user/stateHolder") ! SendMyName
     case Response("MyAddr") => context.system.actorSelection("/user/stateHolder") ! MyAddress
     case Response("MyBalance") => context.system.actorSelection("/user/stateHolder") ! MyBalance
+    case Response("SendInitTx") => context.system.actorSelection("/user/stateHolder") ! InitMessageTx
     case BlockchainAnswer(blockchain) => showCurrentBlockchainHight(blockchain)
     case HeadersAnswer(blockchain) => showCurrentHeadersHight(blockchain)
     case balance: Long => println(s"Balance: $balance")
@@ -54,6 +55,8 @@ object ConsoleActor {
   case object MyAddress
 
   case object MyBalance
+
+  case object InitMessageTx
 
   case object SendMyName
 
