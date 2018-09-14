@@ -45,7 +45,8 @@ class StateHolder extends Actor with StrictLogging {
     case Payloads(payloads: Seq[Payload]) => payloads.filter(validateModifier).foreach(addModifier)
     case Transactions(transactions: Seq[Transaction]) => transactions.filter(validateModifier).foreach(addModifier)
     case GetLastBlock => sender() ! blockChain.blocks.last
-    case GetLastInfo => sender() ! LastInfo(blockChain.blocks, messagesHolder.tail)
+    case GetLastInfo =>
+      sender() ! LastInfo(blockChain.blocks, if(messagesHolder.nonEmpty) messagesHolder.tail else Seq.empty)
     case BlockchainRequest => sender() ! BlockchainAnswer(blockChain)
     case HeadersRequest => sender() ! HeadersAnswer(blockChain)
     case InitMessageTx => self ! baseMessageMessageInfo
@@ -132,9 +133,11 @@ class StateHolder extends Actor with StrictLogging {
       state.state.values.toSeq.find {
         case output: OutputMessage if messagesHolder.nonEmpty =>
           output.messageHash ++ output.metadata ++ output.publicKey ==
-            Sha256RipeMD160(ByteString(messagesHolder.last.message)) ++
-              messagesHolder.last.metadata ++ messagesHolder.last.sender
-        case _ => false
+            Sha256RipeMD160(
+              Base16.decode(messagesHolder.last.message).getOrElse(ByteString(messagesHolder.last.message))
+            ) ++ messagesHolder.last.metadata ++ messagesHolder.last.sender
+        case _ =>
+          false
       }.map(_.asInstanceOf[OutputMessage])
     val boxesToFee: Seq[MonetaryOutput] = wallet
       .unspentOutputs.foldLeft(Seq[MonetaryOutput]()) {
