@@ -6,7 +6,7 @@ import io.circe.parser.decode
 import io.circe.generic.auto._
 import mvp.utils.EncodingUtils._
 import mvp.actors.LastInfo
-import mvp.actors.Messages.GetLastInfo
+import mvp.actors.Messages.{GetLastInfo, LastInfoFromRemote, ReceivedMessage}
 import mvp.actors.networkactors.NetworkMessages.RequestLastInfo
 
 class UdpReceiver extends Actor with StrictLogging {

@@ -6,6 +6,7 @@ import com.typesafe.scalalogging.StrictLogging
 import mvp.actors.LastInfo
 import io.circe.syntax._
 import io.circe.generic.auto._
+import mvp.actors.Messages.MessageToSend
 import mvp.utils.EncodingUtils._
 
 class UdpSender extends Actor with StrictLogging {

@@ -5,6 +5,7 @@ import akka.actor.{Actor, ActorRef}
 import akka.io.{IO, Udp}
 import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
+import mvp.actors.Messages.{MessageToSend, ReceivedMessage}
 import mvp.utils.Settings.settings
 
 class UDPActor extends Actor with StrictLogging {

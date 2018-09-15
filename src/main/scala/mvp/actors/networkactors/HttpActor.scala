@@ -11,7 +11,9 @@ import io.circe.parser.decode
 import mvp.actors.networkactors.NetworkMessages.RequestLastInfo
 import mvp.MVP._
 import mvp.actors.LastInfo
+import mvp.actors.Messages.LastInfoFromRemote
 import mvp.utils.EncodingUtils._
+
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import mvp.utils.Settings.settings
 

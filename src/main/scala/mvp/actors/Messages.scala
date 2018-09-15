@@ -1,5 +1,6 @@
 package mvp.actors
 
+import akka.util.ByteString
 import mvp.data.{Blockchain, Header, Payload, Transaction}
 import mvp.local.messageHolder.UserMessage
 
@@ -28,5 +29,11 @@ object Messages {
   case class BlockchainAnswer(blockchain: Blockchain) extends Message
 
   case class HeadersAnswer(blockchain: Blockchain) extends Message
+
+  case class MessageToSend(data: ByteString) extends Message
+
+  case class ReceivedMessage(data: ByteString) extends Message
+
+  case class LastInfoFromRemote(lastInfo: LastInfo) extends Message
 
 }
