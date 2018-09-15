@@ -4,8 +4,7 @@ import mvp.data.Blockchain
 
 object Commands {
 
-  def showHelp: Unit =
-    println(
+  def showHelp: Unit = println(
       """
 Usage: [GROUP_NAME] [COMMAND] -[ARGUMENT_1]=[VAL_1] -[ARGUMENT_2]=[VAL_2]
 
