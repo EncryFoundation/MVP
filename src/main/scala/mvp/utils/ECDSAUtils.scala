@@ -4,6 +4,7 @@ import java.security.spec.{PKCS8EncodedKeySpec, X509EncodedKeySpec}
 import java.security.{KeyFactory, PrivateKey, PublicKey}
 
 import akka.util.ByteString
+import mvp.crypto.ECDSA
 import mvp.crypto.Sha256.Sha256RipeMD160
 
 object ECDSAUtils {
@@ -11,7 +12,7 @@ object ECDSAUtils {
   private val kf: KeyFactory = KeyFactory.getInstance("ECDSA", "BC")
 
   def publicKey2Addr(publicKey: PublicKey): ByteString =
-    Sha256RipeMD160(ByteString(publicKey.getEncoded))
+    Sha256RipeMD160(ECDSA.compressPublicKey(publicKey))
 
   def str2PublicKey(str: String): PublicKey =
     kf.generatePublic(new X509EncodedKeySpec(Base16.decode(str).getOrElse(ByteString.empty).toArray))

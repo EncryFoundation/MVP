@@ -1,8 +1,8 @@
 package mvp.data
 
-import java.security.PublicKey
+import akka.util.ByteString
 
 trait PublicKeyContainable {
 
-  val publicKey: PublicKey
+  val publicKey: ByteString
 }

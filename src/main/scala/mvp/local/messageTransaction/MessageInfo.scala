@@ -5,7 +5,7 @@ import akka.util.ByteString
 
 case class MessageInfo(message: ByteString,
                        metaData: ByteString,
-                       publicKey: PublicKey) {
+                       publicKey: ByteString) {
 
-  val messageToSign: ByteString = message ++ metaData ++ ByteString(publicKey.getEncoded)
+  val messageToSign: ByteString = message ++ metaData ++ publicKey
 }

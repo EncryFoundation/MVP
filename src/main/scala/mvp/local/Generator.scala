@@ -61,7 +61,7 @@ object Generator {
     )
     val sing: ByteString = ECDSA.sign(privateKey, unsignedTx.messageToSign)
     val signedPaymentInputs: Seq[Input] = boxesToFee.map(box =>
-      Input(box.id, Seq(sing, ByteString(publicKey.getEncoded)))
+      Input(box.id, Seq(sing, ECDSA.compressPublicKey(publicKey)))
     )
     unsignedTx
       .copy(inputs = outputId.map(output => Seq(Input(output, Seq(proof)))).getOrElse(Seq.empty) ++
